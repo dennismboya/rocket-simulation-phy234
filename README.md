@@ -8,9 +8,9 @@ This project models the motion of a rocket launched under the influence of gravi
 
 ## 📂 Contents
 
-[`report/rocket_simulation.ipynb`](./report/rocket_simulation.ipynb) ← Main simulation script
+[`rocket_simulation.ipynb`](./report/rocket_simulation.ipynb) ← Main simulation script
 
-[`report/mechanics_final_paper.pdf`](./report/mechanics_final_paper.pdf) ← Project PDF report (with derivations and results)
+[`mechanics_final_paper.pdf`](./report/mechanics_final_paper.pdf) ← Project PDF report (with derivations and results)
 
 ## 🧪 Key Physics Concepts
 
