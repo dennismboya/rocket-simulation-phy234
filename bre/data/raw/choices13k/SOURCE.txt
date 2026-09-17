@@ -1,0 +1,4 @@
+choices13k — Peterson, Bourgin, Agrawal, Reichman & Griffiths, "Using large-scale experiments and machine learning to discover theories of human decision-making", Science 372(6547):1209-1214 (2021).
+Files c13k_selections.csv, c13k_problems.json, README.md: git clone --depth 1 https://github.com/jcpeterson/choices13k (HEAD 821ae7e), accessed 2026-09-17. No LICENSE file in the repository.
+File choices13k_thomas2024_features.csv: data/choices13k.csv from https://github.com/RothkopfLab/DatasetBias (Thomas et al., Nature Human Behaviour 2024, doi:10.1038/s41562-023-01784-6), accessed 2026-09-17; adds engineered features and dominance flags (Dom, SOSD, TOSD, StochDom). No LICENSE file in that repository.
+Aggregate data only: per-problem B-choice rates with n; individual choices are not public.

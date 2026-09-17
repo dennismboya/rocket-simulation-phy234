@@ -1,0 +1,2 @@
+CPC15 — Erev, Ert, Plonsky, Cohen & Cohen, "From anomalies to forecasts: Toward a descriptive model of decisions under risk, under ambiguity, and from experience", Psychological Review 124(4):369-409 (2017). Canonical data: https://economics.agri.huji.ac.il/crc2015/raw-data (unreachable from the build session).
+File cpc15_thomas2024_aggregate.csv: data/cpc15.csv from https://github.com/RothkopfLab/DatasetBias accessed 2026-09-17 (150 problems x 5 blocks, aggregate B-rates plus engineered features and BEAST predictions). No LICENSE file in that repository.

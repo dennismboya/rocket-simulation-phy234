@@ -1,0 +1,7 @@
+Source repository: https://github.com/k-kyoko/qinst_ozawa_khrennikov (commit bc877e8c3e58a9bf59511ceed2b6464ea4803125), accessed 2026-09-17.
+File transcribed: src/qinst_ozawa/data.py.
+Verification PDF (not redistributed here): OzawaKhrennikov2021.pdf in that repository, sha256 f0398ea29451fdbd333255fc6649a9841cb15318823f2fd8d42add40f183431a,
+  = Ozawa & Khrennikov, "Modeling combination of question order effect, response replicability effect, and QQ-equality with quantum instruments",
+  Journal of Mathematical Psychology 100 (2021) 102491. Section 11 eqs. (149)-(156) give the Clinton-Gore joint proportions used here.
+Black/White and Rose/Jackson tables: not present in that PDF; attributed by the repository to Wang, Solloway, Shiffrin & Busemeyer, PNAS 111(26):9431-9436 (2014). UNVERIFIED from this session.
+Owner action to complete dataset D: download PNAS SI Appendix / Dataset S1 of doi:10.1073/pnas.1407756111 and place it at data/raw/order_effects/wang2014_si/ ; the loader documents the expected columns.

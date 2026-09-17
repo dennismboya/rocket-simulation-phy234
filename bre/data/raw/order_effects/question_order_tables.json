@@ -1,0 +1,24 @@
+{
+  "_provenance": "Transcribed from src/qinst_ozawa/data.py of https://github.com/k-kyoko/qinst_ozawa_khrennikov (commit bc877e8, accessed 2026-09-17). Keys: first letter = first question asked, y/n = answer; e.g. AyBn = P(A answered yes first, then B answered no). Question A = first-named item (Clinton, Black, Rose), B = second.",
+  "clinton_gore": {
+    "description": "Gallup poll, Moore (2002): 'Do you generally think Bill Clinton / Al Gore is honest and trustworthy?' Order A-then-B vs B-then-A.",
+    "verification": "VERIFIED against Ozawa & Khrennikov (2021), J. Math. Psych. 100:102491, eqs. (149)-(156), which cite Moore 2002, Wang & Busemeyer 2013 and Wang et al. 2014. PDF sha256 recorded in SOURCE.txt.",
+    "intervening_information": false,
+    "AyBy": 0.4899, "AyBn": 0.0447, "AnBy": 0.1767, "AnBn": 0.2887,
+    "ByAy": 0.5625, "ByAn": 0.1991, "BnAy": 0.0255, "BnAn": 0.2129
+  },
+  "black_white": {
+    "description": "Survey pair on whether Black/White people are treated fairly (Wang et al. 2014 example).",
+    "verification": "UNVERIFIED secondary transcription: the repository attributes these to Wang et al. 2014 PNAS but the numbers do not appear in the bundled PDF and PNAS is unreachable from the build session. Use only in unit tests flagged 'unverified'; never in a reported result.",
+    "intervening_information": false,
+    "AyBy": 0.3987, "AyBn": 0.0174, "AnBy": 0.1612, "AnBn": 0.4227,
+    "ByAy": 0.4012, "ByAn": 0.0597, "BnAy": 0.1379, "BnAn": 0.4012
+  },
+  "rose_jackson": {
+    "description": "Pete Rose / Shoeless Joe Jackson Hall-of-Fame survey pair; background information shown between questions, so the QQ equality is expected to fail.",
+    "verification": "UNVERIFIED secondary transcription (same caveat as black_white).",
+    "intervening_information": true,
+    "AyBy": 0.3379, "AyBn": 0.3241, "AnBy": 0.0178, "AnBn": 0.3202,
+    "ByAy": 0.4156, "ByAn": 0.0671, "BnAy": 0.1234, "BnAn": 0.3939
+  }
+}
