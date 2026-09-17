@@ -65,8 +65,8 @@ test-instrument: check-venv
 	$(PY) instrument/validate_battery.py && $(NODE) instrument/tests/test_balance.js
 
 data: check-venv
-	$(call require,src/bre/loaders/__main__.py)
-	$(PY) -m bre.loaders
+	$(call require,src/bre/data_cli.py)
+	$(PY) -m bre.data_cli
 
 sim: check-venv
 	$(call require,src/bre/sim/__main__.py)
