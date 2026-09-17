@@ -378,7 +378,10 @@ def test_none_vocabulary_entries_are_held_at_zero(small):
 # ---------------------------------------------------------------------------------------------
 
 RECOVERY_N = 200
-RECOVERY_STEPS = 1500
+RECOVERY_STEPS_Q2 = 1500
+"""Q2: 1500 Adam steps at ~40 ms each on the N = 200 sell rows."""
+RECOVERY_STEPS_Q4 = 1000
+"""Q4: 1000 steps at ~140 ms each (density-matrix chain), keeping the test under three minutes."""
 RECOVERY_LR = 0.02
 
 
@@ -390,7 +393,7 @@ def test_q2_recovers_population_context_parameters_and_states():
     df, truth = gq.generate(RECOVERY_N, 0, mixed_population=False)
     data = build_model_data(df)
     model = Q2(data)
-    params, obj, seconds = fit_map(model, data, KEY, steps=RECOVERY_STEPS, lr=RECOVERY_LR)
+    params, obj, seconds = fit_map(model, data, KEY, steps=RECOVERY_STEPS_Q2, lr=RECOVERY_LR)
     mu_true = np.asarray(truth["subjects"]["theta_ctx"]).mean(axis=0)
     aligned, element, corr = align_gauge(params, mu_true)
     summary = model.subject_summary(aligned, data)
@@ -398,7 +401,7 @@ def test_q2_recovers_population_context_parameters_and_states():
     corr_theta = float(np.corrcoef(summary["bloch_theta"], true_theta)[0, 1])
     corr_phi = circular_correlation(summary["bloch_phi"], np.asarray(truth["subjects"]["bloch_phi"]))
     print(
-        f"\nQ2 recovery (N={RECOVERY_N}, {RECOVERY_STEPS} steps, {seconds:.0f}s, objective {obj:.1f}, gauge {element}): "
+        f"\nQ2 recovery (N={RECOVERY_N}, {RECOVERY_STEPS_Q2} steps, {seconds:.0f}s, objective {obj:.1f}, gauge {element}): "
         f"theta_ctx corr {corr:.3f}; bloch_theta corr {corr_theta:.3f}; bloch_phi circular corr {corr_phi:.3f}; "
         f"theta_L true {np.asarray(truth['population']['theta_L']).round(2)} fit {np.asarray(aligned['theta_L']).round(2)}; "
         f"phi true {truth['population']['phi']:.2f} fit {float(aligned['phi']):.2f}"
@@ -414,14 +417,14 @@ def test_q4_recovers_decoherence_ranking_on_mixed_population():
     df, truth = gq.generate(RECOVERY_N, 0, mixed_population=True)
     data = build_model_data(df)
     model = Q4(data)
-    params, obj, seconds = fit_map(model, data, KEY, steps=RECOVERY_STEPS, lr=RECOVERY_LR)
+    params, obj, seconds = fit_map(model, data, KEY, steps=RECOVERY_STEPS_Q4, lr=RECOVERY_LR)
     lg_true = np.log(np.asarray(truth["subjects"]["gamma"]))
     lg_fit = np.asarray(params["log_gamma"])
     rho = float(spearmanr(lg_true, lg_fit).correlation)
     mu_true = np.asarray(truth["subjects"]["theta_ctx"]).mean(axis=0)
     _, element, corr = align_gauge(params, mu_true)
     print(
-        f"\nQ4 recovery (N={RECOVERY_N}, {RECOVERY_STEPS} steps, {seconds:.0f}s, objective {obj:.1f}, gauge {element}): "
+        f"\nQ4 recovery (N={RECOVERY_N}, {RECOVERY_STEPS_Q4} steps, {seconds:.0f}s, objective {obj:.1f}, gauge {element}): "
         f"log_gamma Spearman {rho:.3f}; theta_ctx corr {corr:.3f}; "
         f"gamma_mu true {truth['population']['mu_gamma']:.2f} fit {float(params['gamma_mu']):.2f}; "
         f"sigma_gamma true {truth['population']['sigma_gamma']:.2f} fit {float(np.exp(params['gamma_log_sigma'])):.2f}"

@@ -59,7 +59,7 @@ from bre import design as _design
 from bre.models.base import Params
 from bre.models.data import ModelData
 from bre.models.quantum import core as C
-from bre.models.quantum.q2_context_unitary import Q2, forward_rho_fast, predict_new_subject
+from bre.models.quantum.q2_context_unitary import Q2, forward_rho_fast, needs_mixture, predict_new_subject
 
 GAMMA_INIT = 0.5
 """Initial dephasing rate of every subject (module docstring)."""
@@ -129,7 +129,7 @@ class Q4(Q2):
             )
         return forward_rho_fast(
             rho, gamma, params["theta_L"], theta_ctx, params["phi"], r["loss_levels"], r["loss_idx"],
-            r["subject_idx"], ctx_idx, ctx_mask, order_flag, tol_answer,
+            r["subject_idx"], ctx_idx, ctx_mask, order_flag, tol_answer, mixture=needs_mixture(order_flag, tol_answer),
         )
 
     def predict_proba(self, params: Params, data: ModelData) -> jnp.ndarray:

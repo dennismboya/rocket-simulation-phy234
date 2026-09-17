@@ -81,6 +81,7 @@ core forward pass; ``Q2.predict_new_subject`` binds the model's vocabulary.
 from __future__ import annotations
 
 import weakref
+from functools import partial
 from typing import Any
 
 import jax
@@ -168,14 +169,46 @@ def _chain_rho(r, gamma, U_L, U_ctx, loss_idx, ctx_idx, ctx_mask):
     return r
 
 
-@jax.jit
-def forward_pure_fast(psi_subj, theta_L, theta_ctx, phi, loss_levels, loss_idx, subject_idx, ctx_idx, ctx_mask, order_flag, tol_answer):
+def needs_mixture(order_flag, tol_answer) -> bool:
+    """True when some tolerance-first row has no observed tolerance answer, i.e. the Lüders
+    mixture branch of the forward pass is needed (static decision, taken on numpy arrays)."""
+    return bool(np.any((np.asarray(order_flag) == 1) & np.isnan(np.asarray(tol_answer, dtype=np.float64))))
+
+
+def _select_branches(measure, collapse, born, state, p1, p0, order_flag, tol_answer, mixture):
+    """Shared branch logic of the two fast forward passes (state = ``psi`` rows or ``rho`` rows).
+
+    ``mixture=True`` evaluates the three chains (scenario-first, collapsed on "yes", collapsed on
+    "no") and selects per row exactly as :func:`core.q_forward_pure`. ``mixture=False`` (no row
+    needs the Lüders mixture) runs one chain per row on the selected initial state: the
+    scenario-first state, or the state collapsed on the observed answer; identical values at a
+    third of the cost, which is what the optimizer uses.
+    """
+    tol_answer = jnp.asarray(tol_answer, dtype=C.RDTYPE)
+    tol_first = jnp.asarray(order_flag) == 1
+    yes = tol_answer >= 0.5
+    if not mixture:
+        init = jnp.where(tol_first[(...,) + (None,) * (state.ndim - 1)], jnp.where(yes[(...,) + (None,) * (state.ndim - 1)], collapse(state, p1), collapse(state, p0)), state)
+        return measure(init)
+    p_sf = measure(state)
+    p_g1 = measure(collapse(state, p1))
+    p_g0 = measure(collapse(state, p0))
+    p_obs = jnp.where(yes, p_g1, p_g0)
+    p_mix = born(state, p1) * p_g1 + born(state, p0) * p_g0
+    p_tf = jnp.where(jnp.isnan(tol_answer), p_mix, p_obs)
+    return jnp.where(tol_first, p_tf, p_sf)
+
+
+@partial(jax.jit, static_argnames=("mixture",))
+def forward_pure_fast(psi_subj, theta_L, theta_ctx, phi, loss_levels, loss_idx, subject_idx, ctx_idx, ctx_mask, order_flag, tol_answer, *, mixture=True):
     """Row-wise ``P(sell)`` of Q2 with the unitaries computed once per parameter table.
 
     ``psi_subj (S, 2)`` per subject; ``theta_ctx (V, 3)`` (rows held at zero already masked);
     ``loss_levels (U,)`` distinct loss magnitudes and ``loss_idx (n,)`` each row's level; the
     other arguments are the ``ModelData`` row arrays. Same semantics as
-    :func:`core.q_forward_pure_batch` (asserted by the tests).
+    :func:`core.q_forward_pure_batch` (asserted by the tests). ``mixture`` (static): whether the
+    Lüders-mixture branch is needed (:func:`needs_mixture`); False is cheaper and exact when
+    every tolerance-first row has an observed answer.
     """
     theta_L = jnp.asarray(theta_L, dtype=C.RDTYPE)
     U_ctx = C.unitaries(jnp.asarray(theta_ctx, dtype=C.RDTYPE))
@@ -183,27 +216,21 @@ def forward_pure_fast(psi_subj, theta_L, theta_ctx, phi, loss_levels, loss_idx, 
     psi = jnp.asarray(psi_subj, dtype=C.CDTYPE)[subject_idx]
     p1 = C.tolerance_projector(phi)
     p0 = C.IDENTITY - p1
-    tol_answer = jnp.asarray(tol_answer, dtype=C.RDTYPE)
 
     def measure(v):
         out = _chain_pure(v, U_L, U_ctx, loss_idx, ctx_idx, ctx_mask)
         return jax.vmap(C.born, in_axes=(0, None))(out, C.P_SELL)
 
-    p_sf = measure(psi)
-    w1 = jax.vmap(C.born, in_axes=(0, None))(psi, p1)
-    w0 = jax.vmap(C.born, in_axes=(0, None))(psi, p0)
-    p_g1 = measure(jax.vmap(C.lueders, in_axes=(0, None))(psi, p1))
-    p_g0 = measure(jax.vmap(C.lueders, in_axes=(0, None))(psi, p0))
-    p_obs = jnp.where(tol_answer >= 0.5, p_g1, p_g0)
-    p_mix = w1 * p_g1 + w0 * p_g0
-    p_tf = jnp.where(jnp.isnan(tol_answer), p_mix, p_obs)
-    return jnp.where(jnp.asarray(order_flag) == 1, p_tf, p_sf)
+    collapse = jax.vmap(C.lueders, in_axes=(0, None))
+    born = jax.vmap(C.born, in_axes=(0, None))
+    return _select_branches(measure, collapse, born, psi, p1, p0, order_flag, tol_answer, mixture)
 
 
-@jax.jit
-def forward_rho_fast(rho_subj, gamma_subj, theta_L, theta_ctx, phi, loss_levels, loss_idx, subject_idx, ctx_idx, ctx_mask, order_flag, tol_answer):
+@partial(jax.jit, static_argnames=("mixture",))
+def forward_rho_fast(rho_subj, gamma_subj, theta_L, theta_ctx, phi, loss_levels, loss_idx, subject_idx, ctx_idx, ctx_mask, order_flag, tol_answer, *, mixture=True):
     """Row-wise ``P(sell)`` of Q4 (density matrices, dephasing at the subject's rate) with the
-    unitaries computed once; same semantics as :func:`core.q_forward_rho_batch`."""
+    unitaries computed once; same semantics as :func:`core.q_forward_rho_batch` (``mixture`` as
+    in :func:`forward_pure_fast`)."""
     theta_L = jnp.asarray(theta_L, dtype=C.RDTYPE)
     U_ctx = C.unitaries(jnp.asarray(theta_ctx, dtype=C.RDTYPE))
     U_L = C.unitaries(jnp.asarray(loss_levels, dtype=C.RDTYPE)[:, None] * theta_L[None, :])
@@ -211,21 +238,14 @@ def forward_rho_fast(rho_subj, gamma_subj, theta_L, theta_ctx, phi, loss_levels,
     gamma = jnp.asarray(gamma_subj, dtype=C.RDTYPE)[subject_idx]
     p1 = C.tolerance_projector(phi)
     p0 = C.IDENTITY - p1
-    tol_answer = jnp.asarray(tol_answer, dtype=C.RDTYPE)
 
     def measure(r):
         out = _chain_rho(r, gamma, U_L, U_ctx, loss_idx, ctx_idx, ctx_mask)
         return jax.vmap(C.born_rho, in_axes=(0, None))(out, C.P_SELL)
 
-    p_sf = measure(rho)
-    w1 = jax.vmap(C.born_rho, in_axes=(0, None))(rho, p1)
-    w0 = jax.vmap(C.born_rho, in_axes=(0, None))(rho, p0)
-    p_g1 = measure(jax.vmap(C.lueders_rho, in_axes=(0, None))(rho, p1))
-    p_g0 = measure(jax.vmap(C.lueders_rho, in_axes=(0, None))(rho, p0))
-    p_obs = jnp.where(tol_answer >= 0.5, p_g1, p_g0)
-    p_mix = w1 * p_g1 + w0 * p_g0
-    p_tf = jnp.where(jnp.isnan(tol_answer), p_mix, p_obs)
-    return jnp.where(jnp.asarray(order_flag) == 1, p_tf, p_sf)
+    collapse = jax.vmap(C.lueders_rho, in_axes=(0, None))
+    born = jax.vmap(C.born_rho, in_axes=(0, None))
+    return _select_branches(measure, collapse, born, rho, p1, p0, order_flag, tol_answer, mixture)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -382,7 +402,7 @@ class Q2(QuantumModelBase):
             )
         return forward_pure_fast(
             psi, params["theta_L"], theta_ctx, params["phi"], r["loss_levels"], r["loss_idx"], r["subject_idx"],
-            ctx_idx, ctx_mask, order_flag, tol_answer,
+            ctx_idx, ctx_mask, order_flag, tol_answer, mixture=needs_mixture(order_flag, tol_answer),
         )
 
     def predict_proba(self, params: Params, data: ModelData) -> jnp.ndarray:
@@ -564,6 +584,7 @@ __all__ = [
     "fold_theta",
     "forward_pure_fast",
     "forward_rho_fast",
+    "needs_mixture",
     "new_subject_state",
     "none_mask",
     "predict_new_subject",
