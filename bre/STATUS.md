@@ -77,6 +77,15 @@ first unfinished item in "Next up".
 
 Phases 0–8 as planned; no long runs started yet.
 
+## Model recovery checks recorded so far (synthetic data, N=200, single seed; the formal study is Phase 2)
+
+* Q2 on G_Q (gamma = 0): population theta_c correlation 0.995 over 12 components; Bloch polar angle r = 0.87.
+* Q4 on G_Q (mixed): log gamma_i Spearman 0.89; theta_c r = 0.986; MAP shrinks the gamma scale (ranks recovered, not values).
+* B1 on G_C: context main effects r = 0.98 (attenuated: marginal vs subject-conditional coefficients).
+* B2 SVI on G_C (N=100): subject intercept Spearman 0.99; population context means r = 1.00.
+* B4 on G_C: lambda ordering Spearman 1.00; magnitudes not separately identified from the temperature.
+* Exact gauge group of Q2/Q4 (conjugation, sigma_z conjugation, theta + pi·theta/|theta|) handled by align_gauge/fold_theta before any parameter comparison.
+
 ## Progress log (long runs)
 
 * 2026-09-17 20:25 UTC — recovery study (N=200) and API build started in background agents; check runs/recover/*.log.
