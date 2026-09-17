@@ -40,3 +40,9 @@ def bre_db_url(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> str:
 def rng() -> np.random.Generator:
     """A fresh ``numpy.random.default_rng(TEST_SEED)`` per test."""
     return np.random.default_rng(TEST_SEED)
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """Register the ``slow`` marker (parameter-recovery fits of a few minutes; deselect with
+    ``-m "not slow"``)."""
+    config.addinivalue_line("markers", "slow: parameter-recovery fits that take up to a few minutes each")
