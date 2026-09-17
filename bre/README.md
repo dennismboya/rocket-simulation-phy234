@@ -24,9 +24,15 @@ make setup && make sim && make recover && make fit && make eval && make dashboar
 ```
 
 * `make setup` creates `.venv` (or reuses the one named by `BRE_VENV`), installs the pinned
-  `requirements.txt` and this package in editable mode.
+  `requirements.txt` and this package in editable mode. To reuse an existing virtualenv instead
+  of creating `.venv`, set `BRE_VENV`: `BRE_VENV=/path/to/venv make test` (in the build
+  container the venv is `/home/user/bre-venv`, so `BRE_VENV=/home/user/bre-venv make test`).
+  When the interpreter is missing, every target prints a one-line hint naming `BRE_VENV`.
 * `make test` runs pytest (math tests: unitarity, probabilities sum to one, recovery of known
   parameters; schema and database tests; dashboard acceptance tests).
+* `make instrument` validates `instrument/battery.json`, regenerates `instrument/static/battery.data.js`
+  and runs the balance test; `make test-instrument` runs the same checks read-only. Both need Node
+  (`NODE ?= node`; in the build container `NODE=/opt/node22/bin/node make instrument`).
 * `make help` lists every phase target. A phase that is not built yet fails with
   `phase not built yet: see STATUS.md`.
 * `make api` serves the FastAPI app on 127.0.0.1:8000; `make dashboard` starts the API in the
@@ -62,10 +68,25 @@ bre/
 ## Real versus synthetic data
 
 Simulated data lives only under `data/synthetic/`, and every table — real or simulated — carries an
-`is_synthetic` column. `bre.schema.validate_frame` refuses a frame whose `is_synthetic` values do not
-match its location. No synthetic result may appear in a table, figure or dashboard screen labelled
-as real, and there are no fabricated or "illustrative" numbers anywhere: the dashboard's demo mode
-runs on the synthetic demo book with its banner on. Negative results are reported as results.
+`is_synthetic` column. `bre.schema.write_events` refuses a frame whose `is_synthetic` values do not
+match its location, and the database applies the same rule to every insert (a `before_flush`
+listener judges the SQLite file's absolute path, so `frame_to_responses` and a plain
+`session.add(Response(...))` are checked alike, and no `responses` table ever mixes the two flags).
+No synthetic result may appear in a table, figure or dashboard screen labelled as real, and there
+are no fabricated or "illustrative" numbers anywhere: the dashboard's demo mode runs on the
+synthetic demo book with its banner on. Negative results are reported as results.
+
+## Schema contract (PLAN.md section 2)
+
+`bre.schema` is the single source of the DecisionEvent rules; `db.models` imports its constants
+and validators, so parquet files and the `responses` table accept exactly the same rows.
+`elicitation_type` is one of `binary_sell`, `allocation_pct`, `likert`, `lottery_choice`,
+`binary_yes_no` (yes/no survey items, e.g. the tolerance question; response in {0, 1}) and
+`choice_rate` (aggregate share in [0, 1]). `covariates` in `responses` takes the six product keys,
+`weight` (respondents behind an aggregate row) and dataset-specific `x_*` keys; `clients.covariates`
+takes the six product keys only. `context_tags` are `namespace:value`. Rows of the shared design
+(`battery_version == bre.design.DESIGN_VERSION`, currently `1.0.0`) use the question-order ids
+`tolerance-first` / `scenario-first`; external datasets carry free-form order ids.
 
 ## Batch scoring
 

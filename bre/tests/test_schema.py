@@ -11,6 +11,7 @@ import pyarrow.parquet as pq
 import pytest
 from pydantic import ValidationError
 
+from bre import design as D
 from bre import schema as S
 from bre.schema import DecisionEvent, SchemaError, ValidationReport
 
@@ -20,7 +21,7 @@ from bre.schema import DecisionEvent, SchemaError, ValidationReport
 
 
 def base_kwargs(**overrides) -> dict:
-    """A valid binary_sell event; ``overrides`` replace fields."""
+    """A valid binary_sell event of the shared design; ``overrides`` replace fields."""
     kw = dict(
         subject_id="s001",
         dataset="synthetic_gq",
@@ -31,7 +32,7 @@ def base_kwargs(**overrides) -> dict:
         loss_pct=-0.10,
         horizon_days=365,
         context_tags=["news:recession", "social:friend_sells"],
-        question_order_id="tolerance_first",
+        question_order_id=D.TOLERANCE_FIRST,
         prior_question_ids=["tolerance"],
         elicitation_type="binary_sell",
         response=1.0,
@@ -40,7 +41,7 @@ def base_kwargs(**overrides) -> dict:
         outcome_behavior=None,
         incentivized=False,
         consent_training=True,
-        battery_version="bre-design-1.0",
+        battery_version=D.DESIGN_VERSION,
         is_synthetic=True,
         source_row_ref="gen:0",
     )
@@ -48,13 +49,22 @@ def base_kwargs(**overrides) -> dict:
     return kw
 
 
+ALL_TYPES = list(S.ELICITATION_TYPES)
+TYPE_RESPONSES = {
+    "binary_sell": 1.0,
+    "allocation_pct": 0.35,
+    "likert": 5.0,
+    "lottery_choice": 0.0,
+    "binary_yes_no": 1.0,
+    "choice_rate": 0.37,
+}
+
+
 def make_events(n: int = 6, is_synthetic: bool = True, dataset: str = "synthetic_gq") -> list[DecisionEvent]:
-    """n events over two subjects covering all four elicitation types and null-able columns."""
-    types = ["binary_sell", "allocation_pct", "likert", "lottery_choice"]
-    responses = {"binary_sell": 1.0, "allocation_pct": 0.35, "likert": 5.0, "lottery_choice": 0.0}
+    """n events over two subjects covering all six elicitation types and null-able columns."""
     events = []
     for i in range(n):
-        et = types[i % 4]
+        et = ALL_TYPES[i % len(ALL_TYPES)]
         events.append(
             DecisionEvent(
                 **base_kwargs(
@@ -62,12 +72,12 @@ def make_events(n: int = 6, is_synthetic: bool = True, dataset: str = "synthetic
                     dataset=dataset,
                     position_in_session=i // 2,
                     elicitation_type=et,
-                    response=responses[et],
+                    response=TYPE_RESPONSES[et],
                     timestamp=None if i % 3 == 0 else "2026-09-17T03:19:00+00:00",
                     loss_pct=None if et == "likert" else -0.05 * (1 + i % 5),
                     horizon_days=None if et == "likert" else 365,
                     context_tags=[] if i % 2 else ["news:technical"],
-                    question_order_id=None if i % 2 else "scenario_first",
+                    question_order_id=None if i % 2 else D.SCENARIO_FIRST,
                     prior_question_ids=[] if i % 2 else ["L05|none"],
                     response_time_ms=None if i == 1 else 100.0 * (i + 1),
                     outcome_behavior=None if i % 2 else {"action": "sold_all", "lag_days": 12, "amount_pct": 1.0},
@@ -98,7 +108,10 @@ def test_columns_arrow_schema_and_dtypes_agree():
     assert not S.ARROW_SCHEMA.field("response").nullable
     assert S.ARROW_SCHEMA.field("outcome_behavior").nullable
     assert set(S.PANDAS_DTYPES) == set(S.COLUMNS)
-    assert S.ELICITATION_TYPES == ("binary_sell", "allocation_pct", "likert", "lottery_choice")
+    assert S.ELICITATION_TYPES == (
+        "binary_sell", "allocation_pct", "likert", "lottery_choice", "binary_yes_no", "choice_rate"
+    )
+    assert set(S.BINARY_ELICITATION_TYPES) | set(S.RATE_ELICITATION_TYPES) | {"likert"} == set(S.ELICITATION_TYPES)
     assert S.KEY_COLUMNS == ["dataset", "subject_id", "session_id", "position_in_session"]
 
 
@@ -204,7 +217,9 @@ def test_event_rejects_rule_violations(override, fragment):
     [
         ("binary_sell", [0, 1, 1.0], [0.5, 2, -1]),
         ("lottery_choice", [0.0, 1], [0.25, 3]),
+        ("binary_yes_no", [0, 1.0], [0.5, 2, -1]),
         ("allocation_pct", [0.0, 0.5, 1.0], [-0.01, 1.01, 7]),
+        ("choice_rate", [0.0, 0.37, 1.0], [-0.01, 1.01, 2]),
         ("likert", [1, 4, 7.0], [0, 8, 2.5, 0.5]),
     ],
 )

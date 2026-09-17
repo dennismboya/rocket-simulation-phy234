@@ -1,6 +1,8 @@
 """BRE database package: SQLAlchemy models, engine/session helpers and seed data.
 
-Import ``db`` with the ``bre/`` directory on ``sys.path`` (e.g. ``python -m pytest`` from ``bre/``).
+Import ``db`` with the ``bre/`` directory on ``sys.path`` (e.g. ``python -m pytest`` from ``bre/``);
+the schema constants and validators come from ``bre.schema`` (installed with ``pip install -e .``
+or ``src/`` on ``sys.path``), so the parquet side and the SQLite side share one rule set.
 """
 
 from db.models import (
@@ -22,10 +24,12 @@ from db.models import (
     PredictionLog,
     Response,
 )
-from db.seed import INTERVENTIONS, seed_interventions
+from db.seed import INTERVENTIONS, seed_interventions, validate_transform
 from db.session import (
     DEFAULT_DB_URL,
     ENV_DB_URL,
+    SyntheticPolicyError,
+    absolute_sqlite_url,
     default_engine,
     delete_client,
     export_client,
@@ -58,7 +62,9 @@ __all__ = [
     "PredictionLog",
     "Response",
     "SCHEMA_COLUMNS",
+    "SyntheticPolicyError",
     "UNIQUE_KEY",
+    "absolute_sqlite_url",
     "default_engine",
     "delete_client",
     "export_client",
@@ -69,5 +75,6 @@ __all__ = [
     "responses_to_frame",
     "seed_interventions",
     "session_scope",
+    "validate_transform",
     "write_audit",
 ]

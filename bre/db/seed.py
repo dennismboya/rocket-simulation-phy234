@@ -7,12 +7,14 @@ vocabulary is deliberately small so the API and dashboard can apply it mechanica
 * ``{"add": [tag, ...]}``     append these context tags (in order) to the client's context sequence;
 * ``{"remove": [tag, ...]}``  drop these tags wherever they occur in the sequence;
 * ``{"question_order": "tolerance-first" | "scenario-first"}``  set the question order
-  (PLAN.md section 3) under which the scenario is evaluated.
+  (``bre.design.QUESTION_ORDER_IDS``, PLAN.md section 3) under which the scenario is evaluated.
 
 Tags come from the shared context set C = {news:recession, news:technical, social:friend_sells,
-market:recovered_5pct} of PLAN.md section 3 so every transform is evaluable by the fitted models
-without new parameters. The mapping is a modeling assumption recorded here, not a measured effect;
-the intervention_log table is where its observed outcomes accumulate.
+market:recovered_5pct} (``bre.design.NONNULL_CONTEXTS``, PLAN.md section 3) so every transform is
+evaluable by the fitted models without new parameters; :func:`validate_transform` checks this
+vocabulary and ``seed_interventions`` refuses a transform outside it. The mapping is a modeling
+assumption recorded here, not a measured effect; the intervention_log table is where its observed
+outcomes accumulate.
 """
 
 from __future__ import annotations
@@ -23,7 +25,35 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from bre.design import NONNULL_CONTEXTS, QUESTION_ORDER_IDS
 from db.models import Intervention
+
+TRANSFORM_KEYS: tuple[str, ...] = ("add", "remove", "question_order")
+"""The transform vocabulary: ``add`` / ``remove`` list context tags, ``question_order`` names an order."""
+
+
+def validate_transform(transform: dict[str, Any]) -> dict[str, Any]:
+    """Rule: keys among :data:`TRANSFORM_KEYS`; ``add``/``remove`` are lists of tags from
+    ``bre.design.NONNULL_CONTEXTS``; ``question_order`` is one of ``bre.design.QUESTION_ORDER_IDS``.
+    Returns the transform unchanged; raises ValueError otherwise."""
+    if not isinstance(transform, dict):
+        raise ValueError(f"transform must be a JSON object, got {type(transform).__name__}")
+    unknown = sorted(set(transform) - set(TRANSFORM_KEYS))
+    if unknown:
+        raise ValueError(f"transform has unknown key(s) {unknown}; allowed {TRANSFORM_KEYS}")
+    for key in ("add", "remove"):
+        if key in transform:
+            tags = transform[key]
+            if not isinstance(tags, list) or not tags:
+                raise ValueError(f"transform[{key!r}] must be a non-empty list of context tags")
+            bad = [t for t in tags if t not in NONNULL_CONTEXTS]
+            if bad:
+                raise ValueError(f"transform[{key!r}] has unknown context tag(s) {bad}; allowed {NONNULL_CONTEXTS}")
+    if "question_order" in transform and transform["question_order"] not in QUESTION_ORDER_IDS:
+        raise ValueError(
+            f"transform['question_order'] must be one of {QUESTION_ORDER_IDS}, got {transform['question_order']!r}"
+        )
+    return transform
 
 INTERVENTIONS: tuple[dict[str, Any], ...] = (
     {
@@ -96,11 +126,12 @@ def seed_interventions(session: Session) -> list[str]:
     for spec in INTERVENTIONS:
         if spec["name"] in existing:
             continue
+        transform = validate_transform(spec["mapped_context_transform"])
         session.add(
             Intervention(
                 name=spec["name"],
                 script=spec["script"],
-                mapped_context_transform=json.dumps(spec["mapped_context_transform"], sort_keys=True),
+                mapped_context_transform=json.dumps(transform, sort_keys=True, allow_nan=False),
                 active=True,
             )
         )
@@ -109,4 +140,4 @@ def seed_interventions(session: Session) -> list[str]:
     return inserted
 
 
-__all__ = ["INTERVENTIONS", "seed_interventions"]
+__all__ = ["INTERVENTIONS", "TRANSFORM_KEYS", "seed_interventions", "validate_transform"]

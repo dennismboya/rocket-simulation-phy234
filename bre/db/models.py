@@ -114,11 +114,6 @@ def _sql_in(values: tuple[str, ...]) -> str:
     return "(" + ", ".join(f"'{v}'" for v in values) + ")"
 
 
-def _json_dumps(obj: Any) -> str:
-    """JSON text for storage: sorted keys, no NaN/Infinity tokens (they are not JSON)."""
-    return json.dumps(obj, sort_keys=True, allow_nan=False)
-
-
 # --------------------------------------------------------------------------------------------
 # Validation helpers shared by the models and by session.frame_to_responses
 # --------------------------------------------------------------------------------------------

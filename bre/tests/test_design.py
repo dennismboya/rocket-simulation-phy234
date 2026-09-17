@@ -23,15 +23,17 @@ def test_plan_constants():
     assert D.CONTEXTS == ("none", "news:recession", "news:technical", "social:friend_sells", "market:recovered_5pct")
     assert D.CONTEXTS[0] == D.CONTEXT_NONE
     assert D.NONNULL_CONTEXTS == D.CONTEXTS[1:]
-    assert set(D.QUESTION_ORDERS) == {"tolerance_first", "scenario_first"}
-    assert D.QUESTION_ORDERS["tolerance_first"] == ("tolerance", "sell")
-    assert D.QUESTION_ORDERS["scenario_first"] == ("sell", "tolerance")
+    assert set(D.QUESTION_ORDERS) == {"tolerance-first", "scenario-first"}
+    assert D.QUESTION_ORDER_IDS == (D.TOLERANCE_FIRST, D.SCENARIO_FIRST) == ("tolerance-first", "scenario-first")
+    assert D.QUESTION_ORDERS["tolerance-first"] == ("tolerance", "sell")
+    assert D.QUESTION_ORDERS["scenario-first"] == ("sell", "tolerance")
+    assert D.DESIGN_VERSION == "1.0.0"
     assert D.TOLERANCE_QUESTION == (
         "Would you describe yourself as someone who avoids investment losses even at the cost of "
         "lower returns?"
     )
     assert D.N_ITEMS == 170 and D.N_CONDITIONS == 17
-    assert all(S.TAG_PATTERN.match(c) for c in D.NONNULL_CONTEXTS)
+    assert all(S.TAG_PATTERN.fullmatch(c) for c in D.NONNULL_CONTEXTS)
 
 
 def test_context_conditions_are_the_17_ordered_tuples():
@@ -127,7 +129,7 @@ def test_full_design_counts(design):
     assert design["scenario_id"].nunique() == 85
     assert design["context_condition_id"].nunique() == 17
     assert design["loss_pct"].nunique() == 5 and set(design["loss_pct"]) == set(D.LOSS_PCTS)
-    assert design["question_order_id"].value_counts().to_dict() == {"tolerance_first": 85, "scenario_first": 85}
+    assert design["question_order_id"].value_counts().to_dict() == {"tolerance-first": 85, "scenario-first": 85}
     assert design.groupby("loss_pct").size().eq(34).all()
     assert design.groupby("context_condition_id").size().eq(10).all()
     assert design["n_contexts"].value_counts().to_dict() == {2: 120, 1: 40, 0: 10}
@@ -141,7 +143,7 @@ def test_full_design_rows_are_internally_consistent(design):
         assert tuple(row.context_tags) == D.condition_from_id(row.context_condition_id)
         assert row.scenario_id == D.scenario_id(row.loss_pct, row.context_tags)
         assert row.item_id == f"{row.scenario_id}|{row.question_order_id}"
-        expected_prior = ["tolerance"] if row.question_order_id == "tolerance_first" else []
+        expected_prior = ["tolerance"] if row.question_order_id == D.TOLERANCE_FIRST else []
         assert row.prior_question_ids == expected_prior
         assert row.question_text == D.render_sell_question(row.loss_pct, row.context_tags)
         assert row.n_contexts == len(row.context_tags)
@@ -262,8 +264,8 @@ def _assert_balanced(subset: pd.DataFrame, record: D.BatteryAssignment, n: int, 
     assert sum(record.loss_counts.values()) == n and max(record.loss_counts.values()) - min(record.loss_counts.values()) <= 1
     # orders balanced to within one item
     orders = subset["question_order_id"].value_counts().to_dict()
-    assert set(orders) == {"tolerance_first", "scenario_first"}
-    assert abs(orders["tolerance_first"] - orders["scenario_first"]) <= 1
+    assert set(orders) == {"tolerance-first", "scenario-first"}
+    assert abs(orders["tolerance-first"] - orders["scenario-first"]) <= 1
     assert record.order_counts == orders
     # first-position contexts among the pairs balanced to within one item
     pairs = subset[subset["n_contexts"] == 2]

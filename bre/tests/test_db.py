@@ -287,13 +287,14 @@ def test_frame_to_responses_accepts_client_and_arrays(engine) -> None:
     import numpy as np
 
     src = make_frame(2)
-    src["context_tags"] = [np.array(["a", "b"]), np.array([], dtype=str)]  # parquet-style arrays
+    # parquet-style arrays of namespace:value tags
+    src["context_tags"] = [np.array(["news:recession", "social:friend_sells"]), np.array([], dtype=str)]
     with session_scope(engine) as s:
         s.add(Client(client_id="c4"))
         s.flush()
         frame_to_responses(s, src, client_id="c4")
         rows = s.query(Response).order_by(Response.position_in_session).all()
-        assert [r.context_tags for r in rows] == [["a", "b"], []]
+        assert [r.context_tags for r in rows] == [["news:recession", "social:friend_sells"], []]
         assert all(r.client_id == "c4" for r in rows)
         assert s.query(AuditLog).filter_by(action="insert_responses").count() == 1
         assert responses_to_frame(s, client_id="c4").shape[0] == 2
@@ -302,8 +303,10 @@ def test_frame_to_responses_accepts_client_and_arrays(engine) -> None:
 
 def test_frame_missing_column_rejected(engine) -> None:
     with session_scope(engine) as s:
-        with pytest.raises(ValueError, match="missing schema columns"):
+        with pytest.raises(ValueError, match="missing columns"):
             frame_to_responses(s, make_frame(1).drop(columns=["covariates"]))
+        with pytest.raises(ValueError, match="unexpected columns"):
+            frame_to_responses(s, make_frame(1).assign(extra=1))
 
 
 # --------------------------------------------------------------------------------------------
@@ -323,8 +326,11 @@ def test_uniqueness_key_enforced(engine) -> None:
     [
         ("binary_sell", 0.5),
         ("lottery_choice", 2),
+        ("binary_yes_no", 0.5),
         ("allocation_pct", 1.5),
         ("allocation_pct", -0.1),
+        ("choice_rate", 1.5),
+        ("choice_rate", -0.1),
         ("likert", 0),
         ("likert", 8),
         ("likert", 3.5),
@@ -337,7 +343,14 @@ def test_response_range_by_type_rejected(elicitation_type, response) -> None:
 
 @pytest.mark.parametrize(
     ("elicitation_type", "response"),
-    [("binary_sell", 0), ("lottery_choice", 1), ("allocation_pct", 0.35), ("likert", 7)],
+    [
+        ("binary_sell", 0),
+        ("lottery_choice", 1),
+        ("binary_yes_no", 1),
+        ("allocation_pct", 0.35),
+        ("choice_rate", 0.37),
+        ("likert", 7),
+    ],
 )
 def test_response_range_by_type_accepted(engine, elicitation_type, response) -> None:
     with session_scope(engine) as s:

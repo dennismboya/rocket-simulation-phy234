@@ -1,10 +1,10 @@
 """Contract tests between ``bre.schema`` (parquet side) and ``db`` (SQLite side).
 
 PLAN.md section 2: "The DB ``responses`` table has the same columns" as the unified schema, and every
-loader/generator calls ``validate_frame``. The two modules are deliberately decoupled (``db`` does
-not import ``bre.schema``), so these tests pin the shared contract:
+loader/generator calls ``validate_frame``. ``db.models`` imports its constants and validators from
+``bre.schema`` (single source of truth); these tests pin the contract from the outside:
 
-1. every column-level constant is defined identically on both sides;
+1. every column-level constant is identical on both sides;
 2. a frame that passes ``bre.schema.validate_frame`` inserts into the DB unchanged and comes back
    (``responses_to_frame``) as a frame that passes ``validate_frame`` again and is cell-for-cell
    equal after ``conform_frame`` (lists, JSON text, nulls in every nullable column, Int64 horizon);
@@ -88,12 +88,19 @@ def _design_events(rng: np.random.Generator, *, is_synthetic: bool, dataset: str
 
 
 def _mixed_events(*, is_synthetic: bool, dataset: str) -> list[S.DecisionEvent]:
-    """Eight events over two subjects covering all four elicitation types and every nullable column."""
-    types = ["binary_sell", "allocation_pct", "likert", "lottery_choice"]
-    responses = {"binary_sell": 1.0, "allocation_pct": 0.35, "likert": 5.0, "lottery_choice": 0.0}
+    """Twelve events over two subjects covering all six elicitation types and every nullable column."""
+    types = list(S.ELICITATION_TYPES)
+    responses = {
+        "binary_sell": 1.0,
+        "allocation_pct": 0.35,
+        "likert": 5.0,
+        "lottery_choice": 0.0,
+        "binary_yes_no": 1.0,
+        "choice_rate": 0.37,
+    }
     events = []
-    for i in range(8):
-        et = types[i % 4]
+    for i in range(12):
+        et = types[i % 6]
         events.append(
             S.DecisionEvent(
                 subject_id=f"s{i % 2:03d}",
@@ -105,7 +112,7 @@ def _mixed_events(*, is_synthetic: bool, dataset: str) -> list[S.DecisionEvent]:
                 loss_pct=None if et == "likert" else -0.05 * (1 + i % 5),
                 horizon_days=None if et == "likert" else 365,
                 context_tags=[] if i % 2 else ["news:recession", "social:friend_sells"],
-                question_order_id=None if i % 2 else "scenario_first",
+                question_order_id=None if i % 2 else D.SCENARIO_FIRST,
                 prior_question_ids=[] if i % 2 else ["L05|none"],
                 elicitation_type=et,
                 response=responses[et],
@@ -114,7 +121,7 @@ def _mixed_events(*, is_synthetic: bool, dataset: str) -> list[S.DecisionEvent]:
                 outcome_behavior=None if i % 2 else {"action": "sold_all", "lag_days": 12, "amount_pct": 1.0},
                 incentivized=False,
                 consent_training=True,
-                battery_version="bre-design-1.0",
+                battery_version=D.DESIGN_VERSION,
                 is_synthetic=is_synthetic,
                 source_row_ref=f"row:{i}",
             )
@@ -178,8 +185,8 @@ def test_mixed_types_and_nulls_round_trip_parquet_to_db_outside_data_synthetic(t
     assert set(back["elicitation_type"]) == set(S.ELICITATION_TYPES)
     for column in S.NULLABLE_COLUMNS:
         assert back[column].isna().any(), f"{column} should contain a null in this fixture"
-    assert back["context_tags"].map(len).tolist().count(0) == 4
-    assert back["prior_question_ids"].map(len).tolist().count(0) == 4
+    assert back["context_tags"].map(len).tolist().count(0) == 6
+    assert back["prior_question_ids"].map(len).tolist().count(0) == 6
 
 
 def test_location_rule_is_enforced_identically_by_parquet_and_db_writers(tmp_path: Path):
