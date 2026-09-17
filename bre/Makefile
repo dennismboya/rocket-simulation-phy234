@@ -34,7 +34,7 @@ help:
 	@echo "  test            pytest -q"
 	@echo "  test-instrument Phase 7 checks, read-only: validate_battery.py and tests/test_balance.js (needs NODE)"
 	@echo "  data            Phase 1: load catalogued datasets into data/processed/*.parquet"
-	@echo "  sim             Phase 2: synthetic generators G_Q, G_C, G_F into data/synthetic/"
+	@echo "  sim             Phase 2: synthetic generators G_Q, G_C, G_F (N=200, seeds 0-4) into data/synthetic/"
 	@echo "  recover         Phase 2: model-recovery study, confusion matrices, N target"
 	@echo "  fit             Phase 3: fit B1-B6 and Q1-Q5"
 	@echo "  eval            Phase 4: pre-registered evaluation and verdict"
@@ -68,9 +68,10 @@ data: check-venv
 	$(call require,src/bre/data_cli.py)
 	$(PY) -m bre.data_cli
 
+# Phase 2 generators: N=200, seeds 0-4 for every available generator (missing ones are reported).
 sim: check-venv
-	$(call require,src/bre/sim/__main__.py)
-	$(PY) -m bre.sim
+	$(call require,src/bre/sim/cli.py)
+	$(PY) -m bre.sim.cli --generators gq,gc,gf --n 200 --seeds 5 --out data/synthetic
 
 recover: check-venv
 	$(call require,src/bre/recover.py)
