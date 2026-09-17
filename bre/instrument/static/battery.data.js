@@ -229,7 +229,7 @@ window.BRE_BATTERY = {
     "questions": {
       "tolerance": {
         "question_id": "tolerance",
-        "elicitation_type": "lottery_choice",
+        "elicitation_type": "binary_yes_no",
         "text": "Would you describe yourself as someone who avoids investment losses even at the cost of lower returns?",
         "choices": [
           {
@@ -241,7 +241,7 @@ window.BRE_BATTERY = {
             "response": 0
           }
         ],
-        "coding_note": "Binary self-description from PLAN.md section 3, wording verbatim. The schema's elicitation_type enum has no dedicated binary-preference type; lottery_choice (response in {0,1}) is used with 1 = 'Yes' = prefers the loss-avoiding (safer) option, consistent with the CPC18 mapping in PLAN.md section 6 where 1 = safer option. ASSUMPTION for the main session to confirm or override."
+        "coding_note": "Binary self-description from PLAN.md section 3, wording verbatim. Stored with elicitation_type binary_yes_no (PLAN.md section 2, amendment of 2026-09-17: response in {0, 1}, the type for the tolerance question and any yes/no survey item): 1 = 'Yes' (describes themself as avoiding losses even at the cost of lower returns), 0 = 'No'. Not a lottery_choice row: the question offers no lottery."
       },
       "sell_hold": {
         "question_id": "sell_hold",
@@ -2595,14 +2595,21 @@ window.BRE_BATTERY = {
       "timestamp": "ISO 8601 UTC at the moment the response was given",
       "position_in_session": "0-based counter over rows in the order they were answered",
       "prior_question_ids": "question_ids already answered within the same item presentation, in order (empty for the first question of an item)",
-      "context_tags": "the item's ordered context tags; empty list for the none condition",
-      "response": "tolerance and sell_hold: 0/1; allocation_share: slider/100 in [0,1]",
+      "context_tags": "the item's ordered context tags, each of the form namespace:value (e.g. news:recession); empty list for the none condition",
+      "question_order_id": "exactly tolerance-first or scenario-first (design.question_orders)",
+      "elicitation_type": "per question (design.questions): tolerance -> binary_yes_no, sell_hold -> binary_sell, allocation_share -> allocation_pct; likert, lottery_choice and choice_rate are never produced by this battery",
+      "response": "tolerance (binary_yes_no, 1 = Yes) and sell_hold (binary_sell, 1 = Sell): 0/1; allocation_share (allocation_pct): slider/100 in [0, 1]",
       "covariates": "object with keys age_band, wealth_band, invest_experience_yrs, self_reported_risk_tolerance, financial_literacy_score, education; identical on every row of a session",
       "outcome_behavior": null,
       "incentivized": false,
       "consent_training": "from the optional consent checkbox",
       "battery_version": "1.0.0",
       "is_synthetic": false
+    },
+    "elicitation_types_used": {
+      "tolerance": "binary_yes_no",
+      "sell_hold": "binary_sell",
+      "allocation_share": "allocation_pct"
     },
     "source_row_ref_format": "{form_id}:i{item_index two digits, 1-based presentation index}[:rep_of_i{original item index}]:{question_id}",
     "source_row_ref_examples": [

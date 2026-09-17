@@ -80,5 +80,14 @@ workflow that uploads only this folder).
   thousands of random seeds.
 * `../tests/smoke_test.js` (Node + jsdom, dev-only) clicks through the whole app under a fake
   browser and checks every produced row, the session log and the POST body.
+* `../tests/drive_battery.mjs` (Node + Playwright, dev-only; the browser comes from
+  `PLAYWRIGHT_BROWSERS_PATH`) serves this folder with `python -m http.server`, clicks through the
+  full form (training consent on) and the short form (consent off) in a real headless Chromium,
+  then the short form again in a 375 px phone viewport, intercepts the two downloads, and checks
+  the 21-field rows, the elicitation contract (tolerance = `binary_yes_no`), the assignment record,
+  the timings and the layout (no horizontal overflow, every control inside the viewport). Prints
+  PASS/FAIL per check.
+* `../tests/validate_intake_json.py` checks downloaded `intake_*.json` files against
+  `../battery.json` and the pipeline's schema code.
 * `DELAY_SECONDS_OVERRIDE` in `config.js` shortens the timed delay page for manual testing; the value
   actually used is recorded in every session log, so a misconfigured deployment is detectable.

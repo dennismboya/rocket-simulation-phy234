@@ -70,8 +70,8 @@ Questions and coding (from `design.questions`):
 
 * tolerance — "Would you describe yourself as someone who avoids investment losses even at the cost
   of lower returns?" Yes = 1 / No = 0. Stored as its own row with `elicitation_type =
-  lottery_choice` (the schema has no binary-preference type; `battery.json` flags this as an
-  assumption for the main session, and §12 repeats it).
+  binary_yes_no` (the value the PLAN.md §2 amendment of 2026-09-17 added to the schema enum for
+  this question; see §12).
 * sell_hold — "What would you do with this position today?" Sell = 1 / Hold = 0,
   `elicitation_type = binary_sell`.
 * allocation_share — "What share of this position would you sell?" Slider 0–100, step 1, start 50,
@@ -463,7 +463,7 @@ No exclusion is based on the content of the decisions themselves.
 | `context_tags` | the item's ordered tags; `[]` for `none`; event wave prepends `market:live_drawdown` |
 | `question_order_id` | the item's order |
 | `prior_question_ids` | question ids already answered within the same presentation, in order (battery rule; see the open point below) |
-| `elicitation_type` / `response` | tolerance: `lottery_choice`, 1 = Yes; sell_hold: `binary_sell`, 1 = Sell; allocation_share: `allocation_pct`, share sold in [0, 1] |
+| `elicitation_type` / `response` | tolerance: `binary_yes_no`, 1 = Yes; sell_hold: `binary_sell`, 1 = Sell; allocation_share: `allocation_pct`, share sold in [0, 1] |
 | `response_time_ms` | question shown to answer given |
 | `covariates` | §7 |
 | `outcome_behavior` | null in pilot and wave 1; the self-report object of §6.2 / §6.3 otherwise |
@@ -475,9 +475,10 @@ No exclusion is based on the content of the decisions themselves.
 
 Open points for the main session (only the main session edits the schema):
 
-* The tolerance answer is stored as a `lottery_choice` row with 1 = Yes, as `battery.json` does and
-  as data/CATALOG.md does for the dataset-D order tables; `battery.json` marks this as an assumption
-  to confirm. Recommended fix: add `binary_question` to `ELICITATION_TYPES`.
+* Resolved 2026-09-17: the tolerance answer is stored as a `binary_yes_no` row with 1 = Yes
+  (PLAN.md §2 amendment; `battery.json output.elicitation_types_used`). The `lottery_choice`
+  stand-in is gone from the instrument; any other table that still uses it for yes/no items
+  (e.g. the dataset-D order tables in data/CATALOG.md) is for the main session to migrate.
 * `db/models.py` documents `prior_question_ids` as "questions asked before this one in the session";
   `battery.json` restricts it to the same presentation. Either is workable for the Q2 Lüders step
   (which needs to know whether the tolerance question preceded the sell question within the item);

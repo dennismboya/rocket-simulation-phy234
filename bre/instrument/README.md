@@ -14,6 +14,10 @@ instrument/
   static/vendor/VENDOR.md   exact jsPsych versions, hashes, re-vendoring steps
   tests/test_balance.js     balance rule over random seeds (plain Node)
   tests/smoke_test.js       end-to-end click-through under jsdom (dev-only dependency)
+  tests/drive_battery.mjs   end-to-end click-through in a real headless Chromium (Playwright): full form,
+                            short form, and the short form again at 375 px; checks every row, the
+                            downloads, the assignment record and the page layout; prints PASS/FAIL per check
+  tests/validate_intake_json.py   checks downloaded intake_*.json files against battery.json and bre.schema
 ```
 
 ## What the battery does
@@ -52,6 +56,17 @@ Validate the definition and regenerate the browser copy after any edit to `batte
 ```
 
 Both exit non-zero on failure; a future `make instrument` target should run exactly these two.
+The browser-level check (needs the `playwright` npm package findable by Node and the Chromium
+build under `PLAYWRIGHT_BROWSERS_PATH`; nothing is installed by the script):
+
+```
+PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers /opt/node22/bin/node bre/instrument/tests/drive_battery.mjs [--fast] [--out DIR]
+/home/user/bre-venv/bin/python bre/instrument/tests/validate_intake_json.py DIR   # the files it downloaded
+```
+
+`--fast` shortens the 10-second delay page to 0.3 s through an in-memory `config.js` (the served
+files are untouched) and is recorded in the session log as `delay_override_active = true`, exactly
+as it would be for a misconfigured deployment. Without `--fast` the run takes about two minutes.
 
 ## Deploying to GitHub Pages
 
@@ -179,11 +194,19 @@ self-selected. Only the main session edits CATALOG.md.
 
 Mapping notes the loader and the models rely on:
 
-* `elicitation_type`: `sell_hold` rows are `binary_sell` (1 = sell); `allocation_share` rows are
-  `allocation_pct` (fraction sold); tolerance rows are `lottery_choice` with 1 = "Yes" (prefers to
-  avoid losses, the safer option). The schema enum has no dedicated binary-preference type; this
-  mapping is an assumption recorded in `battery.json -> design.questions.tolerance.coding_note`
-  for the main session to confirm or change (changing it means a new `battery_version`).
+* `elicitation_type`: `sell_hold` rows are `binary_sell` (1 = Sell); `allocation_share` rows are
+  `allocation_pct` (fraction sold); tolerance rows are `binary_yes_no` with 1 = "Yes" (describes
+  themself as avoiding losses even at the cost of lower returns). `binary_yes_no` is the value the
+  PLAN.md section 2 amendment of 2026-09-17 added to the schema enum for the tolerance question
+  and any yes/no survey item; the mapping is written in `battery.json -> output.elicitation_types_used`
+  and `design.questions.tolerance.coding_note`, and `static/battery.js` refuses to start if
+  `battery.json` deviates from it (`checkQuestions`). The earlier `lottery_choice` stand-in is gone;
+  no rows were collected under it. Loaders and the DB layer must accept `binary_yes_no`
+  (`db/models.py`, `src/bre/schema.py`) before intake files can pass `validate_intake_json.py`'s
+  schema step.
+* `question_order_id` is exactly `tolerance-first` or `scenario-first`; every context tag is
+  `namespace:value` (`news:recession`, `news:technical`, `social:friend_sells`,
+  `market:recovered_5pct`), as the amendment requires.
 * `prior_question_ids` lists the questions already answered *within the same item*, in order, so
   the order effect is readable from each row: under `tolerance-first` the sell/hold row has
   `["tolerance"]`; under `scenario-first` the tolerance row has

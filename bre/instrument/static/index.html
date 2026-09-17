@@ -46,8 +46,28 @@
     .bre-consent input { margin-right: 8px; transform: scale(1.2); }
     .jspsych-btn { font-size: 17px; padding: 10px 22px; border-radius: 8px; }
     .bre-btn-stack .jspsych-btn { display: block; width: 100%; box-sizing: border-box; text-align: left; margin: 6px 0 !important; }
-    #jspsych-html-slider-response-wrapper { max-width: 100%; }
-    #jspsych-html-slider-response-response { width: 100%; }
+    /* jsPsych wraps every button in an inline-block div, which defeats the 100% width above and
+       lets the quiz answers wrap unevenly on phones; make those wrappers block-level so the answers
+       form one vertical stack (browsers without :has() keep the inline wrapping, still usable). */
+    #jspsych-html-button-response-btngroup > div:has(> .bre-btn-stack) { display: block !important; margin: 0 !important; }
+    /* Slider page. The plugin wraps the stimulus and the track in a wrapper with 100px top/bottom
+       margins and positions its labels absolutely: with two labels each one spans the whole track
+       width centred on its end, so the labels stick out half a track on either side. That gives
+       every allocation page a horizontal scrollbar and, on a 375px phone, cuts off the right-hand
+       label. The rules below (the !important ones override the plugin's inline styles) lay the
+       labels out as an in-flow row under the track and drop the dead space. */
+    #jspsych-html-slider-response-wrapper { max-width: 100%; margin: 0 !important; }
+    #jspsych-html-slider-response-response { width: 100%; box-sizing: border-box; margin: 8px 0; }
+    .jspsych-html-slider-response-container { margin: 0 0 1em 0 !important; width: 100% !important; box-sizing: border-box; }
+    .jspsych-html-slider-response-container > div:last-child { display: flex; justify-content: space-between; gap: 12px; }
+    .jspsych-html-slider-response-container > div:last-child > div { position: static !important; left: auto !important; width: auto !important; max-width: 50%; }
+    .jspsych-html-slider-response-container > div:last-child > div:first-child { text-align: left !important; }
+    .jspsych-html-slider-response-container > div:last-child > div:last-child { text-align: right !important; }
+    .jspsych-html-slider-response-container > div:last-child span { font-size: 14px !important; color: var(--bre-muted); }
+    #jspsych-html-slider-response-next { margin-top: 4px; }
+    /* Long unbreakable ids (session id, subject id) must wrap inside the card on narrow screens. */
+    .bre-mono, .bre-hint { overflow-wrap: anywhere; }
+    textarea.bre-json { box-sizing: border-box; }
     .bre-done { text-align: left; }
     .bre-done .bre-actions button { margin: 6px 8px 6px 0; }
     .bre-status { font-size: 15px; margin: 8px 0; }
