@@ -20,10 +20,10 @@ first unfinished item in "Next up".
 |---|---|---|
 | 0 Plan + scaffold | done | schema + validators, shared design, SQLAlchemy layer, packaging, 217 tests green; review findings fixed (df29e0a) |
 | 1 Data | done (public part) | 8 processed tables under data/processed (README lists counts); owner downloads for E–J still pending |
-| 2 Recovery | not started | |
-| 3 Models | in progress | core + interface (18cd33d) and Q1 (e76a1c4) done; Q2/Q4 + G_Q and B1/B2/B4 + G_C/G_F being written (agents) |
+| 2 Recovery | in progress | fit.py/eval.py/recover.py being written; N=200 pass (gq/gc/gf × B1,B2,B4,Q2,Q4, seeds 0–2) to run in background under runs/recover/ |
+| 3 Models | nearly done | core, Q1, B1, B2, B4, Q2, Q4, G_Q/G_C/G_F all present with tests (554+ passing); B3, B5, B6, Q3, Q5 still to write |
 | 4 Evaluation | not started | protocol pre-registered in PLAN.md §6 |
-| 5 API | not started | |
+| 5 API | in progress | predict facade, demo book (60 G_Q investors + 5 archetypes), FastAPI endpoints being written (agent) |
 | 6 Dashboard | not started | |
 | 7 Instrument | nearly done | battery browser-verified (0460ab2); document consistency fixes from the honesty review landing (agent) |
 | 8 Report | not started | |
@@ -76,3 +76,7 @@ first unfinished item in "Next up".
 ## Estimated remaining effort
 
 Phases 0–8 as planned; no long runs started yet.
+
+## Progress log (long runs)
+
+* 2026-09-17 20:25 UTC — recovery study (N=200) and API build started in background agents; check runs/recover/*.log.
