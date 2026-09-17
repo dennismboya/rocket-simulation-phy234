@@ -18,14 +18,14 @@ first unfinished item in "Next up".
 
 | Phase | State | Notes |
 |---|---|---|
-| 0 Plan + scaffold | in progress | schema, design, db, packaging, 150 tests green; 23 review findings being fixed (contract amendments in PLAN.md §2) |
-| 1 Data | in progress | reconnaissance done, see "Data in hand" |
+| 0 Plan + scaffold | done | schema + validators, shared design, SQLAlchemy layer, packaging, 217 tests green; review findings fixed (df29e0a) |
+| 1 Data | in progress | catalog, data map, registration instructions done; loaders being written (agent) |
 | 2 Recovery | not started | |
-| 3 Models | not started | |
+| 3 Models | in progress | model core/interface and Q1 + QQ test being written (agents) |
 | 4 Evaluation | not started | protocol pre-registered in PLAN.md §6 |
 | 5 API | not started | |
 | 6 Dashboard | not started | |
-| 7 Instrument | in progress | battery.json, static jsPsych app (vendored 7.3.4), PROLIFIC.md, IRB_CHECKLIST.md, PREREGISTRATION.md written; browser verification running |
+| 7 Instrument | nearly done | battery browser-verified (0460ab2); document consistency fixes from the honesty review landing (agent) |
 | 8 Report | not started | |
 
 ## Data in hand (raw copies under scratchpad, to be catalogued then copied into data/raw)
@@ -45,6 +45,14 @@ first unfinished item in "Next up".
 * Egress-blocked from this session: Psych-101 (HF), Wang 2014 SI (PNAS), FINRA NFCS, HRS/SCF/PSID,
   GPS (briq), Robintrack, Frey 2017 and Hussain 2024 raw data (OSF), Zenodo originals, market data feeds.
 * GATE (registration): UAS (E), LISS/DNB (H). Instructions to be written; not registered.
+
+## Phase 0 summary (five lines)
+
+1. Schema, validators, shared 170-item design and DB layer exist and agree on one contract (PLAN.md §2 amendment).
+2. Real-vs-synthetic rule is enforced on parquet writes and on every DB insert path; PII beyond display_label is refused.
+3. Datasets A, B (mirror), C (three experiments), D (one verified table) and market series are catalogued and copied; E/H gated; others need owner downloads.
+4. The intake battery runs as a static page, verified in Chromium, exporting schema rows; the Prolific design is shelved and costed.
+5. Open: GitHub push blocked (App not installed); Wang 2014 SI and Psych-101 not obtainable from this session.
 
 ## Decisions
 
