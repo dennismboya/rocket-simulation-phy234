@@ -207,7 +207,18 @@ and cost to close each.
 9. Static jsPsych instrument and PROLIFIC.md.
 10. Phase 4 on real data in hand; REPORT.md, MODEL_CARD.md; STATUS.md data gaps and costs.
 
-## 9. Open decisions recorded
+## 9. Owner constants carried over from the build brief (so they are traceable in-repo)
+
+* Paid-panel cost formula (Prolific, shelved): Cost = minutes/60 × $12/hr × N × 1.333 for the academic
+  or non-profit rate, × 1.428 for the corporate rate. No money is spent without a GATE approval.
+* Sample-size target = the smallest N at which the Phase 2 recovery study selects the true generator
+  at least 90% of the time.
+* Decision-rule wording in §6 is the owner's verbatim text; the phrase "quantum-probability advantage"
+  inside it is kept as written (CLAUDE.md bans the bare phrase "quantum advantage" elsewhere).
+* Participant burden cap: one intake session, at most one scheduled wave 2, at most one
+  event-triggered wave per participant (three sessions maximum), matching the consent text.
+
+## 10. Open decisions recorded
 
 * Individual-level choices13k data are not in the public repo (aggregate rates per problem only);
   the encoder pretraining on A therefore uses problem-level rates with binomial weights.
