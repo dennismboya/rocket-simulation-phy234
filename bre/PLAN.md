@@ -44,6 +44,24 @@ One row per elicited decision, columns exactly as in the build prompt Section 3.
 position_in_session)`, is_synthetic consistency with the file location) and raises on hard errors.
 Every loader and every generator calls it. The DB `responses` table has the same columns.
 
+Amendment 2026-09-17 (after the Phase 0 review), binding for every loader and the DB layer:
+* `elicitation_type` gains two values: `binary_yes_no` (response in {0,1}; used for the tolerance
+  question and any yes/no survey item) and `choice_rate` (aggregate share in [0,1] choosing the
+  target option, e.g. choices13k bRate, CPC block rates, published joint proportions). The four
+  original values keep their ranges.
+* `covariates` keys: the six product keys, plus `weight` (numeric >= 0 or null; the number of
+  respondents behind an aggregate row), plus dataset-specific keys that must carry the prefix `x_`
+  (any JSON scalar; loaders are responsible for keeping PII out of them). `clients.covariates` in the
+  DB accepts only the six product keys.
+* `context_tags` are always `namespace:value` (regex-checked); the psych201 domain tags are
+  `domain:gain`, `domain:loss`, `domain:mixed`.
+* `question_order_id` values for the shared design are the hyphenated `tolerance-first` and
+  `scenario-first`; free-form for external datasets.
+* The DB layer reuses the schema validators: `frame_to_responses` calls `validate_frame(strict=True)`
+  first, the ORM `@validates` hooks mirror the same rules, and the real-vs-synthetic location rule is
+  enforced on every insert path (session `before_flush`), using `os.path.abspath` (no symlink
+  resolution) and absolute SQLite file paths fixed at engine creation.
+
 ## 3. Shared experimental design (`src/bre/design.py`)
 
 * loss_pct ∈ {-0.05, -0.10, -0.15, -0.20, -0.30}; horizon_days = 365 unless stated.
