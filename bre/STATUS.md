@@ -89,3 +89,4 @@ Phases 0–8 as planned; no long runs started yet.
 ## Progress log (long runs)
 
 * 2026-09-17 20:25 UTC — recovery study (N=200) and API build started in background agents; check runs/recover/*.log.
+* 2026-09-17 20:34 UTC — check-in: recovery runner still being written; no run log yet
