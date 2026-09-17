@@ -51,17 +51,21 @@ instrument/
 Validate the definition and regenerate the browser copy after any edit to `battery.json`:
 
 ```
-/home/user/bre-venv/bin/python bre/instrument/validate_battery.py --write-static
-/opt/node22/bin/node bre/instrument/tests/test_balance.js
+python bre/instrument/validate_battery.py --write-static
+node bre/instrument/tests/test_balance.js
 ```
 
-Both exit non-zero on failure; a future `make instrument` target should run exactly these two.
-The browser-level check (needs the `playwright` npm package findable by Node and the Chromium
-build under `PLAYWRIGHT_BROWSERS_PATH`; nothing is installed by the script):
+Here and below, `python` is the project virtualenv's interpreter and `node` a Node binary; the
+locations used in the build container are recorded in `STATUS.md` ("Resume essentials"), and the
+Makefile takes them as `BRE_VENV` and `NODE`. Both commands exit non-zero on failure. From `bre/`,
+`make instrument` runs exactly these two (the validator with `--write-static`, then the balance
+test) and `make test-instrument` runs the read-only pair (the validator without `--write-static`,
+then the balance test). The browser-level check (needs the `playwright` npm package findable by
+Node and the Chromium build under `PLAYWRIGHT_BROWSERS_PATH`; nothing is installed by the script):
 
 ```
-PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers /opt/node22/bin/node bre/instrument/tests/drive_battery.mjs [--fast] [--out DIR]
-/home/user/bre-venv/bin/python bre/instrument/tests/validate_intake_json.py DIR   # the files it downloaded
+PLAYWRIGHT_BROWSERS_PATH=<directory holding the Playwright Chromium build> node bre/instrument/tests/drive_battery.mjs [--fast] [--out DIR]
+python bre/instrument/tests/validate_intake_json.py DIR   # the files it downloaded
 ```
 
 `--fast` shortens the 10-second delay page to 0.3 s through an in-memory `config.js` (the served
@@ -123,6 +127,13 @@ Budget is $0 (CLAUDE.md), so this is a convenience sample of volunteers, and the
 so: it validates the instrument (timing, comprehension, replicability, data flow), it is not a
 representative sample and it is not incentivized (`incentivized = false` on every row).
 
+Before the first volunteer: the owner confirms whether ethics review applies to an unpaid
+convenience-sample pilot in their setting (institution, country, intended use of the data); if it
+does, no one is invited before the board's written determination. Either way the pilot runs under
+the consent text of `IRB_CHECKLIST.md` §6, with the payment paragraph replaced by the statement
+that participation is unpaid (there is no base pay, no bonus and no Prolific), and the battery's
+consent page must say the same things as that text.
+
 1. Freeze the battery: `battery_version` stays `1.0.0` for the whole pilot. Any wording change
    after the first volunteer means a new version and a new pilot; the version is on every row.
 2. Recruit 20-50 adults through personal and professional networks. Do not recruit clients of any
@@ -156,7 +167,9 @@ representative sample and it is not incentivized (`incentivized = false` on ever
    full design, the unit the transparency page uses). The pilot's 20-50 volunteers are below it
    by construction;
    the pilot is an instrument check, not a calibration set, and the dashboard's transparency page
-   must say so if pilot data are ever used in a fit.
+   must say so if pilot data are ever used in a fit. Every table, figure or screen that shows pilot
+   data carries the label "pilot, N = <number of complete sessions>, not for inference"; the pilot is
+   below the sample-size target of PLAN.md §5 and §9 by construction.
 
 Paid collection (Prolific or similar) is a GATE under CLAUDE.md rule 4(a); `PROLIFIC.md` is a
 separate Phase 7 deliverable and nothing here spends money.
@@ -200,8 +213,10 @@ Mapping notes the loader and the models rely on:
   PLAN.md section 2 amendment of 2026-09-17 added to the schema enum for the tolerance question
   and any yes/no survey item; the mapping is written in `battery.json -> output.elicitation_types_used`
   and `design.questions.tolerance.coding_note`, and `static/battery.js` refuses to start if
-  `battery.json` deviates from it (`checkQuestions`). The earlier `lottery_choice` stand-in is gone;
-  no rows were collected under it. Loaders and the DB layer must accept `binary_yes_no`
+  `battery.json` deviates from it (`checkQuestions`). An earlier draft mapped the tolerance row to a
+  different stand-in type; no data was collected under that mapping (no volunteer session has run),
+  so `battery_version` stays `1.0.0` and there is nothing to migrate. Loaders and the DB layer must
+  accept `binary_yes_no`
   (`db/models.py`, `src/bre/schema.py`) before intake files can pass `validate_intake_json.py`'s
   schema step.
 * `question_order_id` is exactly `tolerance-first` or `scenario-first`; every context tag is

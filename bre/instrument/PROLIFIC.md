@@ -64,7 +64,13 @@ Per item (one "presentation"), the page sequence is, for `tolerance-first`: tole
 scenario page (loss + contexts) → delay page if a news tag is present → sell/hold → allocation
 slider; for `scenario-first`: scenario page → delay page if news → sell/hold → allocation slider →
 tolerance question. So the tolerance question is asked with every item, in one of the two orders,
-which is what gives within-subject order data and per-item joint (tolerance, sell) answers.
+which is what gives within-subject order data and per-item joint (tolerance, sell) answers. The two
+orders are not mirror images: under `tolerance-first` the sell answer follows the tolerance answer
+with no elicitation in between (A→B; the scenario and delay pages intervene, but nothing is
+measured), whereas under `scenario-first` the allocation slider is answered between the sell answer
+and the tolerance answer (B→slider→A). `PREREGISTRATION.md` §8 therefore treats the scenario-first
+sequence as the "intervening measurement" case of the QQ test and names the asymmetry wherever q is
+reported.
 
 Questions and coding (from `design.questions`):
 
@@ -129,7 +135,7 @@ O7 Wave questions. Wave 2 and the event wave prepend the self-report questions o
 O8 Delay factor (optional, off by default). The battery shows a fixed 10 s delay page on news
 items. Optionally the Prolific build assigns 0 s to half of a participant's news items (randomly,
 balanced) and keeps 10 s on the rest, so that the Q3 dynamical model (PLAN.md §4) gets within-subject
-variation in time since news. If enabled, `delay_s` is written per row into `covariates` (the
+variation in time since news. If enabled, `x_delay_s` is written per row into `covariates` (§7; the
 battery otherwise keeps `covariates` identical on every row of a session) and the analysis in
 `PREREGISTRATION.md` §9 becomes applicable. Enabling it is a design decision for the owner; the
 default study uses the battery as built.
@@ -199,18 +205,28 @@ Let H = 365 calendar days be the horizon (PLAN.md §3, `design.horizon_days`).
 ### 5.3 The path table — to be built from a public price series; nothing in it is invented here
 
 `instrument/path_table.csv` does not exist yet and no episode dates or returns appear in this
-document. It is to be built by a script (`instrument/build_path_table.py`, Phase 7, not yet written)
-from a public daily closing-price series of the S&P 500 once the owner has downloaded it. Yahoo
-Finance, FRED and the other market-data hosts are unreachable from the build session (CLAUDE.md
-environment notes), so the download is an owner action; the series is catalogued in
-`data/CATALOG.md` (source URL, terms, access date, first and last date, number of rows, SHA-256)
-before the script is run.
+document. It is to be built by a script (`instrument/build_path_table.py`, Phase 7, not yet written).
+The preferred input is a daily closing-price series of the S&P 500 that the owner downloads
+(yfinance `^GSPC` or FRED `SP500`): Yahoo Finance, FRED and the other market-data hosts are
+unreachable from the build session (CLAUDE.md environment notes), so the download is an owner
+action, and the series is catalogued in `data/CATALOG.md` (source URL, terms, access date, first
+and last date, number of rows, SHA-256) before the script is run. Until that daily series exists,
+the stand-in is a monthly-resolution episode table built from the S&P 500 series already catalogued
+as data/CATALOG.md entry M, which is Shiller's monthly average of daily closes (not a month-end
+close); any table built from it is labelled "monthly-average based, stand-in" in its header and in
+`path_table.md`, is used for design work only (row-set counts, budget arithmetic), and never pays a
+bonus. The script records, in the header comment of `path_table.csv`, which series it used (catalog
+entry, file name, SHA-256, resolution), so the disclosure of §5.2 always names the actual series
+behind the drawn episode.
 
-Algorithm (deterministic given the series):
+Algorithm (deterministic given the series; defined on whatever resolution is supplied: with a daily
+series a period is a trading day, with the monthly stand-in a period is a calendar month, and "day"
+below reads "period"):
 
-1. Input: trading-day closes P(t), one row per trading day, price index (dividends excluded). If a
-   public total-return series is available the owner may substitute it; the choice is recorded and
-   the report notes that a price index understates M_hold relative to a total-return investment.
+1. Input: closes P(t), one row per period (trading day preferred; calendar month for the monthly
+   stand-in), price index (dividends excluded). If a public total-return series is available the
+   owner may substitute it; the choice is recorded and the report notes that a price index
+   understates M_hold relative to a total-return investment.
 2. Running peak: peak(t) = max_{s ≤ t} P(s). Drawdown: dd(t) = P(t)/peak(t) − 1.
 3. A cycle starts at a new all-time high and ends at the next one. Within a cycle, for each
    threshold L ∈ {−0.05, −0.10, −0.15, −0.20, −0.30}, the `at_drawdown(L)` entry is the first day
@@ -223,9 +239,10 @@ Algorithm (deterministic given the series):
    the series therefore yields no entries.
 6. Each row records: rule, L, cycle start date, t0, P(t0), dd(t0), t0 + H (first trading day on or
    after), P(t0 + H), M_hold, and, for the rebound rule, the trough date and trough close.
-7. Output: `instrument/path_table.csv` with a header comment naming the input series, its SHA-256
-   and the build date, and `instrument/path_table.md` listing the number of episodes per rule and
-   threshold. Those counts are `{{N_EPISODES_PER_RULE_AND_THRESHOLD}}` until built; if any row set is
+7. Output: `instrument/path_table.csv` with a header comment naming the input series (catalog
+   entry and file), its SHA-256, its resolution (daily, or monthly stand-in) and the build date, and
+   `instrument/path_table.md` listing the number of episodes per rule and threshold under the same
+   label. Those counts are `{{N_EPISODES_PER_RULE_AND_THRESHOLD}}` until built; if any row set is
    empty the study cannot pay that threshold and the design must be revised before launch (the
    script checks this and fails loudly).
 8. The expected multiplier per row set, needed for the bonus budget in §9, is
@@ -237,11 +254,20 @@ of the same rule and threshold fall in the same cycle.
 
 ## 6. Waves
 
+Participant burden cap (PLAN.md §9, matching the consent text of `IRB_CHECKLIST.md` §6): each
+participant is asked for one intake session (wave 1), at most one scheduled wave 2 and at most one
+event-triggered wave, three sessions maximum, whatever the market does during the study. Anyone who
+took part in the pilot (§13) has used their intake session and is not recruited again for wave 1
+(§10: one submission per person across all waves).
+
 ### 6.1 Wave 1 (main collection)
 
 Single Prolific study, flow as in §4, `session_id = "w1:<seed>"`. Question order is within
 subject and per item (§2), so wave 1 alone yields both orders for every participant, the per-item
 joint (tolerance, sell) answers the QQ-equality test needs, and δ_LTP (PLAN.md §4) within subject.
+The QQ test uses those joints with the asymmetry of §2 named (tolerance-first = A→B with no
+intervening measurement; scenario-first = B→A with the allocation slider intervening), as
+pre-registered in `PREREGISTRATION.md` §8.
 
 ### 6.2 Wave 2 (2–4 weeks after wave 1)
 
@@ -283,15 +309,20 @@ Rules (design decisions):
 * Launch within 48 h of the triggering close; collection window 72 h from launch.
 * Sample: the wave-1 allowlist (within-subject comparison of hypothetical vs live drawdown), plus a
   fresh sample of the same size only if the owner approves the additional cost.
-* Cooldown: at most one event wave per 30 calendar days; no event wave in the 14 days after a
-  participant's wave 1 (their wave-2 window takes precedence).
+* Cap and cooldown: at most one event-triggered wave per participant, ever (PLAN.md §9 burden cap:
+  one intake, at most one scheduled wave 2, at most one event-triggered wave; three sessions
+  maximum). If a second trigger fires during the study, the wave-1 cohort is not re-invited; the
+  owner may serve that trigger only with a fresh sample, under its own cost approval. No event wave
+  in the 14 days after a participant's wave 1 (their wave-2 window takes precedence), and
+  event-wave launches (fresh samples included) are at least 30 calendar days apart.
 * Content: the wave-1 battery with a fresh seed and, before the scenarios (O7), the participant's own
   current situation ("Do you currently hold stock investments?", "Have you sold any in the past
   7 days?", "Do you intend to sell any in the next 7 days?"), stored as `outcome_behavior` with
   `lag_days` = days since wave 1. Every row carries `context_tags` prefixed with
-  `market:live_drawdown` and `covariates.market_state = {"index_close": P(t), "weekly_return":
-  r(t), "drawdown_from_peak": dd(t), "as_of": date}` copied from the trigger log, so the live context
-  is recorded from the same numbers that fired the trigger.
+  `market:live_drawdown` and the four scalar covariate keys `x_market_index_close` = P(t),
+  `x_market_weekly_return` = r(t), `x_market_drawdown_from_peak` = dd(t) and `x_market_as_of` = the
+  ISO date of that close (§7), copied from the trigger log, so the live context is recorded from the
+  same numbers that fired the trigger.
 * `session_id = "e<YYYYMMDD>:<seed>"` with the trigger date.
 * The invitation text is neutral, gives no financial advice and does not cite the market fall as the
   reason (`IRB_CHECKLIST.md` §3).
@@ -304,11 +335,25 @@ Whether any event wave ever runs depends on the market; the design does not assu
 `invest_experience_yrs` (0–40); `self_reported_risk_tolerance` (1–7); `financial_literacy_score`
 (0–5, number of correct answers on the battery's quiz, "I don't know" counted as incorrect);
 `education` {hs, some_college, bachelor, graduate}. "Prefer not to say" is stored as null
-(`intake.covariate_null_rule`). The battery keeps `covariates` identical on every row of a session;
-the Prolific build adds the session-level keys `wave`, `attention_pass_count`,
-`comprehension_attempts`, `manipulation_check` and, on event-wave rows, `market_state`; with O8
-enabled it also adds the per-row key `delay_s`. Per-page response times, `delay_display_ms`,
-`order_balance_satisfied` and the drawn payout episode live in the session log, not in the schema.
+(`intake.covariate_null_rule`). The battery keeps `covariates` identical on every row of a session.
+The Prolific build adds dataset-specific keys, each carrying the `x_` prefix and holding a JSON
+scalar, as PLAN.md §2 requires for anything beyond the six product keys and `weight`:
+
+| Key | Type | Rows | Meaning |
+|---|---|---|---|
+| `x_wave` | string | all | `pilot`, `w1`, `w2` or `e<YYYYMMDD>` (the wave part of `session_id`) |
+| `x_attention_pass_count` | integer 0–3 | all | attention checks passed (§8) |
+| `x_comprehension_attempts` | integer 1–2 | all | attempts used on the comprehension check (§8) |
+| `x_manipulation_check` | string | all | option ids selected on the manipulation check (§8), sorted and joined by `;` (empty string if none) |
+| `x_delay_s` | number, 0 or 10 | per row; O8 only | delay-page seconds for that item's presentation; absent when O8 is off |
+| `x_market_index_close` | number | event wave | P(t), the close that fired the trigger (§6.3) |
+| `x_market_weekly_return` | number | event wave | r(t) from the trigger log |
+| `x_market_drawdown_from_peak` | number | event wave | dd(t) from the trigger log |
+| `x_market_as_of` | string, ISO date `YYYY-MM-DD` | event wave | date of that close |
+
+The session-level keys are identical on every row of a session; only `x_delay_s` varies per row.
+Per-page response times, `delay_display_ms`, `order_balance_satisfied` and the drawn payout episode
+live in the session log, not in the schema.
 
 ## 8. Attention checks, comprehension check, manipulation check (O4, O5)
 
@@ -319,12 +364,12 @@ enabled it also adds the per-row key `delay_s`. Per-page response times, `delay_
   Prolific's rules prescribe, and the participant is not counted toward N.
 * Three instructed-response attention checks in scenario format at random positions among the 14
   presentations ("This item checks that you are reading. Choose Sell and set the slider to 100%").
-  Not paid, not stored as decision rows; `attention_pass_count` (0–3) is a covariate. Pre-registered
+  Not paid, not stored as decision rows; `x_attention_pass_count` (0–3) is a covariate (§7). Pre-registered
   rule: 0 or 1 passes → excluded from analysis; Prolific rejection only where Prolific's
   attention-check policy permits, and rejection decisions are separate from analysis exclusions.
 * Manipulation check (not an exclusion criterion): after the last presentation, "Which of these
   reasons for the fall did you read during the study?" (multi-select over the two cause frames plus
-  two distractors). Recorded in `covariates.manipulation_check`.
+  two distractors). Recorded as the covariate `x_manipulation_check` (§7).
 * Straight-lining flag: identical slider value on every presentation, or the same sell/hold answer
   on every presentation with a median item response time below the floor of §10. Flag stored;
   exclusion per §10.
@@ -367,8 +412,9 @@ schedule at launch; taxes, if any, are not included. Bonus cost is on top of thi
     Bonus_cost(N) = fee_factor × N × B × E[M],  E[M] = {{MEAN_M_HOLD_PER_ROW_SET_FROM_PATH_TABLE}}
     (averaged over the item mix and the sell_hold/allocation coin; M_sell = 1 bounds the sell branch)
 
-Total for the study = wave 1 + wave 2 (N × {{WAVE2_RETENTION_FROM_WAVE1}}, its own T) + any event
-wave, each evaluated with the same formula; plus the pilot (§13).
+Total for the study = wave 1 + wave 2 (N × {{WAVE2_RETENTION_FROM_WAVE1}}, its own T) + at most one
+event wave for the wave-1 cohort (PLAN.md §9), each evaluated with the same formula; plus the pilot
+(§13).
 
 ### 9.3 Evaluation of the base-pay formula (arithmetic only, not data)
 
@@ -473,12 +519,15 @@ No exclusion is based on the content of the decisions themselves.
 | `is_synthetic` | false |
 | `source_row_ref` | battery format |
 
-Open points for the main session (only the main session edits the schema):
+Tolerance coding (settled; not an open point): the tolerance answer is stored as a `binary_yes_no`
+row with 1 = Yes and 0 = No, exactly as PLAN.md §2 (amendment of 2026-09-17) and
+`battery.json output.elicitation_types_used` specify. An earlier draft of this document mapped the
+tolerance row to a different stand-in type; no data was collected under that mapping (no pilot,
+volunteer or Prolific session has run), so `battery_version` stays 1.0.0 and there is nothing to
+migrate.
 
-* Resolved 2026-09-17: the tolerance answer is stored as a `binary_yes_no` row with 1 = Yes
-  (PLAN.md §2 amendment; `battery.json output.elicitation_types_used`). The `lottery_choice`
-  stand-in is gone from the instrument; any other table that still uses it for yes/no items
-  (e.g. the dataset-D order tables in data/CATALOG.md) is for the main session to migrate.
+Open point for the main session (only the main session edits the schema):
+
 * `db/models.py` documents `prior_question_ids` as "questions asked before this one in the session";
   `battery.json` restricts it to the same presentation. Either is workable for the Q2 Lüders step
   (which needs to know whether the tolerance question preceded the sell question within the item);
@@ -489,7 +538,9 @@ Open points for the main session (only the main session edits the schema):
 
 1. Implement the overrides of §3 behind a Prolific-mode flag in the instrument; run the acceptance
    tests offline; three internal dry runs by the owner. No cost.
-2. Build the path table from the owner-downloaded series (§5.3); verify no empty row set. No cost.
+2. Build the path table from the owner-downloaded daily series (§5.3; the monthly stand-in from
+   data/CATALOG.md entry M serves design work only and never pays a bonus); verify no empty row set.
+   No cost.
 3. IRB / ethics review per `instrument/IRB_CHECKLIST.md`; register `instrument/PREREGISTRATION.md`
    at a public registry with a timestamp before step 4. No cost (registry) or the board's fee (GATE).
 4. GATE — pilot: 20 participants (design decision), wave-1 flow. Outputs: T (median duration),
@@ -513,7 +564,7 @@ a value yet.
 | `{{T_BATTERY_MIN_FROM_PILOT}}` | pilot: median completion time in minutes from Prolific's report |
 | `{{RT_FLOOR_MS_FROM_PILOT}}` | pilot: 2.5th percentile of item response times |
 | `{{BONUS_STAKE_USD_OWNER}}` | owner decision on the bonus stake B (a spending decision, not made here) |
-| `{{N_EPISODES_PER_RULE_AND_THRESHOLD}}` | `build_path_table.py` on the owner-downloaded S&P 500 series |
+| `{{N_EPISODES_PER_RULE_AND_THRESHOLD}}` | `build_path_table.py` on the owner-downloaded daily S&P 500 series (a count from the monthly stand-in of CATALOG entry M is labelled "monthly-average based" and does not fill this token) |
 | `{{MEAN_M_HOLD_PER_ROW_SET_FROM_PATH_TABLE}}` | same script; expected hold multiplier per row set, for the bonus budget |
 | `{{WAVE2_RETENTION_FROM_WAVE1}}` | wave 1: share of wave-1 participants who complete wave 2 |
 
@@ -522,6 +573,7 @@ full form of 12 items (4 none / 4 single / 4 pair) + 2 repeats from positions 1�
 per-item question order, 2 + 2 per block; delay page 10 s on news items (optional 0/10 s factor,
 O8); slider start 50 with required movement; 3 attention checks with the ≥ 2-of-3 rule;
 comprehension check with 2 attempts; wave-2 window days 14–28; event trigger r(t) < −0.05 vs the
-prior week's last close, launch ≤ 48 h, window 72 h, cooldown 30 days; pilot of 20; US residents,
+prior week's last close, launch ≤ 48 h, window 72 h, at most one event wave per participant (three
+sessions maximum, PLAN.md §9), 30 days between event-wave launches; pilot of 20; US residents,
 approval ≥ 95%, ≥ 20 prior submissions; horizon 365 days; H = 365 and the 5% rebound rule for the
 path table.

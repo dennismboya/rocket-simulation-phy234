@@ -19,8 +19,9 @@ budget approval (CLAUDE.md rule 4(a)).
 - [ ] Principal investigator: ____ ; institution or affiliation: ____ ; contact e-mail: ____ .
 - [ ] Board: ____ (institutional IRB / independent ethics board); submission route: ____ .
 - [ ] Study type: online behavioral decision study with survey items, single site (Prolific),
-      up to three sessions per participant (wave 1, wave 2 at 2–4 weeks, and a possible
-      event-triggered wave; `PROLIFIC.md` §6).
+      at most three sessions per participant: one intake session (wave 1), at most one scheduled
+      wave 2 at 2–4 weeks, and at most one event-triggered wave (participant burden cap, PLAN.md
+      §9; `PROLIFIC.md` §6). No participant is invited to a second wave 2 or a second event wave.
 - [ ] Funding: none / self-funded / ____ . Budget approval by the owner attached (or "not yet").
 - [ ] Commercial interest disclosed: the anonymised responses may be used to train the models of an
       advisor-facing dashboard being built by the PI (`PROLIFIC.md` §11, `consent_training`).
@@ -50,7 +51,11 @@ Candidate categories under the US Common Rule (45 CFR 46.104(d)), to be confirme
       slider (share sold); answering, with each scenario, a yes/no question about one's attitude to
       losses; a 10-second timed pause page on scenarios that mention news; banded demographic and
       financial questions; a five-item financial-literacy quiz; three attention checks; a
-      comprehension check. Screen texts are those of `instrument/battery.json`.
+      comprehension check on the payout rule; a manipulation check at the end (which reasons for the
+      fall the participant read; `PROLIFIC.md` §8); in wave 2, three questions about investments
+      sold or bought since wave 1; in an event wave, three questions about current holdings, sales
+      in the past 7 days and intentions for the next 7 days (`PROLIFIC.md` §6.2, §6.3). Screen texts
+      are those of `instrument/battery.json`.
 - [ ] No physical procedures, no physiological measurement, no recording of audio/video/screen.
 - [ ] No deception: every statement shown to participants is true, including the payout rule and
       the fact that the scenario "story" does not affect which historical episode is used
@@ -58,15 +63,18 @@ Candidate categories under the US Common Rule (45 CFR 46.104(d)), to be confirme
 - [ ] Participants cannot lose money: the bonus is a positive-only payment; the "loss" is the state
       of a historical price path, never a deduction from earnings. Stated in consent and instructions.
 - [ ] Emotional risk: scenarios describe hypothetical losses; the study does not ask about the
-      participant's own losses in detail (wave-2 and event-wave items ask only whether they bought
-      or sold, and a band for the size). Participants who find the topic distressing can stop at any
-      time (§7). No financial advice is given anywhere in the study; a fixed disclaimer sentence
-      appears in the debrief.
-- [ ] Event-triggered wave: participants may be invited during a period of real market stress. The
-      invitation is neutral (it does not cite the market fall as the reason), the content is the same
-      battery, and the timing is disclosed in wave-1 consent ("we may invite you again within a few
-      weeks, and possibly at a time of our choosing during the year"). Ask the board whether this
-      needs a separate consideration.
+      participant's own losses in detail (the wave-2 items ask only whether they sold or bought any
+      investments since wave 1 and a band for the size of the largest such transaction; the
+      event-wave items ask only whether they currently hold stock investments, whether they sold any
+      in the past 7 days and whether they intend to sell any in the next 7 days; `PROLIFIC.md` §6.2,
+      §6.3). Participants who find the topic distressing can stop at any time (§7). No financial
+      advice is given anywhere in the study; a fixed disclaimer sentence appears in the debrief.
+- [ ] Event-triggered wave: participants may be invited, at most once, during a period of real
+      market stress. The invitation is neutral (it does not cite the market fall as the reason), the
+      content is the same battery, and the timing and the cap are disclosed in wave-1 consent (§6:
+      a second session two to four weeks later, possibly one further session at a time of our
+      choosing within the next year, never more than three sessions in total). Ask the board whether
+      this needs a separate consideration.
 - [ ] Sensitive categories: none targeted. Wealth is asked in four bands with "prefer not to say".
 - [ ] Duration: `{{T_BATTERY_MIN_FROM_PILOT}}` minutes per session, measured in the pilot.
 - [ ] Vulnerable populations: none recruited; no prisoners, children, or people unable to consent.
@@ -84,14 +92,17 @@ Candidate categories under the US Common Rule (45 CFR 46.104(d)), to be confirme
       not stored.
 - [ ] Sample size: `{{N_TARGET_FROM_PHASE2}}` analysable participants (source: Phase 2 recovery
       study, PLAN.md §5), recruited as `N_recruit = ceil(N_target / (1 − {{EXCLUSION_RATE_FROM_PILOT}}))`,
-      plus a pilot of 20 (design decision), plus wave 2 and any event wave (same people).
+      plus a pilot of 20 (design decision), plus at most one wave 2 and at most one event wave (the
+      same people; three sessions maximum per participant, PLAN.md §9).
 
 ## 5. Anonymisation and data minimisation
 
 - [ ] Collected: decisions, slider values, response times, the tolerance answer, banded
       demographics, banded investable assets, years of experience (0–40), risk tolerance (1–7),
-      literacy score (0–5), education band, attention/comprehension counts, wave-2/event-wave
-      self-reported buy/sell (yes/no and a size band), timestamps.
+      literacy score (0–5), education band, attention/comprehension counts, the manipulation-check
+      selection, wave-2 self-report (sold / bought since wave 1, size band), event-wave self-report
+      (currently holds stock investments, sold any in the past 7 days, intends to sell in the next
+      7 days), timestamps.
 - [ ] Not collected: name, e-mail, postal address, IP address, device fingerprint, geolocation,
       free-text responses, any account or brokerage data.
 - [ ] Prolific ID handling: the raw ID reaches only the owner-hosted intake endpoint, which stores
@@ -142,10 +153,11 @@ without all of them. Fill the fields before submission.
 > recovery do. The full rule is explained again before your first decision.
 >
 > Follow-up: we may invite you, through Prolific, to a second session two to four weeks from now,
-> and possibly to one further session at a time of our choosing within the next year. Each
-> invitation is optional and paid separately. To send invitations we keep a link between your
-> Prolific ID and your coded study ID, encrypted, on the researcher's computer only. That link is
-> deleted when the last session closes.
+> and possibly to one further session at a time of our choosing within the next year. You will
+> never be asked to take part in more than three sessions in total: this one, at most one follow-up
+> session, and at most one further session. Each invitation is optional and paid separately. To
+> send invitations we keep a link between your Prolific ID and your coded study ID, encrypted, on
+> the researcher's computer only. That link is deleted when the last session closes.
 >
 > Risks: we do not expect any risk beyond those of everyday life. The scenarios are hypothetical.
 > Nothing in the study is financial advice.
@@ -182,6 +194,8 @@ without all of them. Fill the fields before submission.
       `delete_subject` and no payload beyond the hash. Payment already made is not reclaimed.
 - [ ] After the mapping deletion date: withdrawal impossible (stated in consent).
 - [ ] Wave 2 and event-wave invitations are opt-in on Prolific; not responding has no consequence.
+      No participant receives more than one wave-2 invitation and one event-wave invitation (three
+      sessions maximum, PLAN.md §9).
 
 ## 8. Payment and incentives
 
@@ -224,7 +238,8 @@ without all of them. Fill the fields before submission.
 - [ ] Software: the static jsPsych build under `instrument/static/` (jsPsych vendored from npm, open
       source) driven by `instrument/battery.json`; the intake endpoint is part of this repository
       (Phase 5); the board can inspect all of it. The Prolific-mode additions (hashed IDs, payout,
-      attention checks, wave questions) are listed in `PROLIFIC.md` §3 and are not yet implemented.
+      attention checks, comprehension and manipulation checks, wave questions) are listed in
+      `PROLIFIC.md` §3 and are not yet implemented.
 - [ ] Pilot (20 participants) is covered by this same protocol and consent; pilot data are excluded
       from confirmatory analyses but retained under the same rules.
 - [ ] Amendments: any change to the scenarios, payment, waves or data handling is resubmitted before

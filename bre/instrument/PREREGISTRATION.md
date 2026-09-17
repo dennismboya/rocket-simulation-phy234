@@ -35,13 +35,16 @@ confidence interval with 1000 draws (PLAN.md §6) unless stated otherwise.
 | Hypothesis | RQ | Statement | Q-model prediction | Classical prediction | Confirmed if |
 |---|---|---|---|---|---|
 | H1 Law-of-total-probability violation by question order | RQ1 | The probability of selling depends on whether the tolerance question was asked before the scenario. | δ_LTP ≠ 0 | δ_LTP = 0 | CI of the pooled δ_LTP (over loss levels and context conditions) excludes 0 |
-| H2a Context order effects | RQ1 | For at least one unordered pair of contexts, the sell probability depends on the order in which the two contexts were presented. | Δ_order ≠ 0 for some pair (non-commuting unitaries) | Δ_order = 0 (additive or Bayesian context effects; B4 predicts order dependence only through the recency discount δ) | at least one of the 6 unordered pairs has a Holm-adjusted CI excluding 0 |
-| H2b QQ equality | RQ1 | Where an order effect exists between the tolerance question and the sell question, the QQ equality holds. | q = 0 (Q1) | no constraint; q = 0 only when there is no order effect at all | given H1 confirmed, the CI of q includes 0 and its half-width is smaller than the absolute pooled δ_LTP; if H1 is not confirmed, H2b is not testable and is reported as such |
+| H2a Context order effects | RQ1 | For at least one unordered pair of contexts, the sell probability depends on the order in which the two contexts were presented. | Δ_order ≠ 0 for some pair (non-commuting unitaries) | Δ_order = 0 under additive context effects (the classical models as fitted on split (b), §4); B4 can produce Δ_order ≠ 0 through its recency discount δ. A confirmed H2a is a structural check that rules out the additive baselines, not support for a Q-model; Q vs B4 is settled by H3 only | at least one of the 6 unordered pairs has a Holm-adjusted CI excluding 0 |
+| H2b QQ equality | RQ1 | Where an order effect exists between the tolerance question and the sell question, the QQ equality holds (scenario-first is the intervening-measurement sequence; §8 step 4). | q = 0 (Q1) | no constraint; q = 0 only when there is no order effect at all | given H1 confirmed, the CI of q includes 0 and its half-width is smaller than the absolute pooled δ_LTP; if H1 is not confirmed, H2b is not testable and is reported as such |
 | H3 Predictive advantage of Q-models | RQ2 | The best Q-model predicts held-out responses on split (b) better than the best classical baseline at matched or lower parameter count. | held-out NLL lower | held-out NLL equal or higher | exactly the decision rule of §7 |
-| H4 External validity of per-investor parameters | RQ3 | Per-investor parameters fitted at wave 1 predict (a) that investor's later decisions (wave 2, event wave) and (b) their self-reported real buy/sell actions. | (a) NLL on split (d) lower than the covariates-only model; (b) AUC of the wave-1 sell propensity for "sold" > 0.5 and > the covariates-only AUC | same functional claims for the winning classical model; H4 is about any per-investor model, not Q vs classical | (a) CI of the NLL difference excludes 0; (b) CI of the AUC difference excludes 0. Both (a) and (b) are required for "confirmed"; (b) alone is reported as "self-report only" |
+| H4 External validity of per-investor parameters | RQ3 | Per-investor parameters fitted at wave 1 predict (a) that investor's later decisions (wave 2, event wave) and (b) their self-reported real buy/sell actions. | (a) NLL on split (d) lower than the covariates-only model; (b) AUC of the wave-1 sell propensity for "sold" > 0.5 and > the covariates-only AUC; `no_investments` rows are excluded from (b) and reported separately (§8 step 7) | same functional claims for the winning classical model; H4 is about any per-investor model, not Q vs classical | (a) CI of the NLL difference excludes 0; (b) CI of the AUC difference excludes 0. Both (a) and (b) are required for "confirmed"; (b) alone is reported as "self-report only" |
 
 H1, H2a and H2b are structural tests (PLAN.md §6 "Structural tests"); H3 is the single primary
-confirmatory test of the project; H4 requires wave-2 or event-wave data and is otherwise "not
+confirmatory test of the project. H2a in particular: the classical prediction Δ_order = 0 is a
+property of the additive baselines, so confirming H2a is a structural check on them and not
+Q-support; B4's recency discount δ is a classical route to order dependence, and only H3 separates
+the Q-models from B4. H4 requires wave-2 or event-wave data and is otherwise "not
 testable with the data in hand", which is a permitted conclusion.
 
 For analysis (A) on public data, H1 and H2b are testable only on dataset D (question-order tables;
@@ -71,7 +74,8 @@ Unit of analysis: the decision row; subject-level clustering is respected in eve
   ordered pairs. Classical models use additive context effects on this split; B4 (Bayesian belief
   updater) is the natural rival. For analysis A the pre-registered CPC18 mapping of PLAN.md §6 is
   used verbatim (singles = one preceding trial, ordered pairs = two preceding trials); for analysis B
-  the split is by design (`PROLIFIC.md` §4).
+  the split is by design (`PROLIFIC.md` §2, "Split (b) of PLAN.md §6 is available within every
+  participant").
 * (c) held-out question order: train on tolerance-first items, test on scenario-first items and vice
   versa (within subject in analysis B, since order is assigned per item).
 * (d) temporal: train on wave 1, test on wave 2 and on the event wave (analysis B); for analysis A,
@@ -127,9 +131,17 @@ as count(best Q) ≤ count(best classical) by `count_params`.
      weighting across cells; CI by subject-level bootstrap.
    * Δ_order: for each of the 6 unordered context pairs, from the two ordered-pair conditions, pooled
      over loss levels; Holm correction over the 6 pairs.
-   * q: from the per-item joint (tolerance answer, sell answer): tolerance-first items give the
-     A→B order, scenario-first items the B→A order, with no other item intervening because both
-     answers belong to the same presentation; pooled over cells; also reported per loss level as
+   * q: from the per-item joint (tolerance answer, sell answer), both answers belonging to the same
+     presentation. The two sequences are not symmetric: tolerance-first items give the A→B order
+     with no intervening measurement (the scenario and delay pages are shown between the two
+     answers, but nothing is elicited); scenario-first items give the B→A order with the allocation
+     slider answered between the sell answer and the tolerance answer (`battery.json`
+     `design.question_orders`). The pre-registered QQ test therefore treats the scenario-first
+     sequence as the "intervening measurement" case, analogous to the `intervening_information`
+     flag of data/CATALOG.md dataset D, and reports both: q computed from the two sequences as
+     elicited (the primary statistic, with the asymmetry named next to it), and the two per-sequence
+     joint tables separately, so a reader can see how much of any departure from q = 0 sits in the
+     B→A cells that carry the intervening slider. Pooled over cells; also reported per loss level as
      secondary. Repeat presentations are excluded from the structural tests (originals only).
    * Analysis A: δ_LTP and q on dataset D (verified table only in reported results); Δ_order on the
      CPC18 analog.
@@ -142,7 +154,10 @@ as count(best Q) ≤ count(best classical) by `count_params`.
    per-investor model vs a covariates-only logistic; (b) wave-1 sell propensity, defined as each
    participant's model-implied mean P(sell) over the 85 loss × condition cells under the winning
    model, as a predictor of `outcome_behavior.action ∈ {sold, both}` vs {none, bought}, compared with
-   a covariates-only logistic by 10-fold cross-validated AUC; CIs by subject-level bootstrap.
+   a covariates-only logistic by 10-fold cross-validated AUC; CIs by subject-level bootstrap. Rows
+   with `outcome_behavior.action == no_investments` are excluded from H4(b), because neither class
+   applies when there was no position to sell, and are reported separately: their count, and the
+   distribution of their wave-1 sell propensity next to that of the two classes.
 8. Report: every result with its CI, the exclusion counts, the split file hash, the analysis-code
    commit, and the verdict sentence produced by the decision rule.
 
@@ -169,7 +184,8 @@ no correction across families (H1–H4 are reported separately, and only H3 is t
   remove the binary row; missing covariate bands ("prefer not to say" → null, `battery.json`
   `intake.covariate_null_rule`) are one-hot encoded with a missing indicator, not imputed.
 * Outliers: none removed beyond the pre-registered response-time floor; no trimming of sliders.
-* Pilot rows (`session_id = "pilot"`) are excluded from every confirmatory analysis.
+* Pilot rows (`session_id` starting with `"pilot:"`, i.e. `"pilot:<seed>"` as in `PROLIFIC.md`
+  §13) are excluded from every confirmatory analysis.
 
 ## 11. Stopping rule for data collection (analysis B)
 
@@ -186,8 +202,10 @@ no correction across families (H1–H4 are reported separately, and only H3 is t
   which cannot alter the target.
 * Wave 2 closes for each participant 28 days after their wave-1 completion, whatever the retention;
   no top-up recruitment for wave 2.
-* An event wave closes 72 hours after its launch; at most one per 30 days; whether one runs at all
-  depends on the trigger of `PROLIFIC.md` §6.3 and on a fresh owner approval.
+* An event wave closes 72 hours after its launch; the wave-1 cohort is invited to at most one event
+  wave (PLAN.md §9 burden cap: one intake, at most one scheduled wave 2, at most one event-triggered
+  wave, three sessions maximum per participant) and event-wave launches are at least 30 days apart;
+  whether one runs at all depends on the trigger of `PROLIFIC.md` §6.3 and on a fresh owner approval.
 * The pilot is 20 participants (design decision) and stops at 20 completions regardless of quality;
   its only outputs are T, e, the response-time floor and bugs.
 * Analysis A (public data) has no data collection; its "stopping rule" is that the dataset list of

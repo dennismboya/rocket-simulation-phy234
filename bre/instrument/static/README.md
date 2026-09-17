@@ -50,7 +50,10 @@ of them works if it:
 
 1. accepts a JSON body (`application/json`), not only URL-encoded form fields;
 2. allows cross-origin requests from your GitHub Pages origin (CORS);
-3. accepts a payload of roughly 30-60 KB (a full-form session, pretty-printed);
+3. accepts a payload of the size a session produces: in the recorded runs of
+   `../tests/drive_battery.mjs` the downloaded responses files measured about 41 KB for the full
+   form (42 rows) and about 15 KB for the short form (15 rows); the POST carries the same array,
+   plus the session log when `ENDPOINT_INCLUDE_SESSION_LOG` is on;
 4. lets you export the stored submissions as JSON or CSV;
 5. has a retention and privacy policy you are comfortable holding volunteer data under.
 
