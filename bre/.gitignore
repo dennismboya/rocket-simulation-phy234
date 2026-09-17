@@ -1,0 +1,17 @@
+# bre/.gitignore — data/raw is tracked (catalogued copies); processed, synthetic and run outputs
+# are rebuilt by `make data`, `make sim`, `make recover` etc. and never committed.
+.venv
+__pycache__/
+*.pyc
+.pytest_cache
+data/processed/*.parquet
+data/synthetic/*
+!data/synthetic/.gitkeep
+runs/*
+!runs/.gitkeep
+*.db
+.streamlit/secrets.toml
+node_modules
+# build artifacts of `pip install -e .`
+src/bre.egg-info/
+build/

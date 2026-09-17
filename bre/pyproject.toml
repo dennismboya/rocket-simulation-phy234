@@ -1,0 +1,75 @@
+# pyproject.toml — Behavioral Risk Engine (BRE). Src layout: the importable package is src/bre.
+# The top-level packages db/, api/ and app/ are project code, not part of the wheel; pytest and the
+# Makefile put the project root on sys.path so `import db` and `import api` work (see [tool.pytest]).
+# Versions are unpinned here on purpose; requirements.txt carries the exact pins (CLAUDE.md rule 5).
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bre"
+description = "Behavioral Risk Engine: quantum-probability and classical models of context-dependent financial risk decisions, with a scoring API and an advisor dashboard."
+readme = "README.md"
+requires-python = ">=3.11"
+dynamic = ["version"]
+dependencies = [
+    # numerics and data
+    "numpy",
+    "pandas",
+    "pyarrow",
+    "scipy",
+    "scikit-learn",
+    # optimizer-fitted models (Q1-Q5, B1, B3, B4, B6) and the hierarchical Bayesian baseline (B2)
+    "jax",
+    "jaxlib",
+    "optax",
+    "numpyro",
+    "arviz",
+    # storage, validation, service, dashboard
+    "sqlalchemy",
+    "pydantic",
+    "fastapi",
+    "uvicorn",
+    "httpx",
+    "streamlit",
+    # reporting
+    "matplotlib",
+    "tabulate",
+    "tqdm",
+    "requests",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-cov", "ruff"]
+# PLAN.md section 0: the dashboard's "Load current market" button uses yfinance; the feed is not
+# reachable from the build session, so the package is an extra rather than a core dependency.
+market = ["yfinance"]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+version = { attr = "bre.__version__" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# "src" makes `import bre` work without installing; "." (the bre/ project root) makes `import db`
+# and `import api` work.
+pythonpath = ["src", "."]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "."]
+extend-exclude = ["data", "runs", "instrument/vendor"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "W"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["bre", "db", "api", "app"]

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Investment decisions questionnaire</title>
+  <link rel="stylesheet" href="vendor/jspsych.css">
+  <style>
+    :root {
+      --bre-bg: #f6f7f9;
+      --bre-card: #ffffff;
+      --bre-ink: #1d2433;
+      --bre-muted: #5b6474;
+      --bre-line: #d9dee7;
+      --bre-accent: #1f4e79;
+      --bre-loss: #8a1c1c;
+    }
+    html, body { background: var(--bre-bg); color: var(--bre-ink); margin: 0; }
+    #jspsych-target { min-height: 100vh; }
+    .jspsych-content { max-width: 680px; text-align: left; font-size: 17px; line-height: 1.5; }
+    .jspsych-content-wrapper { padding: 16px; box-sizing: border-box; }
+    .bre-card {
+      background: var(--bre-card); border: 1px solid var(--bre-line); border-radius: 10px;
+      padding: 20px 22px; margin: 8px 0 18px 0;
+    }
+    .bre-kicker { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--bre-muted); margin-bottom: 8px; }
+    .bre-title { font-size: 22px; font-weight: 600; margin: 0 0 12px 0; }
+    .bre-loss { font-weight: 600; color: var(--bre-loss); }
+    .bre-lead { color: var(--bre-muted); margin-top: 14px; }
+    .bre-ctx { margin: 6px 0 0 0; padding-left: 12px; border-left: 3px solid var(--bre-accent); }
+    .bre-ctx-list { margin: 6px 0 0 0; padding-left: 22px; }
+    .bre-ctx-list li { margin-bottom: 8px; }
+    .bre-summary { font-size: 15px; color: var(--bre-muted); border: 1px dashed var(--bre-line); border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; }
+    .bre-summary .bre-loss { color: var(--bre-loss); }
+    .bre-question { font-size: 19px; font-weight: 600; margin: 8px 0 4px 0; }
+    .bre-hint { font-size: 14px; color: var(--bre-muted); }
+    .bre-field { margin: 14px 0 18px 0; }
+    .bre-field legend, .bre-field .bre-label { font-weight: 600; margin-bottom: 6px; display: block; }
+    .bre-field label.bre-opt { display: block; padding: 6px 0; cursor: pointer; }
+    .bre-field input[type=number] { font-size: 17px; padding: 6px 8px; width: 6em; }
+    .bre-likert { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .bre-likert label { display: inline-flex; flex-direction: column; align-items: center; padding: 6px 8px; border: 1px solid var(--bre-line); border-radius: 6px; cursor: pointer; min-width: 34px; }
+    .bre-likert .bre-anchor { font-size: 13px; color: var(--bre-muted); flex-basis: 100%; }
+    .bre-consent label { display: block; padding: 8px 0; }
+    .bre-consent input { margin-right: 8px; transform: scale(1.2); }
+    .jspsych-btn { font-size: 17px; padding: 10px 22px; border-radius: 8px; }
+    .bre-btn-stack .jspsych-btn { display: block; width: 100%; box-sizing: border-box; text-align: left; margin: 6px 0 !important; }
+    #jspsych-html-slider-response-wrapper { max-width: 100%; }
+    #jspsych-html-slider-response-response { width: 100%; }
+    .bre-done { text-align: left; }
+    .bre-done .bre-actions button { margin: 6px 8px 6px 0; }
+    .bre-status { font-size: 15px; margin: 8px 0; }
+    .bre-status.ok { color: #1a6b2a; }
+    .bre-status.err { color: var(--bre-loss); }
+    .bre-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; }
+    textarea.bre-json { width: 100%; height: 180px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+    .bre-error { background: #fdecec; border: 1px solid #e3a3a3; color: var(--bre-loss); padding: 12px 16px; border-radius: 8px; margin: 16px; }
+    @media (max-width: 480px) {
+      .jspsych-content { font-size: 16px; }
+      .bre-card { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="jspsych-target"></div>
+  <noscript><div class="bre-error">This questionnaire needs JavaScript to run.</div></noscript>
+
+  <!-- Vendored jsPsych 7.x (see vendor/VENDOR.md). Classic scripts so the page works from file:// too. -->
+  <script src="vendor/jspsych.js"></script>
+  <script src="vendor/plugin-html-button-response.js"></script>
+  <script src="vendor/plugin-html-slider-response.js"></script>
+  <script src="vendor/plugin-survey-html-form.js"></script>
+  <!-- Generated copy of ../battery.json (validate_battery.py --write-static). -->
+  <script src="battery.data.js"></script>
+  <script src="config.js"></script>
+  <script src="battery.js"></script>
+  <script>
+    window.addEventListener('error', function (e) {
+      var el = document.getElementById('jspsych-target');
+      if (el) { el.insertAdjacentHTML('afterbegin', '<div class="bre-error">Something went wrong: ' + String(e.message) + '</div>'); }
+    });
+    BRE.run();
+  </script>
+</body>
+</html>
