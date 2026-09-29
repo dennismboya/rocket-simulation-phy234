@@ -141,3 +141,26 @@ Phases 0–8 as planned; no long runs started yet.
 * 2026-09-29 16:12 UTC — DIAGNOSIS: each container restart coincides with the session going idle between check-ins (the container is reclaimed on inactivity and background runs die with it). Long runs are now kept alive by staying active in the session (Monitor waits) instead of scheduled check-ins.
 * 2026-09-29 16:50 UTC — Phase 4 assembled over all ten models; verdict published at reports/phase4/ (flat) and in REPORT.md and MODEL_CARD.md; grid N=100 (gq) running single-worker.
 * 2026-09-29 17:35 UTC — CAVEAT RESOLVED: the recovery grid was completed in per-N single-worker batches and merged (bre.recover_merge): 135 fits, 0 failed, 9/9 correct family at every N; N_target = 50. The 13:56 caveat about missing cells no longer applies. Model card, plain summary, DATA_GAPS and REPORT.md regenerated.
+
+## Definition of done — verified 2026-09-29
+
+| step | result |
+|---|---|
+| `make setup` | venv recreated from requirements.txt (`BRE_VENV` reuse documented) |
+| `make test` | 702 fast tests passed (`-m "not slow"`); slow recovery tests pass with `-m slow` |
+| `make data` | 8 validated tables, data/processed/README.md |
+| `make sim` | 15 synthetic tables (gq/gc/gf × 5 seeds, N=200) with truth files |
+| `make recover` | run in per-N single-worker batches and merged (reports/recovery): 135 fits, 0 failed, 9/9 at every N, N_target = 50 |
+| `make fit` | 10 synthetic fits on G_Q N=200 seed 0 (runs/make_fit.log, exit 0) |
+| `make eval` | 40 fits (10 models × 4 splits) on synthetic data (runs/make_eval.log, exit 0); its synthetic verdict is written under reports/eval, not at the real-data path |
+| `make dashboard` | API + Streamlit pages 1–7 on the demo DB; AppTest acceptance suite green |
+| `make report` | reports/REPORT.md regenerated with the real-data Phase 4 section |
+| transparency page | prints the pre-registered verdict verbatim: "no evidence of a quantum-probability advantage in the available data" |
+
+## What real data is missing and what each costs (summary; full table in reports/DATA_GAPS.md)
+
+* Intake battery pilot (20–50 volunteers, $0, owner time and an ethics decision) → pipeline validation only.
+* Prolific wave 1 at the N target of 50: $133.30 (academic) / $142.80 (corporate) for 10 minutes, $159.96 / $171.36 for 12 minutes, plus bonus and later waves (GATE: spending).
+* UAS, LISS/DNB: $0, registration by the owner (GATE) → RQ3.
+* FINRA NFCS, GPS, Robintrack, Psych-101, Wang 2014 SI: $0, owner downloads (hosts unreachable from the build session).
+* Splits (a) and (d) of the CPC18 protocol at full settings: 15–20 h of compute (GATE).
