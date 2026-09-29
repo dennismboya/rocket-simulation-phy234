@@ -88,6 +88,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+import pyarrow.parquet as pq
 import yaml
 
 from bre import schema as S
@@ -164,6 +165,68 @@ def read_frame(name: str) -> pd.DataFrame:
     return S.read_events(PROCESSED_DIR / spec["file"])
 
 
+def _pick_ids(ids: np.ndarray, n: int | None, seed: int) -> np.ndarray | None:
+    """The deterministic subject subsample rule (module docstring) on sorted unique ids; None
+    means every subject."""
+    ids = np.asarray(sorted(str(v) for v in ids), dtype=object)
+    if n is None or int(n) >= len(ids):
+        return None
+    if int(n) <= 0:
+        raise ValueError("subjects must be a positive integer")
+    rng = np.random.default_rng(int(seed))
+    return np.asarray(sorted(rng.choice(ids, size=int(n), replace=False).tolist()), dtype=object)
+
+
+def processed_subject_ids(name: str) -> np.ndarray:
+    """Sorted unique ``subject_id`` of a processed table (reads that column only)."""
+    spec = _check_name(name)
+    col = pq.read_table(PROCESSED_DIR / spec["file"], columns=["subject_id"]).column(0).to_pylist()
+    return np.asarray(sorted(set(str(v) for v in col)), dtype=object)
+
+
+def read_processed(name: str, subject_ids=None) -> pd.DataFrame:
+    """The processed table of ``name`` restricted to ``subject_ids`` through a parquet row filter
+    (only those rows are materialized; the full table is never in memory), cast to the schema
+    and validated like ``bre.schema.read_events``. ``subject_ids=None`` reads everything."""
+    spec = _check_name(name)
+    path = PROCESSED_DIR / spec["file"]
+    if subject_ids is None:
+        return S.read_events(path)
+    table = pq.read_table(path, filters=[("subject_id", "in", [str(v) for v in subject_ids])])
+    if table.schema.names != S.COLUMNS:
+        raise S.SchemaError(f"{path.name}: columns do not match the schema")
+    df = S.table_to_frame(table.cast(S.ARROW_SCHEMA))
+    S.validate_frame(df, expect_synthetic=False, strict=True)
+    return df
+
+
+def derive_pairs_tags(singles: pd.DataFrame) -> pd.DataFrame:
+    """The CPC18 pairs variant from the singles rows: the loader's ``pairs=True`` writes the
+    experienced-outcome tag of trial ``t-2`` (only if that payoff was shown) before the tag of
+    ``t-1``; the singles tag of the preceding row of the same subject and problem (``position -
+    1``) is exactly that tag, so ``context_tags = [tag(row t-1), tag(row t), feedback, block]``
+    with absent tags skipped. Rows are ordered by ``(subject_id, position_in_session)``; the
+    equality with ``bre.loaders.cpc18.load_cpc18(pairs=True)`` is tested on a subsample."""
+    df = singles.sort_values(["subject_id", "position_in_session"], kind="stable").reset_index(drop=True)
+    subj = df["subject_id"].astype(str).to_numpy()
+    scen = df["scenario_id"].astype(str).to_numpy()
+    pos = df["position_in_session"].to_numpy()
+    tags = _tags(df)
+    own = [next((t for t in tt if t.startswith("exp:")), None) for tt in tags]
+    prev_same = np.concatenate([[False], (subj[1:] == subj[:-1]) & (scen[1:] == scen[:-1]) & (pos[1:] == pos[:-1] + 1)])
+    new_tags: list[list[str]] = []
+    for i, tt in enumerate(tags):
+        t: list[str] = []
+        if prev_same[i] and own[i - 1] is not None:
+            t.append(own[i - 1])
+        if own[i] is not None:
+            t.append(own[i])
+        t.extend(x for x in tt if not x.startswith("exp:"))
+        new_tags.append(t)
+    df["context_tags"] = new_tags
+    return df
+
+
 def _cache_path(stem: str, subjects: int | None, seed: int) -> Path:
     return CACHE_DIR / f"{stem}-n{'all' if subjects is None else int(subjects)}-seed{int(seed)}.parquet"
 
@@ -178,10 +241,15 @@ def assembled_frame(name: str, subjects: int | None = None, seed: int = 0, *, ca
     path = _cache_path(name, subjects, seed)
     if cache and path.exists():
         return S.read_events(path)
-    frame = subsample_subjects(assemble_frame(name, read_frame(name)), subjects, seed)
+    if name in ("cpc18", "cpc18_pairs"):
+        ids = _pick_ids(processed_subject_ids("cpc18"), subjects, seed)
+        base = read_processed("cpc18", ids)
+        frame = assemble_frame(name, derive_pairs_tags(base) if name == "cpc18_pairs" else base)
+    else:
+        frame = subsample_subjects(assemble_frame(name, read_frame(name)), subjects, seed)
     if cache:
         S.write_events(frame, path)
-        read_frame.cache_clear()  # release the full table; later calls with this key read the parquet
+        read_frame.cache_clear()  # release any full table; later calls with this key read the parquet
     return frame
 
 
@@ -279,16 +347,10 @@ def assemble_frame(name: str, frame: pd.DataFrame) -> pd.DataFrame:
 def subsample_subjects(frame: pd.DataFrame, n: int | None, seed: int = 0) -> pd.DataFrame:
     """Deterministic subject subsample (module docstring); the whole frame when ``n`` is None or
     not smaller than the number of subjects. Index reset."""
-    if n is None:
+    pick = _pick_ids(frame["subject_id"].astype(str).unique(), n, seed)
+    if pick is None:
         return frame.reset_index(drop=True)
-    ids = np.asarray(sorted(frame["subject_id"].astype(str).unique()), dtype=object)
-    if int(n) >= len(ids):
-        return frame.reset_index(drop=True)
-    if int(n) <= 0:
-        raise ValueError("subjects must be a positive integer")
-    rng = np.random.default_rng(int(seed))
-    pick = set(rng.choice(ids, size=int(n), replace=False).tolist())
-    keep = frame["subject_id"].astype(str).isin(pick).to_numpy()
+    keep = frame["subject_id"].astype(str).isin(set(pick.tolist())).to_numpy()
     return frame.loc[keep].reset_index(drop=True)
 
 
@@ -380,7 +442,7 @@ def aggregate_cpc18_by_problem(subjects: int | None = None, seed: int = 0) -> pd
     path = _cache_path("cpc18_agg", subjects, seed)
     if path.exists():
         return S.read_events(path)
-    frame = subsample_subjects(read_frame("cpc18"), subjects, seed)
+    frame = read_processed("cpc18", _pick_ids(processed_subject_ids("cpc18"), subjects, seed))
     tags = _tags(frame)
     fb = [next(t for t in tt if t.startswith("feedback:")) for tt in tags]
     block = [next(t for t in tt if t.startswith("block:")) for tt in tags]
@@ -409,7 +471,6 @@ def aggregate_cpc18_by_problem(subjects: int | None = None, seed: int = 0) -> pd
         n,
     )
     S.write_events(out, path)
-    read_frame.cache_clear()
     return out
 
 
@@ -839,6 +900,9 @@ __all__ = [
     "aggregate_cpc18_by_problem",
     "assemble_frame",
     "assembled_frame",
+    "derive_pairs_tags",
+    "processed_subject_ids",
+    "read_processed",
     "collapse_to_single_subject",
     "cpc15_worst_outcome_rel",
     "cpc18_worst_outcome_rel",

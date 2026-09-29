@@ -57,6 +57,23 @@ def test_load_real_cpc18_pairs_subsample_validates_and_builds(cpc18_pairs_20):
     assert all(s.startswith("cpc18/") for s in data.subject_ids)  # subject_key = dataset/subject_id
 
 
+def test_derived_pairs_tags_equal_the_loader_on_a_subsample():
+    """``bre.realdata`` derives the pairs variant from the processed singles rows (a pushed-down
+    parquet filter keeps the memory small); it must equal ``load_cpc18(pairs=True)``."""
+    from bre.loaders import cpc18 as L
+
+    ref = L.load_cpc18(pairs=True, subjects=6)  # the first six subjects in file order
+    ids = sorted(ref["subject_id"].astype(str).unique())
+    mine = R.derive_pairs_tags(R.read_processed("cpc18", ids))
+    a = ref.sort_values(["subject_id", "position_in_session"], kind="stable").reset_index(drop=True)
+    b = mine.sort_values(["subject_id", "position_in_session"], kind="stable").reset_index(drop=True)
+    assert len(a) == len(b) > 0
+    assert all(list(x) == list(y) for x, y in zip(a["context_tags"], b["context_tags"]))
+    assert np.allclose(a["loss_pct"].astype(float).fillna(9.0), b["loss_pct"].astype(float).fillna(9.0))
+    assert np.array_equal(a["response"].to_numpy(), b["response"].to_numpy())
+    assert np.array_equal(a["scenario_id"].astype(str).to_numpy(), b["scenario_id"].astype(str).to_numpy())
+
+
 def test_load_real_aggregate_and_psych201_tables():
     frame, data = R.load_real("choices13k", subjects=300, seed=0, single_subject=True)
     assert data.n == 300 and data.n_subjects == 1 and set(data.summary()["row_kinds"]) == {"rate"}
