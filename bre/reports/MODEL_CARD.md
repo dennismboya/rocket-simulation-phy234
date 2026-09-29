@@ -81,55 +81,6 @@ predicted `P(sell)` per loss level is 0.337, 0.345, 0.361, 0.382, 0.438 at losse
 −0.15, −0.20, −0.30 (`mean_p_sell_by_loss`). This is a diagnostic of the served model, not a test
 of any data (see §9, loss-response caveat).
 
-## 5. Real-data evaluation (Phase 4) — NOT COMPLETED
-
-The pre-registered evaluation of `PLAN.md` §6 on real data has **not** completed. State as of
-this card:
-
-* `STATUS.md` (phase table): Phase 4 "in progress".
-* `runs/phase4/cpc18-pairs/phase4.log` (2026-09-29T13:48:46Z): the full CPC18 run
-  (`experiments/p4-cpc18-full.yaml`, `name: cpc18-pairs`, all 686 subjects, 10 models, splits a/b/d;
-  split (c) recorded as not applicable because no real dataset in hand manipulates question
-  order) is estimated at 2429 min with 4 workers — over the two-hour GATE of CLAUDE.md rule 4 —
-  and no fit line follows the estimate in that log. `reports/phase4/cpc18-pairs/` is empty.
-* `reports/phase4/README.md` (runtime budget): the whole ten-model run is of the order of 60–80 h
-  sequential, 15–20 h with four workers; it must be split into GATE-sized invocations.
-
-**This section is to be filled, verbatim and by code, from** `reports/phase4/cpc18-pairs/verdict.json`
-(fields `verdict`, `best_quantum`, `best_classical`, `nll_diff`, `ci95`, `interference_ci`,
-`n_params_q`, `n_params_c`) **and** `reports/phase4/cpc18-pairs/table.md` (per-split model tables with
-parameter counts), with `structural.md` and `verdict.md` beside them; the secondary dataset writes
-the same files under `reports/phase4/psych201-spektor2024/` (splits (a) and (d) only; the
-positive verdict is not reachable there, `experiments/p4-psych201-spektor2024.yaml`). Until those
-files exist the dashboard's transparency page shows "Decision rule not yet run: no real-data
-numbers are shown" and no Phase 4 table (`app/pages/6_Transparency.py`). No real-data metric is
-quoted here for the same reason.
-
-**Decision rule** (verbatim, `PLAN.md` §6; the same text is `DECISION_RULE_TEXT` in
-`src/bre/eval.py` and is printed on the transparency page):
-
-> "Q-model supported" only if, on real data, the best Q-model beats the best classical baseline on
-> split (b) by held-out NLL with a bootstrap 95% CI excluding zero, at matched or lower parameter
-> count, and the interference-term CI excludes zero. Otherwise the conclusion is "no evidence of a
-> quantum-probability advantage in the available data", and the report names the data that would
-> resolve it. The dashboard serves whichever model wins on held-out NLL; if that is a classical
-> model, the screen says so.
-
-(The phrase "quantum-probability advantage" is the owner's verbatim wording and is kept only inside
-this quotation, `PLAN.md` §9.) Implementation notes from `src/bre/eval.py::decision_rule`: the
-NLL comparison is a paired subject-level bootstrap; "matched or lower" means the Q-model's count is
-less than or equal to the classical count; a missing or NaN interference interval does **not**
-exclude zero; on synthetic data the positive verdict is never issued.
-
-**What the real data in hand can and cannot test.** The pre-registered split (b) mapping uses
-CPC18 (`PLAN.md` §6): response = retreat to the safer option, context = sign of the experienced
-outcome on the preceding one or two trials. It is an analog of panic selling, not panic selling,
-and it has no tolerance question, so the `delta_LTP` interval on that table is a model-internal
-counterfactual (`reports/phase4/README.md`). Real within-subject data with ordered context pairs
-and both question orders on the shared design exist only through the intake battery
-(`instrument/`), which has collected no sessions yet (`data/processed/README.md`: `intake_battery`
-0 rows).
-
 ## 6. Evaluation data
 
 * No held-out evaluation of `demo-q4-v2` exists (`artifact.json`, `metrics.held_out: null`).
@@ -243,3 +194,30 @@ and both question orders on the shared design exist only through the intake batt
    `reports/phase4/cpc18-pairs/verdict.json` exists and the verdict is copied here unchanged; if the
    verdict is negative, this card and the transparency page must say so (CLAUDE.md rule 6). The
    data that would resolve the question and their cost are listed in `reports/DATA_GAPS.md`.
+
+## Real-data evaluation (Phase 4) — COMPLETED 2026-09-29
+
+Generated from `reports/phase4/cpc18-pairs/verdict.json` and `table.md` (pre-registered split (b) on CPC18 pairs, real data, 686 subjects, 40,860 train / 367,740 test rows).
+
+**Verdict (verbatim):** no evidence of a quantum-probability advantage in the available data
+
+* Best classical model: B6 (held-out NLL 0.5374, 58 parameters); best quantum-probability model: Q4 (NLL 0.6672, 3546 parameters).
+* NLL difference (quantum minus classical): 0.1298, bootstrap 95% CI [0.1262, 0.1334]; interference-term 95% CI [-0.1382, 0.0379].
+* Failed conditions of the rule: beats_best_classical_nll_ci_excludes_zero, param_count_matched_or_lower, interference_ci_excludes_zero.
+* Model the rule designates for serving on this data: B6 (classical). The model served in demo mode remains `demo-q4-v2`, trained on synthetic data for demonstration; no real-data-validated model exists for the product question, and the transparency page says so.
+* CPC18 is an analog (retreat to the lower-variance option after experienced outcomes in a lab lottery task), not panic selling; the data that would resolve the question is the intake battery / Prolific design (see `reports/DATA_GAPS.md`).
+
+Split (b) table (all models, from `table.md`):
+
+| model | family | n_params | NLL | NLL CI95 | Brier | AUC |
+|---|---|---:|---|---|---|---|
+| B6 | classical | 58 | 0.5374 | [0.5331, 0.5415] | 0.1750 | 0.8668 |
+| B5 | classical | 3005 | 0.6291 | [0.6263, 0.6319] | 0.2189 | 0.7194 |
+| Q4 | quantum | 3546 | 0.6672 | [0.6638, 0.6706] | 0.2375 | 0.6258 |
+| B2 | classical | 4841 | 0.6736 | [0.6697, 0.6776] | 0.2403 | 0.6218 |
+| B1 | classical | 93 | 0.6830 | [0.6814, 0.6848] | 0.2450 | 0.5707 |
+| Q5 | quantum | 721 | 0.6833 | [0.6803, 0.6862] | 0.2450 | 0.6074 |
+| Q3 | quantum | 2848 | 0.6844 | [0.6814, 0.6875] | 0.2455 | 0.5880 |
+| B4 | classical | 720 | 0.6963 | [0.6940, 0.6987] | 0.2494 | 0.5710 |
+| B3 | classical | 2145 | 0.7012 | [0.6970, 0.7058] | 0.2496 | 0.6039 |
+| Q2 | quantum | 2858 | 0.7157 | [0.7106, 0.7207] | 0.2586 | 0.5987 |

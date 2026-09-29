@@ -1,15 +1,19 @@
 # Source files of `reports/REPORT.md`
 
-Generated 2026-09-29T14:20:57+00:00 by `python -m bre.report`. Every file read while assembling the report, with its modification time (UTC), size and sha256; the report contains no number that is not in one of these files.
+Generated 2026-09-29T16:46:35+00:00 by `python -m bre.report`. Every file read while assembling the report, with its modification time (UTC), size and sha256; the report contains no number that is not in one of these files.
 
 | file | modified (UTC) | bytes | sha256 |
 |---|---|---|---|
 | `PLAN.md` | 2026-09-17T13:32:39+00:00 | 16065 | 178a2ae18c68fb03601753d96bfe5070a210e0561d9a7fbaf4511024c280a31f |
-| `STATUS.md` | 2026-09-29T14:17:41+00:00 | 12040 | 4bbd4481a7c15aeff743a8a2631d09b05411c21693360341d6de00a6587310b6 |
+| `STATUS.md` | 2026-09-29T16:12:12+00:00 | 13535 | 5d2fc98b938466daaceac41cfb64850f5b41c6393e8dd00271ee6a592107d8db |
 | `data/DATA_MAP.md` | 2026-09-17T03:24:47+00:00 | 2140 | e9d608f1133b868578a0398a71661bdfb1367eeaa02c059c05da71f408dbb151 |
 | `data/processed/README.md` | 2026-09-17T14:13:16+00:00 | 5096 | 49fadb7f6582b372d69fc09c7c02b378af4b0fa6cf8b0708a9f2ae8bdca37312 |
 | `reports/DATA_GAPS.md` | 2026-09-29T14:15:15+00:00 | 10912 | b7a560e158dfa450d1ef14c3a6f75e04c35e366f4c55b28430c9dc925f975c48 |
-| `reports/profiles_synthetic.json` | 2026-09-29T14:20:57+00:00 | 53870 | fe24f4c1d21499e88324e4a1e30f94edf77b0c59a3834f17a0b7762a61694d37 |
+| `reports/phase4/cpc18-pairs/structural.md` | 2026-09-29T16:45:40+00:00 | 3247 | 9a6c57e64b643bd27410ffefed57773222ebfb2f4deb7e21abd71f2fe71cf13b |
+| `reports/phase4/cpc18-pairs/table.md` | 2026-09-29T16:45:40+00:00 | 2614 | bd07b190d36eb7cb090fc19324032cd1c4a9fb58babba5786908fe102a879eba |
+| `reports/phase4/cpc18-pairs/verdict.json` | 2026-09-29T16:45:40+00:00 | 1568 | 6c7fb4e28628ca56df4a86608088adac99dbbb053da3c09cc9afe229e6d7d4f7 |
+| `reports/phase4/cpc18-pairs/verdict.md` | 2026-09-29T16:45:40+00:00 | 2208 | bdbb7fc6310aeb58870e70fd88759c10f6e892f0d9693291b5599dae908b98bb |
+| `reports/profiles_synthetic.json` | 2026-09-29T16:46:35+00:00 | 53870 | 6aa928023cec4b9c8962538bdff92be53672e1e2d596b36d468d1be131c395ca |
 | `reports/q1_qq_equality.md` | 2026-09-17T13:57:25+00:00 | 9644 | 4712687be34333bc8007e7e698488a77acc533c5f66ddb55f982d9bb97d4deb1 |
 | `reports/recovery/summary.md` | 2026-09-29T13:43:13+00:00 | 15916 | 498248ab567c1206222a6054ce2bc870a87b8c4464ad856fab2b78d0091a9240 |
 | `reports/transfer/A_to_B.md` | 2026-09-29T13:57:35+00:00 | 4715 | f8bc828b4996514b75df8a29aef8ab3dc8f82f561f56d2028745e4b4b1683dc6 |
