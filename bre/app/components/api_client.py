@@ -11,13 +11,18 @@ Base URL: ``st.session_state["api_base_url"]``, else ``$BRE_API_URL``, else
 
 Endpoints used: ``GET /health``, ``GET /model``, ``GET /clients``, ``GET /interventions``,
 ``GET /market``, ``GET /openapi.json`` (enums and route probing), ``POST /score_book``,
-``POST /predict``, ``POST /profile``, ``POST /interventions/rank``.
+``POST /predict``, ``POST /profile``, ``POST /interventions/rank``, and the Phase 6 endpoints
+(pages 4-7): ``GET/PUT /settings``, ``GET/POST /contexts``, ``GET/POST /scenarios``,
+``PUT /interventions``, ``GET /interventions/versions``, ``GET /intake/config``,
+``POST /clients/{client_id}/responses``, ``POST /intake/upload``,
+``GET /clients/{client_id}/responses``, ``GET /clients/{client_id}/export``,
+``DELETE /clients/{client_id}``, ``GET /model/registry``, ``POST /model/activate``,
+``GET /transparency``, ``POST /retrain``.
 
-Missing endpoints (probed through ``/openapi.json`` so they are picked up automatically when
-the service grows them): a per-client response history (``GET /clients/{client_id}/responses``)
-falls back to a **read-only** SQLite read of the database the service reports in ``/health``;
-client status and intervention logging have no endpoint and live in the session store
-(:mod:`components.store`).
+The per-client response history is probed through ``/openapi.json``: when the route is absent
+(an older service) the client falls back to a **read-only** SQLite read of the database the
+service reports in ``/health``. Client contact status and the intervention log still live in
+the session store (:mod:`components.store`).
 """
 
 from __future__ import annotations
@@ -72,10 +77,20 @@ def _format_detail(detail: Any) -> str:
     return str(detail)
 
 
-def _request(method: str, path: str, base: str, json_body: Any = None) -> Any:
+def admin_headers() -> dict[str, str]:
+    """``X-BRE-Admin: 1`` when this dashboard process runs with ``BRE_ADMIN=1`` (the API accepts
+    the header as its admin flag; see api/phase6.py — a local convenience, not authentication)."""
+    return {"X-BRE-Admin": "1"} if os.environ.get("BRE_ADMIN", "").strip() == "1" else {}
+
+
+def is_admin() -> bool:
+    return bool(admin_headers())
+
+
+def _request(method: str, path: str, base: str, json_body: Any = None, *, headers: dict[str, str] | None = None, files: Any = None, data: Any = None, params: Any = None) -> Any:
     try:
         with httpx.Client(base_url=base, timeout=TIMEOUT_S) as c:
-            r = c.request(method, path, json=json_body)
+            r = c.request(method, path, json=json_body, headers=headers, files=files, data=data, params=params)
     except httpx.HTTPError as exc:
         raise ApiError(f"cannot reach the BRE API at {base} ({type(exc).__name__}: {exc}). Start it with `make api` or `make dashboard`.") from exc
     if r.status_code >= 400:
@@ -236,7 +251,109 @@ def client_responses(base: str, client_id: str) -> tuple[list[dict[str, Any]], s
     return out, SOURCE_DB_READONLY
 
 
+# ---------------------------------------------------------------------------------------------
+# Phase 6 endpoints (pages 4-7): settings, editor documents, intake, registry, transparency
+# ---------------------------------------------------------------------------------------------
+
+
+def clear_caches() -> None:
+    """After a write that changes what the cached reads return (settings, activation, retrain,
+    contexts, deletes)."""
+    st.cache_data.clear()
+
+
+def get_settings(base: str) -> dict[str, Any]:
+    return _request("GET", "/settings", base)
+
+
+def put_settings(base: str, patch: dict[str, Any]) -> dict[str, Any]:
+    out = _request("PUT", "/settings", base, patch)
+    clear_caches()
+    return out
+
+
+def contexts(base: str) -> list[dict[str, Any]]:
+    return _request("GET", "/contexts", base)
+
+
+def post_context(base: str, body: dict[str, Any]) -> dict[str, Any]:
+    out = _request("POST", "/contexts", base, body)
+    clear_caches()
+    return out
+
+
+def scenarios(base: str, history: bool = False) -> dict[str, Any]:
+    return _request("GET", "/scenarios", base, params={"history": "true"} if history else None)
+
+
+def post_scenario(base: str, key: str, text: str, note: str | None = None) -> dict[str, Any]:
+    return _request("POST", "/scenarios", base, {"key": key, "text": text, "note": note})
+
+
+def interventions_versions(base: str, history: bool = False) -> list[dict[str, Any]]:
+    return _request("GET", "/interventions/versions", base, params={"history": "true"} if history else None)
+
+
+def put_intervention(base: str, body: dict[str, Any]) -> dict[str, Any]:
+    out = _request("PUT", "/interventions", base, body)
+    clear_caches()
+    return out
+
+
+@st.cache_data(ttl=CACHE_TTL_S, show_spinner=False)
+def intake_config(base: str) -> dict[str, Any]:
+    return _request("GET", "/intake/config", base)
+
+
+def post_responses(base: str, client_id: str, rows: list[dict[str, Any]], assignment: dict[str, Any], session: dict[str, Any], display_label: str | None = None) -> dict[str, Any]:
+    out = _request("POST", f"/clients/{client_id}/responses", base, {"rows": rows, "assignment": assignment, "session": session, "display_label": display_label})
+    clear_caches()
+    return out
+
+
+def upload_intake(base: str, client_id: str, filename: str, content: bytes, *, store_as_synthetic: bool = False, display_label: str | None = None) -> dict[str, Any]:
+    data = {"client_id": client_id, "store_as_synthetic": "true" if store_as_synthetic else "false"}
+    if display_label:
+        data["display_label"] = display_label
+    out = _request("POST", "/intake/upload", base, files={"file": (filename, content, "application/json")}, data=data)
+    clear_caches()
+    return out
+
+
+def registry(base: str) -> dict[str, Any]:
+    return _request("GET", "/model/registry", base, headers=admin_headers())
+
+
+def activate(base: str, version: str) -> dict[str, Any]:
+    out = _request("POST", "/model/activate", base, {"version": version}, headers=admin_headers())
+    clear_caches()
+    return out
+
+
+def transparency(base: str) -> dict[str, Any]:
+    return _request("GET", "/transparency", base)
+
+
+def retrain(base: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
+    out = _request("POST", "/retrain", base, body or {})
+    clear_caches()
+    return out
+
+
+def export_client(base: str, client_id: str) -> dict[str, Any]:
+    return _request("GET", f"/clients/{client_id}/export", base)
+
+
+def delete_client(base: str, client_id: str) -> dict[str, Any]:
+    out = _request("DELETE", f"/clients/{client_id}", base)
+    clear_caches()
+    return out
+
+
 __all__ = [
-    "ApiError", "base_url", "client_payload", "client_responses", "clients", "dumps", "enum_values", "has_path",
-    "health", "interventions", "market", "model_info", "openapi", "predict", "profile", "rank_interventions", "score_book",
+    "ApiError", "activate", "admin_headers", "base_url", "clear_caches", "client_payload", "client_responses", "clients", "contexts",
+    "delete_client", "dumps", "enum_values", "export_client", "get_settings", "has_path", "health", "intake_config", "interventions",
+    "interventions_versions", "is_admin", "market", "model_info", "openapi", "post_context", "post_responses", "post_scenario", "predict",
+    "profile", "put_intervention", "put_settings", "rank_interventions", "registry", "retrain", "scenarios", "score_book", "transparency",
+    "upload_intake",
 ]

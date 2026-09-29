@@ -28,7 +28,7 @@ except api.ApiError as exc:
     chrome.stop_on_error(exc)
 
 payload = market_bar.render(model)
-target = float(st.session_state.setdefault("capacity_target", 0.25))
+target = chrome.capacity_target(base)
 try:
     scored = api.score_book(base, api.dumps(api.client_payload(book)), api.dumps(payload), target)
 except api.ApiError as exc:
@@ -79,7 +79,7 @@ COLUMN_CONFIG = {
 # ---------------------------------------------------------------------------------------------
 
 if "alert_threshold" not in st.session_state:
-    st.session_state["alert_threshold"] = float(meta["status_thresholds"]["high"])
+    st.session_state["alert_threshold"] = float((st.session_state.get("settings") or {}).get("alert_threshold", meta["status_thresholds"]["high"]))
 threshold = float(st.number_input(f"Alert threshold ({chrome.WORDING})", min_value=0.0, max_value=1.0, step=0.05, format="%.2f", key="alert_threshold"))
 n_above = int((frame["p_sell"] >= threshold).sum())
 alert = f"{n_above} clients above threshold {threshold:.2f} ({chrome.WORDING} ≥ {threshold:.2f}, point prediction; intervals in the table)"

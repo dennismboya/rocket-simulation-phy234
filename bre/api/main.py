@@ -23,6 +23,14 @@ Endpoints
 * ``POST /interventions/rank`` — interventions ranked by predicted change in P(sell), labelled
   "predicted effect, not causally validated".
 
+Phase 6 endpoints (``api/phase6.py``, mounted here): ``GET/PUT /settings``, ``GET/POST /contexts``,
+``GET/POST /scenarios``, ``PUT /interventions`` and ``GET /interventions/versions``,
+``POST /clients/{client_id}/responses``, ``POST /intake/upload``, ``GET /intake/config``,
+``GET /clients/{client_id}/responses``, ``GET /clients/{client_id}/export``,
+``DELETE /clients/{client_id}``, ``GET /model/registry``, ``POST /model/activate`` (admin),
+``GET /transparency``, ``POST /retrain``. ``demo_mode`` is also forced on by the ``demo_mode``
+setting; it can never be switched off while the data is synthetic.
+
 Every prediction shown is written to ``predictions_log`` (under the request's ``client_id``,
 created on first use, or the anonymous API client / the batch client for uploads) and
 ``audit_log``. Input validation errors return 422 with the field names. Every response derived
@@ -58,6 +66,7 @@ from sqlalchemy import func, select
 from sqlalchemy.engine import Engine
 
 from api import schemas as Sch
+from api import store
 from bre import __version__ as bre_version
 from bre import predict as P
 from bre import schema as S
@@ -164,15 +173,39 @@ class ServiceState:
         self.warmup: dict[str, float] = {}
         self.seed_summary: dict[str, Any] | None = None
         self._loss_response: tuple[tuple[str, ...], dict[str, Any]] | None = None
+        self.settings: dict[str, Any] = dict(store.DEFAULT_SETTINGS)
+        self._calibration_plot: tuple[str, Any] | None = None
 
     @property
-    def demo_mode(self) -> bool:
+    def demo_mode_from_data(self) -> bool:
+        """Demo mode forced by the data: a synthetic-training model or a database under
+        ``data/synthetic`` (CLAUDE.md rule 3; the settings toggle cannot switch this off)."""
         if self.artifact is not None and bool(self.artifact.is_synthetic_training):
             return True
         if self.engine is not None:
             p = sqlite_file_path(self.engine)
             return p is not None and S.is_synthetic_path(p)
         return True
+
+    @property
+    def demo_mode(self) -> bool:
+        """``demo_mode_from_data`` or the ``demo_mode`` setting (``GET /settings``)."""
+        return self.demo_mode_from_data or bool(self.settings.get("demo_mode", False))
+
+    def reload_settings(self) -> dict[str, Any]:
+        if self.engine is None:
+            return self.settings
+        with session_scope(self.engine) as s:
+            self.settings = store.get_settings(s)
+        return self.settings
+
+    def swap_artifact(self, artifact: Any) -> None:
+        """Serve another artifact (activation, promotion): registry row, caches, warm-up of the
+        single-row passes."""
+        self.artifact = artifact
+        self.registry_row = P.active_registry_row(self.engine) if self.engine is not None else None
+        self._loss_response = None
+        self._calibration_plot = None
 
     @property
     def db_label(self) -> str:
@@ -190,10 +223,13 @@ def build_state(db_url: str | None = None, *, autoseed: bool | None = None, warm
     state = ServiceState()
     state.engine = get_engine(db_url or default_db_url())
     init_db(state.engine)
+    store.ensure_tables(state.engine)  # the dashboard's versioned documents (api.store), migration-free
     with session_scope(state.engine) as s:
         for cid, label in ((ANON_CLIENT_ID, "Anonymous API requests"), (BATCH_CLIENT_ID, "Batch scoring rows of unregistered clients")):
             if s.get(Client, cid) is None:
                 s.add(Client(client_id=cid, display_label=label, covariates="{}"))
+        store.seed_documents(s)
+    state.reload_settings()
     row = P.active_registry_row(state.engine)
     autoseed = _env_flag("BRE_API_AUTOSEED") if autoseed is None else autoseed
     if row is None and autoseed:
@@ -470,7 +506,9 @@ def profile(req: Sch.ProfileRequest, request: Request) -> Any:
 def _score(st: ServiceState, clients: list[Sch.ClientIn], market_state: Sch.MarketState, target: float, register_unknown: bool) -> Sch.ScoreBookResponse:
     t0 = time.time()
     frame = pd.DataFrame([{"client_id": c.client_id, "display_label": c.display_label, "covariates": c.covariates.record()} for c in clients])
-    table = P.score_book(st.artifact, frame, market_state.model_dump(), _interventions(st), target=target)
+    crisis = [t for t in (st.settings.get("typical_crisis_contexts") or P.TYPICAL_CRISIS_CONTEXTS) if t in st.artifact.ctx_vocab]
+    table = P.score_book(st.artifact, frame, market_state.model_dump(), _interventions(st), target=target,
+                         crisis_contexts=crisis, status_thresholds=st.settings.get("status_thresholds"))
     seconds = time.time() - t0
     rows = [_clean_row(r) for r in table.to_dict(orient="records")]
     ms = market_state.model_dump()
@@ -489,7 +527,8 @@ def _score(st: ServiceState, clients: list[Sch.ClientIn], market_state: Sch.Mark
     return Sch.ScoreBookResponse(
         **_served(st), rows=[Sch.ScoreRow(**r) for r in rows], scenario=attrs["scenario"], n_calibration=attrs["n_calibration"],
         meta={"target": target, "interval": attrs["interval"], "intervention_label": attrs["intervention_label"], "capacity_definition": attrs["capacity_definition"],
-              "n_clients": len(rows), "seconds": seconds, "status_thresholds": P.STATUS_THRESHOLDS},
+              "n_clients": len(rows), "seconds": seconds, "status_thresholds": attrs.get("status_thresholds", P.STATUS_THRESHOLDS),
+              "crisis_contexts": attrs.get("crisis_contexts", list(P.TYPICAL_CRISIS_CONTEXTS))},
     )
 
 
@@ -564,6 +603,12 @@ async def _validation(request: Request, exc: RequestValidationError) -> JSONResp
     """Default 422 shape, kept explicit so the contract is visible in this file (``loc`` names
     the field; ``ctx`` carries the validator message, never a raw exception object)."""
     return JSONResponse(status_code=422, content={"detail": _clean_errors(exc.errors())})
+
+
+# Phase 6 endpoints (settings, editor documents, intake, registry, transparency, retrain, export/delete)
+from api import phase6 as _phase6  # noqa: E402 - after the app and its helpers exist
+
+app.include_router(_phase6.router)
 
 
 __all__ = ["ANON_CLIENT_ID", "BATCH_CLIENT_ID", "CATALOG_MATCH_RULE", "DECISION_RULE", "ServiceState", "app", "build_state", "catalog_entries", "catalog_entries_used", "dataset_ids_of_refs", "default_db_url", "loss_response"]

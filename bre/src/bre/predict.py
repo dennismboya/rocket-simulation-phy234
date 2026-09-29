@@ -634,10 +634,11 @@ def calibration_of(artifact: ModelArtifact, tags: tuple[str, ...]) -> dict[str, 
     return out
 
 
-def _status(p: float, calibration: dict[str, dict[str, Any]]) -> str:
-    if p >= STATUS_THRESHOLDS["high"]:
+def _status(p: float, calibration: dict[str, dict[str, Any]], thresholds: dict[str, float] | None = None) -> str:
+    th = STATUS_THRESHOLDS if thresholds is None else {**STATUS_THRESHOLDS, **thresholds}
+    if p >= th["high"]:
         s = "high"
-    elif p >= STATUS_THRESHOLDS["elevated"]:
+    elif p >= th["elevated"]:
         s = "elevated"
     else:
         s = "stable"
@@ -1331,9 +1332,16 @@ def score_book(
     interventions: Any = None,
     *,
     target: float = DRAWDOWN_TARGET,
+    crisis_contexts: tuple[str, ...] | list[str] | None = None,
+    status_thresholds: dict[str, float] | None = None,
 ) -> pd.DataFrame:
     """Triage table of a client book under one market state (one vectorized forward pass over
     every client and counterfactual, one draw pass over the main rows).
+
+    ``crisis_contexts`` (default :data:`TYPICAL_CRISIS_CONTEXTS`) is the ordered context sequence
+    of the drawdown capacity and ``status_thresholds`` (default :data:`STATUS_THRESHOLDS`) the
+    ``elevated`` / ``high`` boundaries of ``status``; both are the dashboard's editable settings
+    (``GET /settings``) and are echoed in ``result.attrs``.
 
     ``clients`` needs ``client_id`` and ``covariates`` (dict or JSON text; ``display_label``
     optional). Columns: ``p_sell`` (predicted probability of selling under the market state),
@@ -1359,6 +1367,8 @@ def score_book(
         labels = list(ids)
     items = [it for it in _interventions_list(interventions) if it.get("active", True)]
     grid = sorted(abs(x) for x in D.LOSS_PCTS)
+    crisis = TYPICAL_CRISIS_CONTEXTS if crisis_contexts is None else check_context_tags(list(crisis_contexts), artifact.ctx_vocab, artifact.n_ctx_positions)
+    thresholds = STATUS_THRESHOLDS if status_thresholds is None else {**STATUS_THRESHOLDS, **{k: float(v) for k, v in status_thresholds.items()}}
     sc = scorer_for(artifact)
 
     scen_list: list[Scenario] = []
@@ -1375,7 +1385,7 @@ def score_book(
             scen_list.append(Scenario(cid, cov, loss, t2, o2, None, tag=f"iv:{it['name']}"))
         cap_start = len(scen_list)
         for L in grid:
-            scen_list.append(Scenario(cid, cov, -L, TYPICAL_CRISIS_CONTEXTS, D.SCENARIO_FIRST, None, tag=f"cap:{L}"))
+            scen_list.append(Scenario(cid, cov, -L, crisis, D.SCENARIO_FIRST, None, tag=f"cap:{L}"))
         layout.append({"main": start, "base": start + 1, "drivers": (start + 2, iv_start), "iv": (iv_start, cap_start), "cap": (cap_start, len(scen_list))})
 
     p = sc.predict(scen_list)
@@ -1406,7 +1416,7 @@ def score_book(
             "top_driver": td["driver"], "top_driver_delta": float(td["delta_p"]),
             "suggested_intervention": best_name, "suggested_delta": best_delta,
             "drawdown_capacity": cap, "capacity_status": cap_status,
-            "status": _status(pm, calibration), "known_client": cid in known, "synthetic": bool(artifact.is_synthetic_training),
+            "status": _status(pm, calibration, thresholds), "known_client": cid in known, "synthetic": bool(artifact.is_synthetic_training),
         })
     out = pd.DataFrame(rows)
     for col in ("display_label", "top_driver", "suggested_intervention"):
@@ -1414,7 +1424,8 @@ def score_book(
     out.attrs.update({
         "scenario": scen, "n_calibration": calibration, "target": target, "interval": "80% " + INTERVAL_SOURCE if smp is not None else _no_samples_reason(artifact),
         "intervention_label": INTERVENTION_LABEL,
-        "capacity_definition": CAPACITY_DEFINITION.format(grid=[-x for x in grid], contexts=list(TYPICAL_CRISIS_CONTEXTS), target=target),
+        "capacity_definition": CAPACITY_DEFINITION.format(grid=[-x for x in grid], contexts=list(crisis), target=target),
+        "crisis_contexts": list(crisis), "status_thresholds": dict(thresholds),
         "model_version": artifact.version, "model_type": artifact.model_name, "synthetic": bool(artifact.is_synthetic_training), "wording": PROBABILITY_WORDING,
     })
     return out

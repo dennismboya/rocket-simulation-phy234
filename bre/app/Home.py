@@ -27,7 +27,7 @@ except api.ApiError as exc:
     chrome.stop_on_error(exc)
 
 payload = market_bar.render(model)
-target = float(st.session_state.setdefault("capacity_target", 0.25))
+target = chrome.capacity_target(base)
 try:
     scored = api.score_book(base, api.dumps(api.client_payload(book)), api.dumps(payload), target)
 except api.ApiError as exc:
@@ -37,7 +37,7 @@ market_bar.render_scenario(scored["scenario"], scored["n_calibration"])
 rows = scored["rows"]
 meta = scored["meta"]
 if "alert_threshold" not in st.session_state:
-    st.session_state["alert_threshold"] = float(meta["status_thresholds"]["high"])
+    st.session_state["alert_threshold"] = float((st.session_state.get("settings") or {}).get("alert_threshold", meta["status_thresholds"]["high"]))
 threshold = float(st.session_state["alert_threshold"])
 
 st.subheader("Book under the current market state")
@@ -58,6 +58,10 @@ st.caption(f"Intervals: {meta.get('interval')}. Status thresholds: {meta.get('st
 
 st.page_link("pages/1_Book_triage.py", label="Book triage — one row per client, alerts, CSV export", icon="📋")
 st.page_link("pages/2_Client_profile.py", label="Client profile — risk state, sensitivities, what-if, interventions, PDF", icon="👤")
+st.page_link("pages/4_Intake_battery.py", label="Intake battery — run the questionnaire in-session or send the link, upload responses", icon="📝")
+st.page_link("pages/5_Scenario_editor.py", label="Scenario and context editor — texts, contexts, intervention scripts (versioned)", icon="✏️")
+st.page_link("pages/6_Transparency.py", label="Model and data transparency — registry, verdict, calibration, provenance, retrain", icon="🔍")
+st.page_link("pages/7_Settings.py", label="Settings — thresholds, targets, prior strength, crisis contexts, export / delete, demo mode", icon="⚙️")
 
 with st.expander("Served model and provenance (transparency)", expanded=False):
     st.write(

@@ -1,0 +1,44 @@
+# Phase 3, first-actions item 6: A -> B transfer protocol on REAL public data (bre.realdata).
+# Run: python -m bre.realdata transfer experiments/p3-transfer-A-to-B.yaml
+# (flags --models / --rows-a / --subjects-b / --steps / --restarts / --out override this file).
+#
+# Source A: choices13k aggregate rates (data/processed/choices13k.parquet, catalog A, 12,225 rows
+# after the first-order-dominance filter), collapsed under one pseudo-subject; binomial weight =
+# respondents per rate; contexts = feedback:on|off and block:k tags; loss_pct = min(0,
+# x_worst_outcome_rel) (the problem's worst relative outcome, 0 when no outcome is negative);
+# response = share choosing gamble B. The population parts of B1, B3 and Q2 are fitted with the
+# encoder random effect u frozen at zero (bre.realdata.PopulationOnly).
+# Targets (catalog B): cpc15 aggregate rates (weights unknown -> 1; worst outcome from the mirror's
+# lottery parameters) and cpc18 per-problem B-rates computed from the individual rows (weight =
+# choices behind the rate). Each target's problems are split 80/20 with the seed; the transferred
+# fit, a refit on the target's training problems and a constant rate are scored on the held-out
+# problems: weighted NLL per respondent, Brier, Pearson r, Spearman rho, problem-level bootstrap.
+# Every knob that affects a number is stated here (experiments/README.md).
+name: A_to_B
+models: [B1, B3, Q2]
+seed: 0
+source:
+  dataset: choices13k
+  rows: null                # null = every row; an integer subsamples the rows deterministically (tests)
+targets:
+  cpc15: {}
+  cpc18_agg:
+    cpc18_subjects: null    # null = all 686 subjects behind the per-problem rates
+  test_frac_problems: 0.2   # fixed in bre.realdata.TARGET_TEST_FRAC
+model_kwargs: {}
+fit:
+  restarts: 5               # PLAN.md section 4
+  steps: 1500
+  lr: 0.02
+  val_frac: 0.2             # within the single pseudo-subject: 20% of the rate rows, stratified by condition
+  seed: 0
+  early_stopping_patience: 5
+  eval_every: 25
+  lbfgs_polish: true
+  lbfgs_steps: 100
+  n_samples: 0              # no draws needed for the transfer scores (forced to 0 by run_transfer)
+bootstrap:
+  n_draws: 1000             # problem-level bootstrap of every rate metric
+output:
+  dir: reports/transfer     # A_to_B.json and A_to_B.md
+  runs_dir: runs/transfer   # transfer.log and the source-fit artifacts (fit_A/<model>)

@@ -35,6 +35,7 @@ except api.ApiError as exc:
     chrome.stop_on_error(exc)
 payload = market_bar.render(model)
 demo = chrome.demo_mode()
+chrome.capacity_target(base)  # seeds the session's target from GET /settings
 
 # ---------------------------------------------------------------------------------------------
 # Client selection

@@ -357,8 +357,291 @@ class MarketResponse(BaseModel):
     demo_mode: bool
 
 
+
+# ---------------------------------------------------------------------------------------------
+# Phase 6 additions: settings, editor documents, intake, registry, transparency, retrain
+# ---------------------------------------------------------------------------------------------
+
+
+class SettingsPatch(BaseModel):
+    """``PUT /settings`` body: any subset of the settings keys (``api.store.DEFAULT_SETTINGS``
+    documents the defaults and ``SETTINGS_RULES`` the ranges; unknown keys are refused)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    alert_threshold: float | None = Field(default=None, ge=0.0, le=1.0)
+    status_thresholds: dict[str, float] | None = Field(default=None, description="{elevated, high}, 0 <= elevated <= high <= 1")
+    capacity_target: float | None = Field(default=None, gt=0.0, lt=1.0)
+    prior_strength: float | None = Field(default=None, gt=0.0)
+    typical_crisis_contexts: list[str] | None = Field(default=None, max_length=2)
+    demo_mode: bool | None = None
+    retrain: dict[str, Any] | None = Field(default=None, description="{steps, restarts, n_samples, val_frac, seed}")
+
+
+class SettingsOut(BaseModel):
+    settings: dict[str, Any]
+    defaults: dict[str, Any]
+    rules: dict[str, str]
+    version: int
+    updated_at: str | None
+    demo_mode: bool = Field(description="the effective demo mode: forced by the setting, or by a synthetic model / database")
+    demo_mode_forced_by_data: bool
+
+
+class ContextIn(BaseModel):
+    """``POST /contexts``: add a context or write a new version of one (retire with ``active: false``)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    tag: str = Field(pattern=r"^[A-Za-z0-9_]+:[A-Za-z0-9_.+\-]+$", max_length=80, description="namespace:value, e.g. news:tariff_shock")
+    kind: str = Field(default="news", max_length=40)
+    display: str = Field(max_length=2000, description="the sentence shown in the intake battery")
+    active: bool = True
+    triggers_delay: bool | None = None
+    note: str | None = Field(default=None, max_length=500)
+
+
+class ContextOut(BaseModel):
+    tag: str
+    kind: str
+    display: str
+    active: bool
+    triggers_delay: bool | None = None
+    note: str | None = None
+    version: int
+    updated_at: str
+    actor: str
+    in_design: bool = Field(description="one of the shared design's contexts (bre.design.NONNULL_CONTEXTS)")
+    in_served_vocabulary: bool
+    calibration: dict[str, Any] = Field(description="from the active artifact: n_responses, status, theta, theta_ci95, min_responses")
+
+
+class ScenarioIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    key: str = Field(max_length=80)
+    text: str = Field(max_length=4000)
+    note: str | None = Field(default=None, max_length=500)
+
+
+class ScenarioOut(BaseModel):
+    key: str
+    text: str
+    note: str | None = None
+    version: int
+    updated_at: str
+    actor: str
+
+
+class ScenariosOut(BaseModel):
+    texts: dict[str, ScenarioOut]
+    keys: list[str]
+    history: list[dict[str, Any]] | None = None
+    design_version: str
+    note: str
+
+
+class InterventionPut(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(max_length=80)
+    script: str | None = Field(default=None, max_length=4000)
+    mapped_context_transform: dict[str, Any] | None = None
+    active: bool | None = None
+    note: str | None = Field(default=None, max_length=500)
+
+
+class InterventionVersionOut(InterventionOut):
+    version: int
+    updated_at: str | None
+    history: list[dict[str, Any]] | None = None
+
+
+class IntakeResponsesIn(BaseModel):
+    """``POST /clients/{client_id}/responses``: schema rows of one intake session plus the
+    randomized assignment and the session record."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    rows: list[dict[str, Any]] = Field(min_length=1, max_length=2000, description="DecisionEvent rows (bre.schema.COLUMNS), one per elicited decision")
+    assignment: dict[str, Any] = Field(default_factory=dict, description="bre.design.BatteryAssignment.to_dict() plus the presentation order and repeats")
+    session: dict[str, Any] = Field(default_factory=dict, description="form, seed, consent, timings, text versions shown")
+    display_label: str | None = Field(default=None, max_length=80)
+
+
+class IntakeResponsesOut(BaseModel):
+    client_id: str
+    session_id: str
+    n_rows: int
+    is_synthetic: bool
+    consent_training: bool
+    dataset: str
+    document_version: int
+    note: str
+    demo_mode: bool
+
+
+class IntakeConfig(BaseModel):
+    instrument_url: str
+    instrument_url_source: str
+    battery_version: str
+    design_version: str
+    forms: dict[str, Any]
+    url_params: dict[str, Any]
+    file_names: dict[str, Any]
+    intake: dict[str, Any] = Field(default_factory=dict, description="battery.json intake texts: consent, instructions, covariates, financial_literacy_quiz, questions, delay_page")
+    demo_mode: bool
+    storage_note: str
+
+
+class RegistryRow(BaseModel):
+    version: str
+    model_type: str
+    family: str | None
+    is_active: bool
+    promoted_at: str | None
+    created_at: str | None
+    is_synthetic_training: bool | None
+    n_params: int | None
+    train_nll: float | None
+    held_out_nll: float | None
+    training_data_refs: list[str]
+    artifact_dir: str | None
+    artifact_exists: bool
+    notes: str | None = None
+
+
+class RegistryOut(BaseModel):
+    active_version: str
+    rows: list[RegistryRow]
+    selectable_model_types: list[str]
+    admin: bool
+    admin_rule: str
+
+
+class ActivateIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    version: str = Field(max_length=120)
+
+
+class ActivateOut(BaseModel):
+    activated: str
+    previous: str | None
+    model_type: str
+    demo_mode: bool
+    synthetic: bool
+
+
+class RetrainIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    model_type: str | None = Field(default=None, description="Q2, Q4 or B2 (default: the active model's type)")
+    steps: int | None = Field(default=None, ge=1, le=5000)
+    restarts: int | None = Field(default=None, ge=1, le=10)
+    n_samples: int | None = Field(default=None, ge=0, le=500)
+    seed: int | None = None
+    n_boot: int | None = Field(default=None, ge=0, le=2000)
+
+
+class RetrainOut(BaseModel):
+    run_id: str
+    status: str
+    promoted: bool
+    reason: str | None
+    version: str | None
+    model_type: str
+    nll_new: float | None
+    nll_reference: float | None
+    recorded_reference_nll: float | None
+    active_version: str
+    demo_mode: bool
+    result: dict[str, Any]
+
+
+class TransparencyOut(BaseModel):
+    model_version: str
+    model_type: str
+    family: str
+    n_params: int
+    n_params_population: int | None
+    is_synthetic_training: bool
+    demo_mode: bool
+    decision_rule: str
+    verdict: dict[str, Any] | None = Field(description="reports/phase4/verdict.json when it exists")
+    verdict_status: str = Field(description='the verdict sentence, or exactly "Decision rule not yet run: no real-data numbers are shown"')
+    phase4_metrics: dict[str, Any] | None = Field(description="held-out metrics of Phase 4; null until the verdict exists")
+    real_data_numbers_shown: bool
+    training_metrics: dict[str, Any]
+    calibration_plot: dict[str, Any] | None
+    n_target: dict[str, Any] | None
+    provenance: list[dict[str, Any]]
+    model_card: str | None
+    model_card_path: str | None
+    retrain_rule: str
+    wording: str = "predicted probability of selling"
+
+
+class ExportOut(BaseModel):
+    client: dict[str, Any]
+    responses: list[dict[str, Any]]
+    predictions_log: list[dict[str, Any]]
+    intervention_log: list[dict[str, Any]]
+    intake_sessions: list[dict[str, Any]]
+    exported_at: str
+    demo_mode: bool
+    synthetic: bool
+
+
+class DeleteOut(BaseModel):
+    client_id: str
+    deleted: dict[str, int]
+    audit_log_id: int
+
+
+class ResponseRowOut(BaseModel):
+    id: int
+    dataset: str
+    session_id: str
+    timestamp: str | None
+    position_in_session: int
+    scenario_id: str
+    loss_pct: float | None
+    context_tags: list[str]
+    question_order_id: str | None
+    elicitation_type: str
+    response: float
+    response_time_ms: float | None
+    outcome_behavior: dict[str, Any] | None
+    consent_training: bool
+    is_synthetic: bool
+    source_row_ref: str
+
+
 __all__ = [
+    "ActivateIn",
+    "ActivateOut",
     "CLIENT_ID_PATTERN",
+    "ContextIn",
+    "ContextOut",
+    "DeleteOut",
+    "ExportOut",
+    "IntakeConfig",
+    "IntakeResponsesIn",
+    "IntakeResponsesOut",
+    "InterventionPut",
+    "InterventionVersionOut",
+    "RegistryOut",
+    "RegistryRow",
+    "ResponseRowOut",
+    "RetrainIn",
+    "RetrainOut",
+    "ScenarioIn",
+    "ScenarioOut",
+    "ScenariosOut",
+    "SettingsOut",
+    "SettingsPatch",
+    "TransparencyOut",
     "Calibration",
     "ClientIn",
     "ClientOut",

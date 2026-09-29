@@ -101,6 +101,37 @@ def demo_mode() -> bool:
     return bool(st.session_state.get("demo_mode", True))
 
 
+def load_settings(base: str) -> dict[str, Any]:
+    """``GET /settings`` once per script run (kept in ``st.session_state["settings"]``); seeds
+    the session's ``capacity_target`` and ``alert_threshold`` from it the first time."""
+    try:
+        out = api.get_settings(base)
+    except api.ApiError:
+        out = {"settings": {}, "demo_mode": demo_mode()}
+    s = out.get("settings") or {}
+    st.session_state["settings"] = s
+    if "capacity_target" not in st.session_state and s.get("capacity_target") is not None:
+        st.session_state["capacity_target"] = float(s["capacity_target"])
+    if "alert_threshold" not in st.session_state and s.get("alert_threshold") is not None:
+        st.session_state["alert_threshold"] = float(s["alert_threshold"])
+    if out.get("demo_mode"):
+        st.session_state["demo_mode"] = True
+    return s
+
+
+def capacity_target(base: str) -> float:
+    """The session's drawdown-capacity target (editable on the client profile; seeded from
+    ``GET /settings``)."""
+    if "capacity_target" not in st.session_state:
+        load_settings(base)
+    return float(st.session_state.setdefault("capacity_target", 0.25))
+
+
+def uncalibrated_markdown(status: str) -> str:
+    """The calibration status as markdown: an uncalibrated context in red."""
+    return f":red[**{status}**]" if str(status).startswith("uncalibrated") else str(status)
+
+
 def stop_on_error(exc: Exception) -> None:
     st.error(f"API error: {exc}")
     st.stop()
@@ -158,6 +189,6 @@ def calibration_min_n(n_cal: dict[str, Any] | None) -> int | None:
 
 __all__ = [
     "CONTEXT_LABELS", "GUARDRAIL_LABEL", "INTERVENTION_LABEL_FALLBACK", "SYNTHETIC_BANNER", "WORDING", "calibration_min_n",
-    "calibration_text", "condition_label", "context_label", "demo_mode", "fmt_interval", "fmt_p", "fmt_pct", "fmt_signed",
-    "ordered_contexts", "page_setup", "prob_text", "stop_on_error",
+    "calibration_text", "capacity_target", "condition_label", "context_label", "demo_mode", "fmt_interval", "fmt_p", "fmt_pct", "fmt_signed",
+    "load_settings", "ordered_contexts", "page_setup", "prob_text", "stop_on_error", "uncalibrated_markdown",
 ]

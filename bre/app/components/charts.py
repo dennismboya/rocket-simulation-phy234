@@ -156,4 +156,34 @@ def response_timeline(rows: list[dict[str, Any]]) -> plt.Figure:
     return fig
 
 
-__all__ = ["CMAP", "P_LABEL", "SERIES_1", "SERIES_2", "capacity_curve", "heatmap", "png_bytes", "response_timeline", "sensitivity_bars"]
+def reliability_plot(rows: list[dict[str, Any]], ece: float | None, title: str) -> plt.Figure:
+    """Reliability diagram: mean predicted probability vs observed sell rate per bin (marker
+    area by bin count) against the diagonal. ``rows`` are ``bre.eval.reliability_table``
+    records (``p_mean``, ``y_rate``, ``n`` or similar keys; missing keys are tolerated)."""
+    fig, ax = plt.subplots(figsize=(4.8, 4.2))
+    _style(ax)
+    xs, ys, ns = [], [], []
+    for r in rows:
+        x = r.get("p_mean", r.get("mean_p", r.get("p")))
+        y = r.get("frac_pos", r.get("y_rate", r.get("mean_y", r.get("y"))))
+        n = r.get("n", r.get("count", 0))
+        if x is None or y is None or not (np.isfinite(float(x)) and np.isfinite(float(y))):
+            continue
+        xs.append(float(x)); ys.append(float(y)); ns.append(float(n or 0))
+    ax.plot([0, 1], [0, 1], color=MUTED, linewidth=1, linestyle="--", label="perfect calibration")
+    if xs:
+        size = 20 + 180 * (np.asarray(ns) / max(max(ns), 1.0))
+        ax.scatter(xs, ys, s=size, color=SERIES_1, edgecolor=SURFACE, linewidth=1.2, zorder=3, label="bin (area = count)")
+        ax.plot(xs, ys, color=SERIES_1, linewidth=1.2, zorder=2)
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_xlabel(f"mean {P_LABEL} in bin", fontsize=8)
+    ax.set_ylabel("observed sell rate in bin", fontsize=8)
+    ax.set_title(title + ("" if ece is None else f" (ECE {ece:.3f})"), fontsize=9, loc="left")
+    ax.legend(loc="upper left", fontsize=7, frameon=False)
+    fig.patch.set_facecolor(SURFACE)
+    fig.tight_layout()
+    return fig
+
+
+__all__ = ["CMAP", "P_LABEL", "SERIES_1", "SERIES_2", "capacity_curve", "heatmap", "png_bytes", "reliability_plot", "response_timeline", "sensitivity_bars"]

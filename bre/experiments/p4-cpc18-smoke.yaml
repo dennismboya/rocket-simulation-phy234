@@ -1,0 +1,36 @@
+# Phase 4 SMOKE run on REAL data (timing and end-to-end check; its numbers are not a result):
+# CPC18 pairs variant, 60 deterministic subjects (seed 0), 300 Adam steps, one restart, 10 draws,
+# 300 SVI steps, every registered model, every split (c reported as not applicable), 1000-draw
+# bootstrap. Run: python -m bre.phase4 --config experiments/p4-cpc18-smoke.yaml
+# (equivalent: python -m bre.phase4 --dataset cpc18 --smoke). The measured per-row-per-step costs
+# of this run fill bre.phase4.SECONDS_PER_ROW_STEP, which --estimate-only scales to the full run.
+name: cpc18-pairs-smoke
+dataset: cpc18
+variant: pairs
+subjects: 60
+seed: 0
+smoke: true
+models: [B1, B2, B3, B4, B5, B6, Q2, Q3, Q4, Q5]
+splits: [a, b, c, d]
+model_kwargs:
+  B5: {n_threads: 1}
+fit:                        # bre.phase4.SMOKE_SETTINGS, stated here in full
+  restarts: 1
+  steps: 300
+  lr: 0.02
+  val_frac: 0.2
+  seed: 0
+  early_stopping_patience: 3
+  eval_every: 25
+  lbfgs_polish: true
+  lbfgs_steps: 20
+  n_samples: 10
+  svi_steps: 300
+  svi_lr: 0.01
+  svi_particles: 1
+bootstrap:
+  n_draws: 1000
+workers: 1
+output:
+  dir: reports/phase4/cpc18-pairs-smoke
+  runs_dir: runs/phase4/cpc18-pairs-smoke
