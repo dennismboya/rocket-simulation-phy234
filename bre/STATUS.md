@@ -113,3 +113,4 @@ Phases 0–8 as planned; no long runs started yet.
 * 2026-09-29 05:34 UTC — grid_a: 3 of 135 fits done;  [recover] done gq N=200 seed=1 Q4: selection_nll=0.6705 train_nll=0.6482 val_nll=0.6726 n_params=1110 (458s) [3/135, 8.
 * 2026-09-29 05:57 UTC — grid_a: 15 of 135 fits done;  [recover] done gc N=100 seed=2 Q4: selection_nll=0.5607 train_nll=0.5553 val_nll=0.5759 n_params=610 (589s) [15/135, 26
 * 2026-09-29 11:57 UTC — container rebooted (~11:55 UTC); grid_a stopped at 42/135 and was resumed from its per-cell cache; API and fit-wiring agents were cut off by the session limit and are being finished by the main session.
+* 2026-09-29 12:33 UTC — grid_a: 105 of 135 fits done since resume;  [recover] done gf N=200 seed=2 B2: selection_nll=0.5730 train_nll=0.5528 val_nll=0.5600 n_params=10
