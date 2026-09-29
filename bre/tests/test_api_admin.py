@@ -20,7 +20,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 
-from db.models import AuditLog, InterventionLog, PredictionLog, Response
+from db.models import AuditLog, Intervention, InterventionLog, PredictionLog, Response
 from db.session import get_engine, session_scope
 from test_predict import COV, MARKET, DemoEnv, demo_env  # noqa: F401 - session fixture reused
 
@@ -128,7 +128,7 @@ def test_openapi_has_the_new_routes_and_committed_file_is_current(client: TestCl
 # ---------------------------------------------------------------------------------------------
 
 
-def test_settings_defaults_validation_and_demo_mode(client: TestClient):
+def test_settings_defaults_validation_and_demo_mode(client: TestClient, admin_env: AdminEnv):
     r = client.get("/settings")
     assert r.status_code == 200, r.text
     body = r.json()
@@ -158,7 +158,7 @@ def test_settings_defaults_validation_and_demo_mode(client: TestClient):
     r = client.put("/settings", json={"demo_mode": False})
     assert r.json()["settings"]["demo_mode"] is False and r.json()["demo_mode"] is True  # synthetic data keeps demo mode on
     client.put("/settings", json={"alert_threshold": 0.5, "status_thresholds": {"elevated": 0.25, "high": 0.5}, "capacity_target": 0.25, "typical_crisis_contexts": ["news:recession", "social:friend_sells"]})
-    with session_scope(get_engine(f"sqlite:///{os.environ['BRE_DB_URL'].removeprefix('sqlite:///')}")) as s:
+    with session_scope(admin_env.engine) as s:
         assert s.execute(select(func.count()).select_from(AuditLog).where(AuditLog.action == "settings")).scalar_one() >= 3
 
 
@@ -300,7 +300,7 @@ def test_delete_client_removes_every_row_in_every_table(client: TestClient, admi
     assert client.post("/clients/DEL-1/responses", json={"rows": rows, "assignment": assignment, "session": {"form": "short", "seed": seed}}).status_code == 200
     assert client.post("/predict", json={"client_id": "DEL-1", "covariates": COV, "loss_pct": -0.2, "context_tags": ["news:recession"]}).status_code == 200
     with session_scope(admin_env.engine) as s:
-        iv_id = s.execute(select(__import__("db.models", fromlist=["Intervention"]).Intervention.id)).scalars().first()
+        iv_id = s.execute(select(Intervention.id)).scalars().first()
         s.add(InterventionLog(client_id="DEL-1", intervention_id=iv_id, advisor_note="test"))
     before = _table_counts(admin_env.db_path, "DEL-1")
     assert before == {"responses": 15, "predictions_log": 1, "intervention_log": 1, "clients": 1, "bre_documents": 1}

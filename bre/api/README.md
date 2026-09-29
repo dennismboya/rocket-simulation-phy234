@@ -42,6 +42,23 @@ drifts from `app.openapi()`.
 | `POST /score_book/csv` | the same from a CSV upload (multipart) |
 | `POST /interventions/rank` | interventions ranked by predicted change in P(sell), each labelled "predicted effect, not causally validated" |
 
+Phase 6 endpoints (`api/phase6.py`, dashboard pages 4–7):
+
+| Method, path | Purpose |
+|---|---|
+| `GET /settings`, `PUT /settings` | the dashboard settings (`alert_threshold`, `status_thresholds {elevated, high}`, `capacity_target`, `prior_strength`, `typical_crisis_contexts`, `demo_mode`, `retrain {steps, restarts, n_samples, val_frac, seed}`); defaults and ranges come back with every read (`api/store.py: DEFAULT_SETTINGS`); every write is a new version and an audit row; the scoring applies the thresholds and the crisis contexts; `demo_mode` can force demo mode on, never off while the data is synthetic |
+| `GET /contexts`, `POST /contexts` | context definitions (tag, kind, display sentence, active) with the calibration status from the active artifact (`n_responses`, `status`, `theta`, `theta_ci95`, `min_responses`); POST adds a context or writes a new version (retire with `active: false`) |
+| `GET /scenarios[?history=true]`, `POST /scenarios` | the editable scenario texts (keys seeded from `instrument/battery.json`), versioned |
+| `PUT /interventions`, `GET /interventions/versions[?history=true]` | edit an intervention's script / transform / active flag (the live table changes, a version is appended) |
+| `GET /intake/config` | the static instrument URL (`BRE_INSTRUMENT_URL`), forms, file names, the intake texts, the storage note |
+| `POST /clients/{client_id}/responses` | rows of one in-session intake battery (`rows`, `assignment`, `session`): validated with `bre.schema`, stored with `db.session.frame_to_responses`, the assignment kept as an `intake_session` document, audit row; 409 when the real-vs-synthetic rule refuses them |
+| `POST /intake/upload` (multipart: `file`, `client_id`, `display_label`, `store_as_synthetic`) | an `intake_<session_id>.json` from the static instrument, checked with the loader's contract and completeness rules (`bre.loaders.intake_battery`) |
+| `GET /clients/{client_id}/responses` | the client's stored rows (the profile page's history) |
+| `GET /clients/{client_id}/export`, `DELETE /clients/{client_id}` | every stored row of a client (plus its intake-session documents); delete cascades to every table and writes the audit row (reserved service clients cannot be deleted) |
+| `GET /model/registry`, `POST /model/activate {version}` | every registered version with its metrics and artifact location; activation is admin-only: `BRE_ADMIN=1` in the API's environment or the header `X-BRE-Admin: 1` (a local convenience, not authentication) |
+| `GET /transparency` | decision rule, verdict (`reports/phase4/verdict.json`, else exactly "Decision rule not yet run: no real-data numbers are shown" and no Phase 4 metrics), the served model's training metrics and in-sample reliability table (synthetic under the banner; withheld for a real-data model until the verdict exists), `N_target` from the recovery study, provenance rows (dataset, N, real or synthetic, licence), the model card (`reports/MODEL_CARD.md`), the retrain rule; `BRE_REPORTS_DIR` overrides the reports directory |
+| `POST /retrain` | `bre.retrain.retrain`: consented responses → 80/20 subject split → refit (`bre.fit.fit_model`) → held-out NLL → promote only if not worse than the active artifact on the same rows; `runs/retrain/<stamp>/`, audit row; the service serves the promoted model at once |
+
 Validation errors return HTTP 422 with the offending field in `detail[].loc`.
 
 Wording: every probability is the *predicted probability of selling* under the served model;

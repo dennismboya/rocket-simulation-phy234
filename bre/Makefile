@@ -41,7 +41,7 @@ help:
 	@echo "  eval            Phase 4: pre-registered evaluation and verdict"
 	@echo "  api             Phase 5: uvicorn api.main:app on $(API_HOST):$(API_PORT)"
 	@echo "  dashboard       Phase 6: streamlit run app/Home.py (starts the API in the background unless $(API_HOST):$(API_PORT) is already listening)"
-	@echo "  retrain         Phase 6: retrain on consented intake responses"
+	@echo "  retrain         Phase 6: retrain on consented responses, promote only if held-out NLL does not degrade (RETRAIN_ARGS=...)"
 	@echo "  instrument      Phase 7: validate battery.json, regenerate static/battery.data.js, run the balance test"
 	@echo "  report          Phase 8: REPORT.md, MODEL_CARD.md"
 	@echo "  clean           remove caches and build artifacts (keeps data/, runs/ and the venv)"
@@ -106,7 +106,8 @@ api: check-venv
 # (a service you started with `make api` is reused and left running); one started here logs to
 # runs/api.log and is stopped when streamlit exits (or on Ctrl-C). The app reads BRE_API_URL.
 # The first start on the default database seeds the demo book and fits the demo model (about a
-# minute); the pages wait for the service (BRE_API_WAIT_S, default 90 s).
+# minute); the pages wait for the service (BRE_API_WAIT_S, default 90 s). BRE_ADMIN=1 in the
+# environment enables the model-activation control on the transparency page (api/phase6.py).
 dashboard: check-venv
 	$(call require,api/main.py)
 	$(call require,app/Home.py)
@@ -121,9 +122,16 @@ dashboard: check-venv
 	  BRE_API_URL=http://$(API_HOST):$(API_PORT) BRE_API_WAIT_S=$${BRE_API_WAIT_S:-180} $(PY) -m streamlit run app/Home.py; \
 	fi
 
+# Phase 6: pull the consented responses from the database (BRE_DB_URL, default the demo database),
+# refit the active model type on 80% of the subjects, evaluate the held-out 20%, promote the refit
+# only if its held-out NLL is not worse than the active artifact's on the same rows; artifact under
+# runs/models/<version>/, log and result under runs/retrain/<stamp>/, audit_log row. Options via
+# RETRAIN_ARGS (e.g. RETRAIN_ARGS="--model Q2 --steps 500"); the dashboard's Retrain button calls
+# POST /retrain, the same code path. A running API picks the promoted model up on its next start
+# (the button reloads it in place).
 retrain: check-venv
 	$(call require,src/bre/retrain.py)
-	$(PY) -m bre.retrain
+	PYTHONPATH=src:. $(PY) -m bre.retrain $(RETRAIN_ARGS)
 
 # Phase 7: check battery.json, rewrite static/battery.data.js from it, run the balance test.
 instrument: check-venv
