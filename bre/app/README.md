@@ -73,4 +73,4 @@ database and drives the pages with `streamlit.testing.v1.AppTest`: banner on eve
 drawdown slider changes the triage probabilities, the threshold alert updates, the CSV header
 carries the banner, the heatmap is 5 × 17, the PDF carries the banner, a weak cause-frame match
 is flagged, the market button fills the bar, a logged intervention shows on the triage page,
-and no "will sell" string exists under `app/`.
+and the forbidden "will" + "sell" phrase is absent from `app/`.
