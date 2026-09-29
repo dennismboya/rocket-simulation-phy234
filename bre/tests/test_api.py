@@ -106,6 +106,19 @@ def test_clients_interventions_market(client: TestClient, demo_env: DemoEnv):
     assert body["scenario"]["loss_pct"] <= -0.05 and "context_tags" in body["scenario"]
 
 
+def test_build_state_warm_start_covers_served_book(demo_env: DemoEnv):
+    """The startup path of ``make api``: ``build_state`` with the warm-up on compiles the
+    single-row passes and the 300-client, three-client and served-book sizes with the served
+    interventions (``bre.predict.warm_up``), and reports the seconds per step."""
+    from api.main import build_state
+
+    st = build_state(f"sqlite:///{demo_env.db_path}", autoseed=False, warm=True)
+    n_book = len(demo_env.clients)
+    assert set(st.warmup) == {"single", "book_300", "book_3", f"book_{n_book}"}
+    assert st.artifact.version == demo_env.artifact.version and st.demo_mode is True
+    assert st.registry_row is not None and st.registry_row["is_active"]
+
+
 # ---------------------------------------------------------------------------------------------
 # /predict
 # ---------------------------------------------------------------------------------------------

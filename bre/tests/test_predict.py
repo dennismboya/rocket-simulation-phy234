@@ -277,6 +277,19 @@ def test_score_book_contract_and_timing(art, demo_env: DemoEnv):
         P.score_book(art, pd.concat([book.head(2), book.head(2)]), MARKET)
 
 
+def test_warm_up_compiles_the_requested_book_sizes_with_interventions(art, demo_env: DemoEnv):
+    """``warm_up`` accepts an int or a sequence of book sizes plus the served interventions (a
+    book scored with them lands in another row bucket than one scored without) and reports the
+    seconds per step; after it, a three-client book with the interventions is fast."""
+    out = P.warm_up(art, (3, 3, 0), demo_env.interventions)
+    assert set(out) == {"single", "book_3"} and all(v >= 0 for v in out.values())
+    assert set(P.warm_up(art, 2)) == {"single", "book_2"}
+    book = demo_env.clients.head(3)
+    t0 = time.perf_counter()
+    P.score_book(art, book, MARKET, demo_env.interventions)
+    assert time.perf_counter() - t0 < 2.0
+
+
 # ---------------------------------------------------------------------------------------------
 # market state mapping
 # ---------------------------------------------------------------------------------------------

@@ -90,8 +90,10 @@ takes the six product keys only. `context_tags` are `namespace:value`. Rows of t
 
 ## Batch scoring
 
-The Phase 5 service (`make api`; `BRE_API_PORT` picks the port) scores one investor or a whole
-book. Its contract is `api/openapi.json` (regenerated from the app by `api/export_openapi.py`,
+The Phase 5 service (`make api`; `BRE_API_PORT` picks the port, default 8000) scores one investor
+or a whole book. When `data/synthetic/demo.db` is missing, `make api` first seeds it
+(`python -m bre.demo --seed-db`: synthetic demo book, interventions, demo model; about a
+minute). Its contract is `api/openapi.json` (regenerated from the app by `api/export_openapi.py`,
 browsable at `http://127.0.0.1:8000/docs`); `api/README.md` documents every endpoint. The
 dashboard obtains every number from this service; no model code runs in the UI.
 
@@ -115,17 +117,26 @@ dashboard obtains every number from this service; no model code runs in the UI.
 
 ```bash
 curl -s -X POST http://127.0.0.1:8000/score_book -H 'Content-Type: application/json' -d '{
-  "clients": [{"client_id": "DEMO-C01", "display_label": "Demo client 01",
-               "covariates": {"age_band": "30-44", "wealth_band": "50-250k", "invest_experience_yrs": 5,
-                              "self_reported_risk_tolerance": 3, "financial_literacy_score": 2, "education": "bachelor"}}],
-  "market_state": {"drawdown_pct": -0.14, "cause_frame": "analysts expect a recession", "social_cue_prevalence": "medium"}
+  "clients": [
+    {"client_id": "DEMO-C01", "display_label": "Demo client 01",
+     "covariates": {"age_band": "30-44", "wealth_band": "50-250k", "invest_experience_yrs": 5,
+                    "self_reported_risk_tolerance": 3, "financial_literacy_score": 2, "education": "bachelor"}},
+    {"client_id": "DEMO-A-panic_prone", "display_label": "Demo archetype: panic-prone",
+     "covariates": {"age_band": "30-44", "wealth_band": "<50k", "invest_experience_yrs": 2,
+                    "self_reported_risk_tolerance": 3, "financial_literacy_score": 2, "education": "some_college"}}
+  ],
+  "market_state": {"drawdown_pct": -0.14, "duration_days": 40,
+                   "cause_frame": "analysts now expect a recession after weak earnings",
+                   "recovery_pct": 0.02, "vix_bucket": "high", "media_intensity": "high", "social_cue_prevalence": "medium"},
+  "target": 0.25
 }'
 ```
 
-Every prediction shown is written to `predictions_log` and `audit_log`; validation errors
-return 422 with the field names. In demo mode (the default database `data/synthetic/demo.db`,
-seeded on first start with the synthetic demo book of `bre.demo`) `GET /model` reports
-`demo_mode: true` and `is_synthetic_training: true`.
+The real response of this command, abbreviated, is in `api/README.md` ("Batch scoring"). Every
+prediction shown is written to `predictions_log` and `audit_log`; validation errors return 422
+with the offending field names in `detail[].loc`. In demo mode (the default database
+`data/synthetic/demo.db`, seeded with the synthetic demo book of `bre.demo`) `GET /model` reports
+`demo_mode: true` and `is_synthetic_training: true`, and every response carries `synthetic: true`.
 
 ## Production deployment
 
