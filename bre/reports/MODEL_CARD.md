@@ -144,25 +144,20 @@ Split (b) table (all models, from `table.md`):
 * Every row carries `is_synthetic = True`; the real-versus-synthetic location rule is enforced on
   every parquet write and DB insert (`PLAN.md` §2 amendment; `STATUS.md` Phase 0 summary).
 * **Synthetic recovery study (what makes the numbers defensible; `PLAN.md` §5)** — as of
-  `reports/recovery/summary.md` and `reports/recovery/N_target.json` (generated
-  2026-09-29T13:43:13+00:00): grid N ∈ {50, 100, 200} × generators {G_Q, G_C, G_F} × seeds {0, 1, 2}
-  × models {B1, B2, B4, Q2, Q4}; correct family-level selection by held-out NLL in 7 of 9 cells at
-  N = 50, 9 of 9 at N = 100 and 9 of 9 at N = 200; **N_target = 100 subjects → 17,000 responses
-  needed for calibration** (100 × 170 items; rule and threshold 0.9 in `N_target.json`). Q4
-  recovers the G_Q population context parameters after gauge alignment at Pearson r 0.903, 0.976,
-  0.970 (seeds 0–2, N = 100) and 0.943, 0.986, 0.887 (N = 200), and the per-subject decoherence
-  ranks at Spearman 0.827, 0.832, 0.798 (N = 100); Q2 alone recovers them poorly on the same
-  mixed-decoherence data (r 0.594, 0.401, 0.376 at N = 200). B2 recovers the G_C context means at
-  r 1.000 and subject intercepts at Spearman 0.987, 0.984, 0.987 (N = 200).
-  **Caveat, to be read with the numbers above:** `summary.md` records 135 fits of which 56 failed
-  with `BrokenProcessPool` (every B1 and B4 cell at every N, and the G_F N = 50 seed 1 and 2 B2
-  cells), and `STATUS.md` (2026-09-29 13:56 UTC) records that the results file held only the 79
-  fits of the resumed run, that 14 cells were missing, that the N = 50 row is provisional (the two
-  "wrong" N = 50 cells are G_F seeds where B2 is missing), and that the same grid was re-invoked to
-  fill the missing cells from cache. The N target above is therefore the value **as of those
-  files** and may change when the completion run finishes. An earlier pass with the old generator
-  defaults (`reports/recovery_pass1_olddefaults/summary.md`, N = 200 only, 45 fits, 9 of 9
-  correct) is superseded and is not a source for any number here.
+  `reports/recovery/summary.md` and `reports/recovery/N_target.json` (merged by
+  `bre.recover_merge` from the per-N runs, 135 fits, 0 failed): grid N ∈ {50, 100, 200} × generators
+  {G_Q, G_C, G_F} × seeds {0, 1, 2} × models {B1, B2, B4, Q2, Q4}; correct family-level selection by
+  held-out NLL in 9 of 9 cells at N = 50, 9 of 9 at N = 100 and 9 of 9 at N = 200; **N_target = 50
+  subjects → 8,500 responses needed for calibration** (50 × 170 items; rule and threshold 0.9 in
+  `N_target.json`; 50 is the smallest N in the grid, so the true minimum may be lower). Q4 recovers
+  the G_Q population context parameters after gauge alignment at Pearson r 0.883–0.956 (N = 50),
+  0.903–0.976 (N = 100) and 0.887–0.986 (N = 200), and the per-subject decoherence ranks at Spearman
+  0.691–0.812 (N = 50), 0.798–0.832 (N = 100) and 0.778–0.831 (N = 200); Q2 alone recovers them
+  poorly on the same mixed-decoherence data (see the Q2 rows of `summary.md`). B2 recovers the G_C
+  context means at r ≈ 1.00 and subject intercepts at Spearman ≈ 0.98 (`summary.md`, G_C tables).
+  An earlier pass with the old generator defaults (`reports/recovery_pass1_olddefaults/summary.md`)
+  and the incomplete resumed run (`reports/recovery_run_resumed/`) are superseded and are not
+  sources for any number here.
 
 ## 8. Ethical considerations
 

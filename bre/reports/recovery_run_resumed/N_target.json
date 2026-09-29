@@ -5,9 +5,9 @@
  "grid": [
   {
    "n": 50,
-   "correct_share": 1.0,
+   "correct_share": 0.7777777777777778,
    "n_cells": 9,
-   "n_correct": 9
+   "n_correct": 7
   },
   {
    "n": 100,
@@ -23,7 +23,7 @@
   }
  ],
  "is_synthetic": true,
- "N_target": 50,
- "responses_needed_for_calibration": 8500,
+ "N_target": 100,
+ "responses_needed_for_calibration": 17000,
  "reached": true
 }

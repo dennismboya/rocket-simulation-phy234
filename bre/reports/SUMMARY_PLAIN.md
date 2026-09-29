@@ -27,14 +27,13 @@ be switched off while this is true [`app/pages/7_Settings.py`].
 Before touching real data, the pipeline was tested on data it generated itself with known answers
 (*recovery study*: generate data from a known model, refit, check that the right model family is
 chosen and the known parameters come back). As of `reports/recovery/summary.md` and
-`N_target.json`: with 100 synthetic subjects the right family was chosen in 9 of 9 cases, with 200
-in 9 of 9, with 50 in 7 of 9. The **calibration target is therefore 100 subjects, i.e. 17,000
-answers on the full 170-item design** [`reports/recovery/N_target.json`]. The Q4 model recovered
-the known context parameters at correlations of 0.90–0.98 at N = 100 [`reports/recovery/summary.md`].
+`N_target.json` (merged grid, 135 fits, none failed): with 50, 100 and 200 synthetic subjects the
+right family was chosen in 9 of 9 cases each. The **calibration target is therefore 50 subjects, i.e.
+8,500 answers on the full 170-item design** [`reports/recovery/N_target.json`]; 50 is the smallest
+sample the grid tested, so the true minimum may be lower. The Q4 model recovered the known context
+parameters at correlations of 0.88–0.99 across the grid [`reports/recovery/summary.md`].
 
-Caveats: that run had failed and missing cells (`summary.md` lists 56 failed fits out of 135;
-`STATUS.md` 13:56 UTC records 14 missing cells and that a completion run was started), so the
-N = 50 row is provisional and the target may move when the completion run finishes. What this study
+What this study
 does **not** show: anything about real investors. It shows only that, if people behaved like the
 generators, the pipeline would tell the model families apart at that sample size.
 

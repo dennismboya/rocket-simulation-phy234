@@ -76,7 +76,7 @@
  "clients_source": "data/synthetic/demo_book.clients.json",
  "db": "/home/user/rocket-simulation-phy234/bre/data/synthetic/demo.db",
  "drawdown_target": 0.25,
- "generated_at": "2026-09-29T16:46:35+00:00",
+ "generated_at": "2026-09-29T17:28:58+00:00",
  "generator": "python -m bre.report (bre.report.generate_profiles): bre.predict.profile + predict_sell + Scorer.predict + drawdown_capacity; no fitting",
  "inputs": [
   {

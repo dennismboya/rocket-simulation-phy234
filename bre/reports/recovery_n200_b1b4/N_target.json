@@ -4,26 +4,15 @@
  "items_per_subject": 170,
  "grid": [
   {
-   "n": 50,
-   "correct_share": 1.0,
-   "n_cells": 9,
-   "n_correct": 9
-  },
-  {
-   "n": 100,
-   "correct_share": 1.0,
-   "n_cells": 9,
-   "n_correct": 9
-  },
-  {
    "n": 200,
-   "correct_share": 1.0,
+   "correct_share": 0.6666666666666666,
    "n_cells": 9,
-   "n_correct": 9
+   "n_correct": 6
   }
  ],
  "is_synthetic": true,
- "N_target": 50,
- "responses_needed_for_calibration": 8500,
- "reached": true
+ "N_target": null,
+ "responses_needed_for_calibration": null,
+ "reached": false,
+ "reason": "no N of the grid [200] reaches 90% correct family-level selection; extend the grid (PLAN.md section 5: 100, 200, 400, 800) or fix identifiability before any real-data fit"
 }

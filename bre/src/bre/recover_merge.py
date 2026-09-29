@@ -39,7 +39,12 @@ def merge(inputs: list[Path], out: Path, items_per_subject: int = 170) -> dict[s
         for r in p["fits"]:
             fits[(r["gen"], int(r["n"]), int(r["seed"]), r["model"])] = r
         for rec in p.get("recovery", []):
-            recovery[(rec["gen"], int(rec["n"]), int(rec["seed"]))] = rec
+            key = (rec["gen"], int(rec["n"]), int(rec["seed"]))
+            # union per cell: a later input adds or replaces the model blocks it carries and never
+            # erases blocks (e.g. a B1/B4-only completion batch must not drop the Q2/Q4 statistics)
+            merged = dict(recovery.get(key, {}))
+            merged.update({k: v for k, v in rec.items() if v not in (None, {}, [])})
+            recovery[key] = merged
         for m in p["models"]:
             if m not in models:
                 models.append(m)

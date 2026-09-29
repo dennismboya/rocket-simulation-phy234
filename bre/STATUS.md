@@ -18,7 +18,7 @@ first unfinished item in "Next up".
 |---|---|---|
 | 0 Plan + scaffold | done | schema + validators, shared design, SQLAlchemy layer, packaging, 217 tests green; review findings fixed (df29e0a) |
 | 1 Data | done (public part) | 8 processed tables under data/processed (README lists counts); owner downloads for E–J still pending |
-| 2 Recovery | done except N=100 completion | N=200: 9/9; N=50 (1 worker): 9/9; N=100 per-generator runs in progress; merged report via recover_merge |
+| 2 Recovery | done | merged grid (reports/recovery, 135 fits, 0 failed): 9/9 correct family at N=50, 100, 200; N_target = 50 (8,500 responses) |
 | 3 Models | done | B1–B6, Q1–Q5 implemented, registered and tested; fit/eval/recover wired for all ten |
 | 4 Evaluation | done (split b, all models) | verdict: no evidence of a quantum-probability advantage in the available data (reports/phase4/cpc18-pairs); splits (a)/(d) not run (compute gate) |
 | 5 API | done | /profile /predict /score_book /interventions/rank /model /market /clients /health; openapi.json committed; demo model demo-q4-v2 active; contract tests green |
@@ -65,7 +65,7 @@ first unfinished item in "Next up".
 1. Model selection by held-out NLL picks the true generator's family in 9 of 9 (generator × seed) cells: Q4 on G_Q data, B2 on G_C and on G_F.
 2. Q4 recovers the population context parameters at r = 0.92–0.99 after gauge alignment and per-subject decoherence ranks at Spearman 0.78–0.83; Q2 alone recovers them poorly on mixed-decoherence data (r ≈ 0.5), as expected.
 3. B2 recovers G_C context means at r = 1.00 and subject intercepts at Spearman 0.98; B1 attenuates (marginal vs conditional coefficients).
-4. N_target = 200 is an upper bound so far (only N tested); the extended grid N ∈ {50, 100, 200, 400} is running to find the smallest N; "responses needed for calibration" = N_target × 170 on the shared design.
+4. Final merged grid (135 fits, 0 failed): 9/9 at N = 50, 100 and 200 → N_target = 50 (8,500 responses); 50 is the smallest N tested, so the true minimum may be lower. N = 400 was not run (compute).
 5. Runtime: 45 fits in 16 min on 4 cores; Q4 is the slowest (2–4 min per fit at N=200).
 
 ## Phase 5 and 6a summary (five lines)
@@ -140,3 +140,4 @@ Phases 0–8 as planned; no long runs started yet.
 * 2026-09-29 15:49 UTC — fourth restart (~15:48) killed the quantum batch (no new job cached) and grid N=100 (2/45). New policy: one single-worker process at a time; quantum Phase 4 jobs relaunched with 1 worker (per-job cache); grid N=100 to run per generator afterwards.
 * 2026-09-29 16:12 UTC — DIAGNOSIS: each container restart coincides with the session going idle between check-ins (the container is reclaimed on inactivity and background runs die with it). Long runs are now kept alive by staying active in the session (Monitor waits) instead of scheduled check-ins.
 * 2026-09-29 16:50 UTC — Phase 4 assembled over all ten models; verdict published at reports/phase4/ (flat) and in REPORT.md and MODEL_CARD.md; grid N=100 (gq) running single-worker.
+* 2026-09-29 17:35 UTC — CAVEAT RESOLVED: the recovery grid was completed in per-N single-worker batches and merged (bre.recover_merge): 135 fits, 0 failed, 9/9 correct family at every N; N_target = 50. The 13:56 caveat about missing cells no longer applies. Model card, plain summary, DATA_GAPS and REPORT.md regenerated.

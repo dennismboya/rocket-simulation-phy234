@@ -31,14 +31,14 @@ RQ1–RQ3 of `PLAN.md` §1.
 ## 2. Prolific wave-1 base-pay arithmetic (formula from `PLAN.md` §9 and `instrument/PROLIFIC.md` §9.2)
 
 Cost_academic(N, T) = T/60 × $12/hr × N × 1.333; Cost_corporate(N, T) = T/60 × $12/hr × N × 1.428.
-N = N_target = 100 (`reports/recovery/N_target.json`, as of that file; see the caveat in §3).
+N = N_target = 50 (`reports/recovery/N_target.json`, merged grid of 135 fits; the earlier provisional value of 100 came from an incomplete run).
 
-| T (minutes) | base pay per participant | × N = 100 | × 1.333 academic / non-profit | × 1.428 corporate |
+| T (minutes) | base pay per participant | × N = 50 | × 1.333 academic / non-profit | × 1.428 corporate |
 |---|---|---|---|---|
-| 10 | 10/60 × 12 = $2.00 | $200.00 | 200.00 × 1.333 = **$266.60** | 200.00 × 1.428 = **$285.60** |
-| 12 | 12/60 × 12 = $2.40 | $240.00 | 240.00 × 1.333 = **$319.92** | 240.00 × 1.428 = **$342.72** |
+| 10 | 10/60 × 12 = $2.00 | $100.00 | 100.00 × 1.333 = **$133.30** | 100.00 × 1.428 = **$142.80** |
+| 12 | 12/60 × 12 = $2.40 | $120.00 | 120.00 × 1.333 = **$159.96** | 120.00 × 1.428 = **$171.36** |
 
-The N = 100 rows of `instrument/PROLIFIC.md` §9.3 give the same four figures. What the formula does
+The N = 100 rows of `instrument/PROLIFIC.md` §9.3 give the figures at twice this N. What the formula does
 not cover (`PROLIFIC.md` §9.2): the bonus, `Bonus_cost(N) = fee_factor × N × B × E[M]` with the
 stake B an owner decision and E[M] from the not-yet-built path table; the pilot of 20 participants
 (design decision, `PROLIFIC.md` §13; at the same rates 20 × $2.00 = $40.00 → $53.32 / $57.12 for
@@ -51,11 +51,10 @@ T itself is a pilot measurement; 10 and 12 minutes are the two durations the bri
 
 ## 3. Notes
 
-* **N target caveat.** N_target = 100 is the value in `reports/recovery/N_target.json` generated
-  2026-09-29T13:43:13+00:00; `STATUS.md` (13:56 UTC) records that 14 cells of that grid were missing
-  and that a completion run was started, so the target — and every cost row derived from it — may
-  change. The superseded old-defaults pass (`reports/recovery_pass1_olddefaults/`) gave 200 at the
-  only N it tested and is not used here.
+* **N target.** N_target = 50 comes from the merged grid (`reports/recovery/N_target.json`, 135
+  fits, 0 failed; 9 of 9 correct at N = 50, 100 and 200); 50 is the smallest N tested, so the true
+  minimum may be lower. It is a synthetic-data result (the smallest N at which the true generator
+  family is recovered), not evidence about real investors.
 * **What no listed dataset gives.** Within-subject manipulated loss × manipulated context × later
   *real* trade. Nothing public provides it (`data/DATA_MAP.md`, last paragraph); the intake battery
   plus `intervention_log` is the only path, and even the Prolific design records later actions as
