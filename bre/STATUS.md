@@ -8,10 +8,8 @@ first unfinished item in "Next up".
 * Virtualenv: `/home/user/bre-venv` (outside the repo). Run make targets as
   `BRE_VENV=/home/user/bre-venv make -C bre <target>`; a clean clone uses `make setup` to build `bre/.venv`.
 * Node for the instrument tests: `/opt/node22/bin/node` (`NODE=/opt/node22/bin/node make -C bre instrument`).
-* GitHub: `git push` and the GitHub API both return 403 for this session (Claude GitHub App not
-  installed on dennismboya/rocket-simulation-phy234). Commits are local on branch
-  `claude/behavioral-risk-engine-5e2mf6`; retry `git push -u origin claude/behavioral-risk-engine-5e2mf6`
-  at every checkpoint; a git bundle of the branch is sent to the owner as the fallback deliverable.
+* GitHub: push works since 2026-09-29 15:05 UTC; draft PR https://github.com/dennismboya/rocket-simulation-phy234/pull/1
+  tracks branch `claude/behavioral-risk-engine-5e2mf6`. Two git bundles were sent to the owner earlier as fallbacks.
 * Tests: `/home/user/bre-venv/bin/python -m pytest -q` from `bre/` (pyproject sets pythonpath).
 
 ## Phase status
@@ -121,3 +119,4 @@ Phases 0–8 as planned; no long runs started yet.
 * 2026-09-29 14:20 UTC — docs drafted: reports/MODEL_CARD.md, SUMMARY_PLAIN.md, TECHNICAL_APPENDIX.md, DATA_GAPS.md (every number sourced). Path note: the transparency page reads reports/phase4/verdict.json; the Phase 4 runner writes reports/phase4/<name>/; the primary run's verdict.json and table.md will be copied to the flat path once produced.
 * 2026-09-29 14:47 UTC — second container restart (~14:45) killed the grid completion at 36/135 and the report agent (its files survived; bre.report committed, 10 tests). Memory-safe plan: Phase 4 split (b) on CPC18 pairs, all 686 subjects, classical models first (2 workers, runs/phase4/cpc18-pairs-classical.stdout), quantum models next, then an assembling invocation; recovery grid re-run per N with 1 worker into reports/recovery_n50 (then n100) and merged with the complete N=200 cells.
 * 2026-09-29 15:05 UTC — full fast test suite: 702 passed (the earlier collection error was transient under memory pressure). Phase 4 classical split (b) and grid N=50 running.
+* 2026-09-29 15:08 UTC — push succeeded; draft PR #1 opened; Phase 4 quantum split (b) batch running (4 jobs, ~42 min est.).
