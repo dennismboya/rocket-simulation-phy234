@@ -1,0 +1,2627 @@
+// GENERATED from ../battery.json by validate_battery.py --write-static. Do not edit by hand.
+// Exists because browsers refuse fetch() of a local JSON file under file://.
+window.BRE_BATTERY = {
+  "battery_version": "1.0.0",
+  "dataset": "intake_battery",
+  "title": "BRE intake battery",
+  "description": "Static intake questionnaire for the Behavioral Risk Engine. It doubles as the data-collection instrument: every elicited decision becomes one row of the unified DecisionEvent schema (PLAN.md section 2). The experimental design is PLAN.md section 3 verbatim; the intake battery samples a randomized, balanced subset of the 170-item full design and records the assignment (seed = session_id).",
+  "provenance": {
+    "design_source": "bre/PLAN.md section 3 (shared experimental design)",
+    "schema_source": "bre/PLAN.md section 2; column list and range rules mirrored in bre/db/models.py",
+    "authored_on": "2026-09-17",
+    "is_synthetic": false,
+    "incentivized": false,
+    "notes": [
+      "No number in this file is an estimate from data. Loss percentages and the 5% recovery are the design's own values; every other numeric value is an instrument parameter chosen by the author and labelled as such where it appears.",
+      "The financial-literacy items are standard public knowledge items written in plain language; their numbers are part of the questions, not data."
+    ]
+  },
+  "design": {
+    "loss_pcts": [
+      -0.05,
+      -0.1,
+      -0.15,
+      -0.2,
+      -0.3
+    ],
+    "loss_pct_display": {
+      "-0.05": "5%",
+      "-0.10": "10%",
+      "-0.15": "15%",
+      "-0.20": "20%",
+      "-0.30": "30%"
+    },
+    "horizon_days": 365,
+    "contexts": {
+      "none": {
+        "tag": "none",
+        "kind": "none",
+        "display": null,
+        "triggers_delay": false,
+        "note": "No context sentence is shown. The 'none' condition has an empty context_tags list."
+      },
+      "news:recession": {
+        "tag": "news:recession",
+        "kind": "news",
+        "display": "The news reports that the economy has entered a recession. Economists quoted in the reports expect business conditions to stay weak for some time, and they say this is what has been pulling down the value of investments like yours.",
+        "triggers_delay": true
+      },
+      "news:technical": {
+        "tag": "news:technical",
+        "kind": "news",
+        "display": "The news reports that the fall was caused by a technical outage at the exchange where your fund trades, which disrupted trading and set off a wave of automatic selling. The reports say the outage has since been fixed and that the businesses the fund invests in are unaffected.",
+        "triggers_delay": true
+      },
+      "social:friend_sells": {
+        "tag": "social:friend_sells",
+        "kind": "social",
+        "display": "A close friend who holds the same fund tells you that they have just sold their entire holding.",
+        "triggers_delay": false
+      },
+      "market:recovered_5pct": {
+        "tag": "market:recovered_5pct",
+        "kind": "market",
+        "display": "In the last few days the fund's price has recovered 5% from its lowest point. The loss described above is measured after this recovery, so the position is still below what you paid.",
+        "triggers_delay": false
+      }
+    },
+    "context_tag_order": [
+      "news:recession",
+      "news:technical",
+      "social:friend_sells",
+      "market:recovered_5pct"
+    ],
+    "context_conditions": [
+      {
+        "condition_id": "none",
+        "condition_type": "none",
+        "context_tags": []
+      },
+      {
+        "condition_id": "news:recession",
+        "condition_type": "single",
+        "context_tags": [
+          "news:recession"
+        ]
+      },
+      {
+        "condition_id": "news:technical",
+        "condition_type": "single",
+        "context_tags": [
+          "news:technical"
+        ]
+      },
+      {
+        "condition_id": "social:friend_sells",
+        "condition_type": "single",
+        "context_tags": [
+          "social:friend_sells"
+        ]
+      },
+      {
+        "condition_id": "market:recovered_5pct",
+        "condition_type": "single",
+        "context_tags": [
+          "market:recovered_5pct"
+        ]
+      },
+      {
+        "condition_id": "news:recession>news:technical",
+        "condition_type": "pair",
+        "context_tags": [
+          "news:recession",
+          "news:technical"
+        ]
+      },
+      {
+        "condition_id": "news:recession>social:friend_sells",
+        "condition_type": "pair",
+        "context_tags": [
+          "news:recession",
+          "social:friend_sells"
+        ]
+      },
+      {
+        "condition_id": "news:recession>market:recovered_5pct",
+        "condition_type": "pair",
+        "context_tags": [
+          "news:recession",
+          "market:recovered_5pct"
+        ]
+      },
+      {
+        "condition_id": "news:technical>news:recession",
+        "condition_type": "pair",
+        "context_tags": [
+          "news:technical",
+          "news:recession"
+        ]
+      },
+      {
+        "condition_id": "news:technical>social:friend_sells",
+        "condition_type": "pair",
+        "context_tags": [
+          "news:technical",
+          "social:friend_sells"
+        ]
+      },
+      {
+        "condition_id": "news:technical>market:recovered_5pct",
+        "condition_type": "pair",
+        "context_tags": [
+          "news:technical",
+          "market:recovered_5pct"
+        ]
+      },
+      {
+        "condition_id": "social:friend_sells>news:recession",
+        "condition_type": "pair",
+        "context_tags": [
+          "social:friend_sells",
+          "news:recession"
+        ]
+      },
+      {
+        "condition_id": "social:friend_sells>news:technical",
+        "condition_type": "pair",
+        "context_tags": [
+          "social:friend_sells",
+          "news:technical"
+        ]
+      },
+      {
+        "condition_id": "social:friend_sells>market:recovered_5pct",
+        "condition_type": "pair",
+        "context_tags": [
+          "social:friend_sells",
+          "market:recovered_5pct"
+        ]
+      },
+      {
+        "condition_id": "market:recovered_5pct>news:recession",
+        "condition_type": "pair",
+        "context_tags": [
+          "market:recovered_5pct",
+          "news:recession"
+        ]
+      },
+      {
+        "condition_id": "market:recovered_5pct>news:technical",
+        "condition_type": "pair",
+        "context_tags": [
+          "market:recovered_5pct",
+          "news:technical"
+        ]
+      },
+      {
+        "condition_id": "market:recovered_5pct>social:friend_sells",
+        "condition_type": "pair",
+        "context_tags": [
+          "market:recovered_5pct",
+          "social:friend_sells"
+        ]
+      }
+    ],
+    "question_orders": [
+      {
+        "question_order_id": "tolerance-first",
+        "page_sequence": [
+          "tolerance",
+          "scenario",
+          "delay_if_news",
+          "sell_hold",
+          "allocation_share"
+        ],
+        "description": "The tolerance question is asked before the scenario is shown."
+      },
+      {
+        "question_order_id": "scenario-first",
+        "page_sequence": [
+          "scenario",
+          "delay_if_news",
+          "sell_hold",
+          "allocation_share",
+          "tolerance"
+        ],
+        "description": "The tolerance question is asked after the sell/hold and allocation questions."
+      }
+    ],
+    "questions": {
+      "tolerance": {
+        "question_id": "tolerance",
+        "elicitation_type": "binary_yes_no",
+        "text": "Would you describe yourself as someone who avoids investment losses even at the cost of lower returns?",
+        "choices": [
+          {
+            "label": "Yes",
+            "response": 1
+          },
+          {
+            "label": "No",
+            "response": 0
+          }
+        ],
+        "coding_note": "Binary self-description from PLAN.md section 3, wording verbatim. Stored with elicitation_type binary_yes_no (PLAN.md section 2, amendment of 2026-09-17: response in {0, 1}, the type for the tolerance question and any yes/no survey item): 1 = 'Yes' (describes themself as avoiding losses even at the cost of lower returns), 0 = 'No'. Not a lottery_choice row: the question offers no lottery."
+      },
+      "sell_hold": {
+        "question_id": "sell_hold",
+        "elicitation_type": "binary_sell",
+        "text": "What would you do with this position today?",
+        "choices": [
+          {
+            "label": "Sell",
+            "response": 1
+          },
+          {
+            "label": "Hold",
+            "response": 0
+          }
+        ],
+        "coding_note": "1 = sell, 0 = hold."
+      },
+      "allocation_share": {
+        "question_id": "allocation_share",
+        "elicitation_type": "allocation_pct",
+        "text": "What share of this position would you sell?",
+        "slider": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "start": 50,
+          "require_movement": true,
+          "labels": [
+            "0% (sell nothing)",
+            "100% (sell everything)"
+          ],
+          "design_choice_note": "Displayed 0-100. The start position (50) and the requirement to move the slider are instrument parameters chosen by the author, not data."
+        },
+        "coding_note": "response = slider value / 100, because the schema constrains allocation_pct to [0, 1] (db/models.py validate_response_range)."
+      }
+    },
+    "scenario": {
+      "template": {
+        "intro": "Please imagine the following situation. About a year ago you invested part of your long-term savings in a fund. The rest of your finances are unchanged and you do not need this money in the near future.",
+        "loss_sentence": "Today you check your account and see that this position is worth {loss_pct_display} less than what you paid for it a year ago.",
+        "context_lead_in": {
+          "single": "Since then, one more thing has happened:",
+          "pair": "Since then, two more things have happened, in this order:"
+        },
+        "reminder": "Reminder: this position is worth {loss_pct_display} less than what you paid for it a year ago.",
+        "placeholders": {
+          "{loss_pct_display}": "design.loss_pct_display[loss_pct formatted with two decimals]"
+        }
+      },
+      "scenario_id_format": "L{loss_pct:.2f}|{context tags joined by '>' or 'none'}|{question_order_id}",
+      "scenario_id_example": "L-0.15|news:recession>social:friend_sells|tolerance-first",
+      "context_presentation": "Context sentences are shown on the scenario page under the loss sentence, in the assigned order, as a numbered list for pairs and a single sentence for singles."
+    },
+    "delay_page": {
+      "applies_when": "the item's context_tags contain at least one tag whose context kind is 'news'",
+      "position": "between the scenario/context page and the sell_hold question",
+      "display_seconds": 10,
+      "title": "A few days later",
+      "text": "Please take a moment before you decide. Imagine that a few days pass. You have not changed anything about the position, and the news you just read is still being discussed. When the button appears, continue to your decision.",
+      "button_label": "Continue to your decision",
+      "recorded_as": "display_seconds is fixed here; the measured display duration (page shown to button clicked, in ms) is written per item to the session log as delay_display_ms. It is not a schema column.",
+      "design_choice_note": "display_seconds = 10 is an instrument parameter chosen by the author to keep the full form inside its time budget; it is not derived from data."
+    },
+    "repeated_scenario_rule": {
+      "n_repeats_full_form": 2,
+      "n_repeats_short_form": 0,
+      "source": "two distinct items drawn from presentation positions 1-6 of the full form",
+      "min_gap_items": 6,
+      "placement": "each repeat is inserted at a slot drawn uniformly from the slots at least min_gap_items after its original (the second repeat is inserted after the first has been placed)",
+      "wording": "verbatim: same scenario_id, same context order, same question order",
+      "purpose": "response replicability (test-retest within session)",
+      "identification": "same scenario_id as the original; source_row_ref carries rep_of_i{original item index}"
+    },
+    "scenario_universe": [
+      {
+        "scenario_id": "L-0.05|none|tolerance-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [],
+        "condition_type": "none",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.05|none|scenario-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [],
+        "condition_type": "none",
+        "question_order_id": "scenario-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.05|news:recession|tolerance-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession"
+        ],
+        "condition_type": "single",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.05|news:recession|scenario-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession"
+        ],
+        "condition_type": "single",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.05|news:technical|tolerance-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical"
+        ],
+        "condition_type": "single",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.05|news:technical|scenario-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical"
+        ],
+        "condition_type": "single",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.05|social:friend_sells|tolerance-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells"
+        ],
+        "condition_type": "single",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.05|social:friend_sells|scenario-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells"
+        ],
+        "condition_type": "single",
+        "question_order_id": "scenario-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.05|market:recovered_5pct|tolerance-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct"
+        ],
+        "condition_type": "single",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.05|market:recovered_5pct|scenario-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct"
+        ],
+        "condition_type": "single",
+        "question_order_id": "scenario-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.05|news:recession>news:technical|tolerance-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.05|news:recession>news:technical|scenario-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.05|news:recession>social:friend_sells|tolerance-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.05|news:recession>social:friend_sells|scenario-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.05|news:recession>market:recovered_5pct|tolerance-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.05|news:recession>market:recovered_5pct|scenario-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.05|news:technical>news:recession|tolerance-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.05|news:technical>news:recession|scenario-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.05|news:technical>social:friend_sells|tolerance-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.05|news:technical>social:friend_sells|scenario-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.05|news:technical>market:recovered_5pct|tolerance-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.05|news:technical>market:recovered_5pct|scenario-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.05|social:friend_sells>news:recession|tolerance-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.05|social:friend_sells>news:recession|scenario-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.05|social:friend_sells>news:technical|tolerance-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.05|social:friend_sells>news:technical|scenario-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.05|social:friend_sells>market:recovered_5pct|tolerance-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.05|social:friend_sells>market:recovered_5pct|scenario-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.05|market:recovered_5pct>news:recession|tolerance-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.05|market:recovered_5pct>news:recession|scenario-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.05|market:recovered_5pct>news:technical|tolerance-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.05|market:recovered_5pct>news:technical|scenario-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.05|market:recovered_5pct>social:friend_sells|tolerance-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.05|market:recovered_5pct>social:friend_sells|scenario-first",
+        "loss_pct": -0.05,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.10|none|tolerance-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [],
+        "condition_type": "none",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.10|none|scenario-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [],
+        "condition_type": "none",
+        "question_order_id": "scenario-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.10|news:recession|tolerance-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession"
+        ],
+        "condition_type": "single",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.10|news:recession|scenario-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession"
+        ],
+        "condition_type": "single",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.10|news:technical|tolerance-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical"
+        ],
+        "condition_type": "single",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.10|news:technical|scenario-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical"
+        ],
+        "condition_type": "single",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.10|social:friend_sells|tolerance-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells"
+        ],
+        "condition_type": "single",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.10|social:friend_sells|scenario-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells"
+        ],
+        "condition_type": "single",
+        "question_order_id": "scenario-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.10|market:recovered_5pct|tolerance-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct"
+        ],
+        "condition_type": "single",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.10|market:recovered_5pct|scenario-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct"
+        ],
+        "condition_type": "single",
+        "question_order_id": "scenario-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.10|news:recession>news:technical|tolerance-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.10|news:recession>news:technical|scenario-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.10|news:recession>social:friend_sells|tolerance-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.10|news:recession>social:friend_sells|scenario-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.10|news:recession>market:recovered_5pct|tolerance-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.10|news:recession>market:recovered_5pct|scenario-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.10|news:technical>news:recession|tolerance-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.10|news:technical>news:recession|scenario-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.10|news:technical>social:friend_sells|tolerance-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.10|news:technical>social:friend_sells|scenario-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.10|news:technical>market:recovered_5pct|tolerance-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.10|news:technical>market:recovered_5pct|scenario-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.10|social:friend_sells>news:recession|tolerance-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.10|social:friend_sells>news:recession|scenario-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.10|social:friend_sells>news:technical|tolerance-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.10|social:friend_sells>news:technical|scenario-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.10|social:friend_sells>market:recovered_5pct|tolerance-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.10|social:friend_sells>market:recovered_5pct|scenario-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.10|market:recovered_5pct>news:recession|tolerance-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.10|market:recovered_5pct>news:recession|scenario-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.10|market:recovered_5pct>news:technical|tolerance-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.10|market:recovered_5pct>news:technical|scenario-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.10|market:recovered_5pct>social:friend_sells|tolerance-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.10|market:recovered_5pct>social:friend_sells|scenario-first",
+        "loss_pct": -0.1,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.15|none|tolerance-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [],
+        "condition_type": "none",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.15|none|scenario-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [],
+        "condition_type": "none",
+        "question_order_id": "scenario-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.15|news:recession|tolerance-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession"
+        ],
+        "condition_type": "single",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.15|news:recession|scenario-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession"
+        ],
+        "condition_type": "single",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.15|news:technical|tolerance-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical"
+        ],
+        "condition_type": "single",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.15|news:technical|scenario-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical"
+        ],
+        "condition_type": "single",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.15|social:friend_sells|tolerance-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells"
+        ],
+        "condition_type": "single",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.15|social:friend_sells|scenario-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells"
+        ],
+        "condition_type": "single",
+        "question_order_id": "scenario-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.15|market:recovered_5pct|tolerance-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct"
+        ],
+        "condition_type": "single",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.15|market:recovered_5pct|scenario-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct"
+        ],
+        "condition_type": "single",
+        "question_order_id": "scenario-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.15|news:recession>news:technical|tolerance-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.15|news:recession>news:technical|scenario-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.15|news:recession>social:friend_sells|tolerance-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.15|news:recession>social:friend_sells|scenario-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.15|news:recession>market:recovered_5pct|tolerance-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.15|news:recession>market:recovered_5pct|scenario-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.15|news:technical>news:recession|tolerance-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.15|news:technical>news:recession|scenario-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.15|news:technical>social:friend_sells|tolerance-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.15|news:technical>social:friend_sells|scenario-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.15|news:technical>market:recovered_5pct|tolerance-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.15|news:technical>market:recovered_5pct|scenario-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.15|social:friend_sells>news:recession|tolerance-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.15|social:friend_sells>news:recession|scenario-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.15|social:friend_sells>news:technical|tolerance-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.15|social:friend_sells>news:technical|scenario-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.15|social:friend_sells>market:recovered_5pct|tolerance-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.15|social:friend_sells>market:recovered_5pct|scenario-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.15|market:recovered_5pct>news:recession|tolerance-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.15|market:recovered_5pct>news:recession|scenario-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.15|market:recovered_5pct>news:technical|tolerance-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.15|market:recovered_5pct>news:technical|scenario-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.15|market:recovered_5pct>social:friend_sells|tolerance-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.15|market:recovered_5pct>social:friend_sells|scenario-first",
+        "loss_pct": -0.15,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.20|none|tolerance-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [],
+        "condition_type": "none",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.20|none|scenario-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [],
+        "condition_type": "none",
+        "question_order_id": "scenario-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.20|news:recession|tolerance-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession"
+        ],
+        "condition_type": "single",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.20|news:recession|scenario-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession"
+        ],
+        "condition_type": "single",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.20|news:technical|tolerance-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical"
+        ],
+        "condition_type": "single",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.20|news:technical|scenario-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical"
+        ],
+        "condition_type": "single",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.20|social:friend_sells|tolerance-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells"
+        ],
+        "condition_type": "single",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.20|social:friend_sells|scenario-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells"
+        ],
+        "condition_type": "single",
+        "question_order_id": "scenario-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.20|market:recovered_5pct|tolerance-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct"
+        ],
+        "condition_type": "single",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.20|market:recovered_5pct|scenario-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct"
+        ],
+        "condition_type": "single",
+        "question_order_id": "scenario-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.20|news:recession>news:technical|tolerance-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.20|news:recession>news:technical|scenario-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.20|news:recession>social:friend_sells|tolerance-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.20|news:recession>social:friend_sells|scenario-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.20|news:recession>market:recovered_5pct|tolerance-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.20|news:recession>market:recovered_5pct|scenario-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.20|news:technical>news:recession|tolerance-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.20|news:technical>news:recession|scenario-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.20|news:technical>social:friend_sells|tolerance-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.20|news:technical>social:friend_sells|scenario-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.20|news:technical>market:recovered_5pct|tolerance-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.20|news:technical>market:recovered_5pct|scenario-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.20|social:friend_sells>news:recession|tolerance-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.20|social:friend_sells>news:recession|scenario-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.20|social:friend_sells>news:technical|tolerance-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.20|social:friend_sells>news:technical|scenario-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.20|social:friend_sells>market:recovered_5pct|tolerance-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.20|social:friend_sells>market:recovered_5pct|scenario-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.20|market:recovered_5pct>news:recession|tolerance-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.20|market:recovered_5pct>news:recession|scenario-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.20|market:recovered_5pct>news:technical|tolerance-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.20|market:recovered_5pct>news:technical|scenario-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.20|market:recovered_5pct>social:friend_sells|tolerance-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.20|market:recovered_5pct>social:friend_sells|scenario-first",
+        "loss_pct": -0.2,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.30|none|tolerance-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [],
+        "condition_type": "none",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.30|none|scenario-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [],
+        "condition_type": "none",
+        "question_order_id": "scenario-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.30|news:recession|tolerance-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession"
+        ],
+        "condition_type": "single",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.30|news:recession|scenario-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession"
+        ],
+        "condition_type": "single",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.30|news:technical|tolerance-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical"
+        ],
+        "condition_type": "single",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.30|news:technical|scenario-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical"
+        ],
+        "condition_type": "single",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.30|social:friend_sells|tolerance-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells"
+        ],
+        "condition_type": "single",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.30|social:friend_sells|scenario-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells"
+        ],
+        "condition_type": "single",
+        "question_order_id": "scenario-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.30|market:recovered_5pct|tolerance-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct"
+        ],
+        "condition_type": "single",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.30|market:recovered_5pct|scenario-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct"
+        ],
+        "condition_type": "single",
+        "question_order_id": "scenario-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.30|news:recession>news:technical|tolerance-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.30|news:recession>news:technical|scenario-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.30|news:recession>social:friend_sells|tolerance-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.30|news:recession>social:friend_sells|scenario-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.30|news:recession>market:recovered_5pct|tolerance-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.30|news:recession>market:recovered_5pct|scenario-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:recession",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.30|news:technical>news:recession|tolerance-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.30|news:technical>news:recession|scenario-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.30|news:technical>social:friend_sells|tolerance-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.30|news:technical>social:friend_sells|scenario-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.30|news:technical>market:recovered_5pct|tolerance-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.30|news:technical>market:recovered_5pct|scenario-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "news:technical",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.30|social:friend_sells>news:recession|tolerance-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.30|social:friend_sells>news:recession|scenario-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.30|social:friend_sells>news:technical|tolerance-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.30|social:friend_sells>news:technical|scenario-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.30|social:friend_sells>market:recovered_5pct|tolerance-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.30|social:friend_sells>market:recovered_5pct|scenario-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "social:friend_sells",
+          "market:recovered_5pct"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.30|market:recovered_5pct>news:recession|tolerance-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.30|market:recovered_5pct>news:recession|scenario-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "news:recession"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.30|market:recovered_5pct>news:technical|tolerance-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.30|market:recovered_5pct>news:technical|scenario-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "news:technical"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": true
+      },
+      {
+        "scenario_id": "L-0.30|market:recovered_5pct>social:friend_sells|tolerance-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "tolerance-first",
+        "has_news_delay": false
+      },
+      {
+        "scenario_id": "L-0.30|market:recovered_5pct>social:friend_sells|scenario-first",
+        "loss_pct": -0.3,
+        "horizon_days": 365,
+        "context_tags": [
+          "market:recovered_5pct",
+          "social:friend_sells"
+        ],
+        "condition_type": "pair",
+        "question_order_id": "scenario-first",
+        "has_news_delay": false
+      }
+    ]
+  },
+  "intake": {
+    "consent": {
+      "title": "Before you start",
+      "text": [
+        "This questionnaire is part of a research project on how people make investment decisions after losses. You will read short hypothetical situations and say what you would do. There are no right or wrong answers.",
+        "Taking part is voluntary and unpaid. You can stop at any time by closing this page; nothing is sent until the final page.",
+        "We do not ask for your name, email address or any account details. A random identifier is generated in your browser and is the only identifier stored with your answers."
+      ],
+      "checkboxes": [
+        {
+          "name": "consent_participate",
+          "label": "I have read the above and agree to take part.",
+          "required": true,
+          "maps_to": null
+        },
+        {
+          "name": "consent_training",
+          "label": "I consent to my anonymised responses being used to train the model",
+          "required": false,
+          "maps_to": "consent_training"
+        }
+      ],
+      "button_label": "Continue"
+    },
+    "instructions": {
+      "title": "How this works",
+      "text": [
+        "First, a few questions about you. Then {n_scenarios} short investment scenarios.",
+        "Each scenario describes a fund that has lost value. Read it, then answer a few quick questions about what you would do.",
+        "Some questions repeat across scenarios. Answer each one as you feel at that moment.",
+        "Please answer on your own, without a calculator or looking anything up."
+      ],
+      "button_label": "Begin"
+    },
+    "covariates": [
+      {
+        "key": "age_band",
+        "text": "What is your age?",
+        "input": "radio",
+        "options": [
+          {
+            "value": "18-29",
+            "label": "18 to 29"
+          },
+          {
+            "value": "30-44",
+            "label": "30 to 44"
+          },
+          {
+            "value": "45-59",
+            "label": "45 to 59"
+          },
+          {
+            "value": "60+",
+            "label": "60 or older"
+          },
+          {
+            "value": null,
+            "label": "Prefer not to say"
+          }
+        ],
+        "required": true,
+        "page": "about_you"
+      },
+      {
+        "key": "education",
+        "text": "What is the highest level of education you have completed?",
+        "input": "radio",
+        "options": [
+          {
+            "value": "hs",
+            "label": "High school or less"
+          },
+          {
+            "value": "some_college",
+            "label": "Some college or vocational training"
+          },
+          {
+            "value": "bachelor",
+            "label": "Bachelor's degree"
+          },
+          {
+            "value": "graduate",
+            "label": "Graduate or professional degree"
+          },
+          {
+            "value": null,
+            "label": "Prefer not to say"
+          }
+        ],
+        "required": true,
+        "page": "about_you"
+      },
+      {
+        "key": "wealth_band",
+        "text": "Roughly how much do you have in savings and investments, not counting your home? (In US dollars or the equivalent in your currency.)",
+        "input": "radio",
+        "options": [
+          {
+            "value": "<50k",
+            "label": "Less than $50,000"
+          },
+          {
+            "value": "50-250k",
+            "label": "$50,000 to $250,000"
+          },
+          {
+            "value": "250k-1M",
+            "label": "$250,000 to $1 million"
+          },
+          {
+            "value": ">1M",
+            "label": "More than $1 million"
+          },
+          {
+            "value": null,
+            "label": "Prefer not to say"
+          }
+        ],
+        "required": true,
+        "page": "about_you"
+      },
+      {
+        "key": "invest_experience_yrs",
+        "text": "For how many years have you held investments such as shares, funds or bonds? Enter 0 if you have never invested; enter 40 if 40 or more.",
+        "input": "number",
+        "min": 0,
+        "max": 40,
+        "step": 1,
+        "required": true,
+        "page": "investing"
+      },
+      {
+        "key": "self_reported_risk_tolerance",
+        "text": "In general, how willing are you to take financial risks in order to earn higher returns?",
+        "input": "likert",
+        "min": 1,
+        "max": 7,
+        "anchors": {
+          "1": "Not at all willing",
+          "7": "Very willing"
+        },
+        "required": true,
+        "page": "investing"
+      }
+    ],
+    "covariate_null_rule": "'Prefer not to say' is stored as null for that key. financial_literacy_score is the number of correct quiz answers (0-5); 'I don't know' counts as incorrect.",
+    "financial_literacy_quiz": {
+      "key": "financial_literacy_score",
+      "score_range": [
+        0,
+        5
+      ],
+      "intro": "Five quick knowledge questions. If you are not sure, choose 'I don't know' rather than guessing.",
+      "items": [
+        {
+          "item_id": "fl1_compound_interest",
+          "family": "big_three",
+          "text": "Suppose you put $100 into a savings account that pays 2% interest per year. You leave the money there and do not add or withdraw anything. After 5 years, how much would be in the account?",
+          "options": [
+            "More than $102",
+            "Exactly $102",
+            "Less than $102",
+            "I don't know"
+          ],
+          "answer_index": 0
+        },
+        {
+          "item_id": "fl2_inflation",
+          "family": "big_three",
+          "text": "Suppose the interest rate on your savings account is 1% per year and inflation is 2% per year. After one year, how much would you be able to buy with the money in the account?",
+          "options": [
+            "More than today",
+            "Exactly the same as today",
+            "Less than today",
+            "I don't know"
+          ],
+          "answer_index": 2
+        },
+        {
+          "item_id": "fl3_diversification",
+          "family": "big_three",
+          "text": "True or false? Buying shares in a single company usually gives a safer return than buying a fund that holds shares in many companies.",
+          "options": [
+            "True",
+            "False",
+            "I don't know"
+          ],
+          "answer_index": 1
+        },
+        {
+          "item_id": "fl4_bond_prices",
+          "family": "additional",
+          "text": "If interest rates rise, what usually happens to the price of existing bonds?",
+          "options": [
+            "They rise",
+            "They fall",
+            "They stay the same",
+            "There is no relationship",
+            "I don't know"
+          ],
+          "answer_index": 1
+        },
+        {
+          "item_id": "fl5_mortgage",
+          "family": "additional",
+          "text": "True or false? For the same amount borrowed, a 15-year mortgage usually has higher monthly payments than a 30-year mortgage, but the total interest paid over the life of the loan is lower.",
+          "options": [
+            "True",
+            "False",
+            "I don't know"
+          ],
+          "answer_index": 0
+        }
+      ]
+    }
+  },
+  "forms": {
+    "full": {
+      "form_id": "full",
+      "n_items": 12,
+      "n_repeats": 2,
+      "n_presentations": 14,
+      "target_duration_min": [
+        8,
+        12
+      ],
+      "balance": {
+        "condition_type_counts": {
+          "none": 4,
+          "single": 4,
+          "pair": 4
+        },
+        "orders_per_condition_type": {
+          "tolerance-first": 2,
+          "scenario-first": 2
+        },
+        "loss_rule": "Each of the 5 loss levels appears at least twice. Each condition-type block of 4 items uses 4 distinct loss levels; the loss level omitted from each block is drawn so that the three omitted levels are distinct, hence 3 levels appear twice and 2 levels appear three times (3x2 + 2x3 = 12).",
+        "single_rule": "Each of the 4 non-null contexts appears exactly once as a single.",
+        "pair_rule": "A uniformly random cyclic ordering (c1,c2,c3,c4) of the 4 non-null contexts gives the 4 ordered pairs c1>c2, c2>c3, c3>c4, c4>c1: every context appears once in first and once in second position and no unordered pair repeats.",
+        "order_rule": "Within each block, 2 tolerance-first and 2 scenario-first, assigned at random; the assignment is redrawn (bounded attempts) until every loss level occurs with both question orders. The session log records whether this was achieved.",
+        "presentation_rule": "The 12 items are shuffled uniformly; then repeats are inserted (repeated_scenario_rule)."
+      }
+    },
+    "short": {
+      "form_id": "short",
+      "n_items": 5,
+      "n_repeats": 0,
+      "n_presentations": 5,
+      "target_duration_min": null,
+      "balance": {
+        "condition_type_counts": {
+          "none": 1,
+          "single": 2,
+          "pair": 2
+        },
+        "loss_rule": "Each of the 5 loss levels appears exactly once, assigned at random.",
+        "single_rule": "2 distinct non-null contexts drawn at random.",
+        "pair_rule": "From a uniformly random cyclic ordering (c1,c2,c3,c4) of the non-null contexts, the two disjoint pairs c1>c2 and c3>c4, so every context appears once in a pair.",
+        "order_rule": "3 items get one question order and 2 the other; which order gets 3 is drawn at random; positions are shuffled.",
+        "presentation_rule": "The 5 items are shuffled uniformly; no repeats."
+      },
+      "note": "target_duration_min is null because the short form's duration has not been measured; the pilot measures it."
+    }
+  },
+  "randomization": {
+    "prng": "sfc32 (32-bit small fast counter), seeded from four 32-bit words drawn with crypto.getRandomValues; 12 warm-up draws discarded",
+    "seed_format": "32 lowercase hex characters (four 8-character words); session_id = seed",
+    "shuffle": "Fisher-Yates using the seeded PRNG",
+    "reproducibility": "buildAssignment(battery, form_id, seed) in static/battery.js is a pure function; the assignment can be regenerated offline from battery_version + form + session_id.",
+    "url_params": {
+      "form": "full | short (default full)",
+      "seed": "optional 32-hex seed to replay an assignment"
+    }
+  },
+  "output": {
+    "schema_fields": [
+      "subject_id",
+      "dataset",
+      "session_id",
+      "timestamp",
+      "position_in_session",
+      "scenario_id",
+      "loss_pct",
+      "horizon_days",
+      "context_tags",
+      "question_order_id",
+      "prior_question_ids",
+      "elicitation_type",
+      "response",
+      "response_time_ms",
+      "covariates",
+      "outcome_behavior",
+      "incentivized",
+      "consent_training",
+      "battery_version",
+      "is_synthetic",
+      "source_row_ref"
+    ],
+    "row_rules": {
+      "one_row_per": "elicited decision: tolerance, sell_hold and allocation_share each produce their own row",
+      "dataset": "intake_battery",
+      "subject_id": "random UUID v4 generated in the browser at session start",
+      "session_id": "the PRNG seed (32 hex characters)",
+      "timestamp": "ISO 8601 UTC at the moment the response was given",
+      "position_in_session": "0-based counter over rows in the order they were answered",
+      "prior_question_ids": "question_ids already answered within the same item presentation, in order (empty for the first question of an item)",
+      "context_tags": "the item's ordered context tags, each of the form namespace:value (e.g. news:recession); empty list for the none condition",
+      "question_order_id": "exactly tolerance-first or scenario-first (design.question_orders)",
+      "elicitation_type": "per question (design.questions): tolerance -> binary_yes_no, sell_hold -> binary_sell, allocation_share -> allocation_pct; likert, lottery_choice and choice_rate are never produced by this battery",
+      "response": "tolerance (binary_yes_no, 1 = Yes) and sell_hold (binary_sell, 1 = Sell): 0/1; allocation_share (allocation_pct): slider/100 in [0, 1]",
+      "covariates": "object with keys age_band, wealth_band, invest_experience_yrs, self_reported_risk_tolerance, financial_literacy_score, education; identical on every row of a session",
+      "outcome_behavior": null,
+      "incentivized": false,
+      "consent_training": "from the optional consent checkbox",
+      "battery_version": "1.0.0",
+      "is_synthetic": false
+    },
+    "elicitation_types_used": {
+      "tolerance": "binary_yes_no",
+      "sell_hold": "binary_sell",
+      "allocation_share": "allocation_pct"
+    },
+    "source_row_ref_format": "{form_id}:i{item_index two digits, 1-based presentation index}[:rep_of_i{original item index}]:{question_id}",
+    "source_row_ref_examples": [
+      "full:i03:sell_hold",
+      "full:i13:rep_of_i02:tolerance",
+      "short:i05:allocation_share"
+    ],
+    "session_log": "A second, non-schema JSON (download button 'Download session log') holds the seed, form, the full assignment, per-page response times, delay_display_ms per item, order_balance_satisfied, user agent and start/end timestamps.",
+    "file_names": {
+      "responses": "intake_{session_id}.json",
+      "session_log": "intake_{session_id}.session.json"
+    }
+  },
+  "placeholder_tokens": []
+};

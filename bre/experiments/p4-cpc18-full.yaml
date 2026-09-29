@@ -1,0 +1,44 @@
+# Phase 4 pre-registered evaluation (PLAN.md section 6) on REAL data: CPC18 individual choices,
+# pairs variant (bre.realdata: feedback blocks 2-5, context = exp:loss|gain of the two preceding
+# trials, response = safer option chosen, loss_pct = previous payoff / max |outcome|), all 686
+# subjects. Run: python -m bre.phase4 --config experiments/p4-cpc18-full.yaml
+# Splits: (a) held-out subjects 20%; (b) train on rows with at most one exp:* tag, test on the
+# ordered pairs; (c) not applicable (no question order in CPC18; listed with the reason); (d) the
+# last 20% of every subject's trials. Models: every registered model (B5 external fit, B2 SVI, Q3
+# at its default time t). Metrics with the 1000-draw subject bootstrap; structural tests that
+# apply (order effects by problem, interference intervals, Q4 decoherence, Q5 quarter law);
+# decision rule of PLAN.md section 6 verbatim on split (b). Outputs: reports/phase4/cpc18-pairs/.
+#
+# RUNTIME: see reports/phase4/README.md. The full run at these settings is far over the two-hour
+# GATE of CLAUDE.md rule 4 on 4 cores; the main session splits it over invocations with --models
+# subsets (cached jobs are reused and assembled by a final call with the full model list) and/or
+# lowers restarts / steps / --subjects, and documents what it ran.
+name: cpc18-pairs
+dataset: cpc18
+variant: pairs
+subjects: null              # null = all 686 subjects
+seed: 0
+models: [B1, B2, B3, B4, B5, B6, Q2, Q3, Q4, Q5]
+splits: [a, b, c, d]
+model_kwargs:
+  B5: {n_threads: 1}
+fit:
+  restarts: 5               # PLAN.md section 4 (5 restarts, Adam + early stopping, L-BFGS polish)
+  steps: 1500
+  lr: 0.02
+  val_frac: 0.2
+  seed: 0
+  early_stopping_patience: 5
+  eval_every: 25
+  lbfgs_polish: true
+  lbfgs_steps: 100
+  n_samples: 50             # Laplace / posterior draws behind the interference intervals (B5: none)
+  svi_steps: 2000           # B2
+  svi_lr: 0.01
+  svi_particles: 1
+bootstrap:
+  n_draws: 1000
+workers: 4                  # one single-threaded XLA process per worker (bre.recover._worker_init)
+output:
+  dir: reports/phase4/cpc18-pairs
+  runs_dir: runs/phase4/cpc18-pairs

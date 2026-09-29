@@ -1,0 +1,16 @@
+# experiments/fit_all.yaml — what `make fit` runs (python -m bre.fit experiments/fit_all.yaml).
+# Each entry is an experiment YAML for `bre.fit` (dataset, model, split, optimizer settings).
+# The list fits the ten registered models (B1-B6, Q2-Q5) on one G_Q synthetic table produced by
+# `make sim` / `make recover` (SYNTHETIC data; artifacts carry is_synthetic_training = true).
+# Real-data fit experiments are added here once Phase 3 catalogues them (see experiments/README.md).
+experiments:
+  - experiments/p3-gq-n200-seed0-B1.yaml
+  - experiments/p3-gq-n200-seed0-B2.yaml
+  - experiments/p3-gq-n200-seed0-B4.yaml
+  - experiments/p3-gq-n200-seed0-Q2.yaml
+  - experiments/p3-gq-n200-seed0-Q4.yaml
+  - experiments/p3-gq-n200-seed0-B3.yaml
+  - experiments/p3-gq-n200-seed0-B5.yaml
+  - experiments/p3-gq-n200-seed0-B6.yaml
+  - experiments/p3-gq-n200-seed0-Q3.yaml
+  - experiments/p3-gq-n200-seed0-Q5.yaml

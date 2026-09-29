@@ -1,0 +1,4351 @@
+{
+  "components": {
+    "schemas": {
+      "ActivateIn": {
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "maxLength": 120,
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "ActivateIn",
+        "type": "object"
+      },
+      "ActivateOut": {
+        "properties": {
+          "activated": {
+            "title": "Activated",
+            "type": "string"
+          },
+          "demo_mode": {
+            "title": "Demo Mode",
+            "type": "boolean"
+          },
+          "model_type": {
+            "title": "Model Type",
+            "type": "string"
+          },
+          "previous": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "activated",
+          "previous",
+          "model_type",
+          "demo_mode",
+          "synthetic"
+        ],
+        "title": "ActivateOut",
+        "type": "object"
+      },
+      "Body_intake_upload_intake_upload_post": {
+        "properties": {
+          "client_id": {
+            "description": "the client the session belongs to",
+            "title": "Client Id",
+            "type": "string"
+          },
+          "display_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Label"
+          },
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "description": "intake_<session_id>.json downloaded from the static instrument",
+            "title": "File",
+            "type": "string"
+          },
+          "store_as_synthetic": {
+            "default": false,
+            "description": "demo mode only: store the rows as synthetic (the demo database refuses real rows)",
+            "title": "Store As Synthetic",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "file",
+          "client_id"
+        ],
+        "title": "Body_intake_upload_intake_upload_post",
+        "type": "object"
+      },
+      "Body_score_book_csv_score_book_csv_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "description": "CSV with client_id, optional display_label and the six covariate columns",
+            "title": "File",
+            "type": "string"
+          },
+          "market_state": {
+            "default": "{}",
+            "description": "JSON object with the market-state fields",
+            "title": "Market State",
+            "type": "string"
+          },
+          "register_unknown": {
+            "default": false,
+            "title": "Register Unknown",
+            "type": "boolean"
+          },
+          "target": {
+            "default": 0.25,
+            "title": "Target",
+            "type": "number"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_score_book_csv_score_book_csv_post",
+        "type": "object"
+      },
+      "Calibration": {
+        "properties": {
+          "n_responses": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Responses"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "n_responses",
+          "status"
+        ],
+        "title": "Calibration",
+        "type": "object"
+      },
+      "ClientIn": {
+        "additionalProperties": false,
+        "properties": {
+          "client_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:\\-]{0,63}$",
+            "title": "Client Id",
+            "type": "string"
+          },
+          "covariates": {
+            "$ref": "#/components/schemas/Covariates"
+          },
+          "display_label": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Label"
+          }
+        },
+        "required": [
+          "client_id"
+        ],
+        "title": "ClientIn",
+        "type": "object"
+      },
+      "ClientOut": {
+        "properties": {
+          "client_id": {
+            "title": "Client Id",
+            "type": "string"
+          },
+          "covariates": {
+            "additionalProperties": true,
+            "title": "Covariates",
+            "type": "object"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "display_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Label"
+          },
+          "known_to_model": {
+            "title": "Known To Model",
+            "type": "boolean"
+          },
+          "n_responses": {
+            "title": "N Responses",
+            "type": "integer"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "client_id",
+          "display_label",
+          "covariates",
+          "created_at",
+          "n_responses",
+          "known_to_model",
+          "synthetic"
+        ],
+        "title": "ClientOut",
+        "type": "object"
+      },
+      "ContextIn": {
+        "additionalProperties": false,
+        "description": "``POST /contexts``: add a context or write a new version of one (retire with ``active: false``).",
+        "properties": {
+          "active": {
+            "default": true,
+            "title": "Active",
+            "type": "boolean"
+          },
+          "display": {
+            "description": "the sentence shown in the intake battery",
+            "maxLength": 2000,
+            "title": "Display",
+            "type": "string"
+          },
+          "kind": {
+            "default": "news",
+            "maxLength": 40,
+            "title": "Kind",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "tag": {
+            "description": "namespace:value, e.g. news:tariff_shock",
+            "maxLength": 80,
+            "pattern": "^[A-Za-z0-9_]+:[A-Za-z0-9_.+\\-]+$",
+            "title": "Tag",
+            "type": "string"
+          },
+          "triggers_delay": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Triggers Delay"
+          }
+        },
+        "required": [
+          "tag",
+          "display"
+        ],
+        "title": "ContextIn",
+        "type": "object"
+      },
+      "ContextOut": {
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "actor": {
+            "title": "Actor",
+            "type": "string"
+          },
+          "calibration": {
+            "additionalProperties": true,
+            "description": "from the active artifact: n_responses, status, theta, theta_ci95, min_responses",
+            "title": "Calibration",
+            "type": "object"
+          },
+          "display": {
+            "title": "Display",
+            "type": "string"
+          },
+          "in_design": {
+            "description": "one of the shared design's contexts (bre.design.NONNULL_CONTEXTS)",
+            "title": "In Design",
+            "type": "boolean"
+          },
+          "in_served_vocabulary": {
+            "title": "In Served Vocabulary",
+            "type": "boolean"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "tag": {
+            "title": "Tag",
+            "type": "string"
+          },
+          "triggers_delay": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Triggers Delay"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "tag",
+          "kind",
+          "display",
+          "active",
+          "version",
+          "updated_at",
+          "actor",
+          "in_design",
+          "in_served_vocabulary",
+          "calibration"
+        ],
+        "title": "ContextOut",
+        "type": "object"
+      },
+      "Covariates": {
+        "additionalProperties": false,
+        "description": "The six product covariates (PLAN.md section 3); every field is optional (missing values\nare handled by the model's missing indicators).",
+        "properties": {
+          "age_band": {
+            "anyOf": [
+              {
+                "enum": [
+                  "18-29",
+                  "30-44",
+                  "45-59",
+                  "60+"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Band"
+          },
+          "education": {
+            "anyOf": [
+              {
+                "enum": [
+                  "hs",
+                  "some_college",
+                  "bachelor",
+                  "graduate"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Education"
+          },
+          "financial_literacy_score": {
+            "anyOf": [
+              {
+                "maximum": 5.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Financial Literacy Score"
+          },
+          "invest_experience_yrs": {
+            "anyOf": [
+              {
+                "maximum": 40.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invest Experience Yrs"
+          },
+          "self_reported_risk_tolerance": {
+            "anyOf": [
+              {
+                "maximum": 7.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Self Reported Risk Tolerance"
+          },
+          "wealth_band": {
+            "anyOf": [
+              {
+                "enum": [
+                  "<50k",
+                  "50-250k",
+                  "250k-1M",
+                  ">1M"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wealth Band"
+          }
+        },
+        "title": "Covariates",
+        "type": "object"
+      },
+      "DeleteOut": {
+        "properties": {
+          "audit_log_id": {
+            "title": "Audit Log Id",
+            "type": "integer"
+          },
+          "client_id": {
+            "title": "Client Id",
+            "type": "string"
+          },
+          "deleted": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Deleted",
+            "type": "object"
+          }
+        },
+        "required": [
+          "client_id",
+          "deleted",
+          "audit_log_id"
+        ],
+        "title": "DeleteOut",
+        "type": "object"
+      },
+      "ExportOut": {
+        "properties": {
+          "client": {
+            "additionalProperties": true,
+            "title": "Client",
+            "type": "object"
+          },
+          "demo_mode": {
+            "title": "Demo Mode",
+            "type": "boolean"
+          },
+          "exported_at": {
+            "title": "Exported At",
+            "type": "string"
+          },
+          "intake_sessions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Intake Sessions",
+            "type": "array"
+          },
+          "intervention_log": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Intervention Log",
+            "type": "array"
+          },
+          "predictions_log": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Predictions Log",
+            "type": "array"
+          },
+          "responses": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Responses",
+            "type": "array"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "client",
+          "responses",
+          "predictions_log",
+          "intervention_log",
+          "intake_sessions",
+          "exported_at",
+          "demo_mode",
+          "synthetic"
+        ],
+        "title": "ExportOut",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "Health": {
+        "properties": {
+          "db": {
+            "title": "Db",
+            "type": "string"
+          },
+          "demo_mode": {
+            "title": "Demo Mode",
+            "type": "boolean"
+          },
+          "model_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Type"
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "uptime_s": {
+            "title": "Uptime S",
+            "type": "number"
+          }
+        },
+        "required": [
+          "status",
+          "model_version",
+          "model_type",
+          "demo_mode",
+          "synthetic",
+          "db",
+          "uptime_s"
+        ],
+        "title": "Health",
+        "type": "object"
+      },
+      "IntakeConfig": {
+        "properties": {
+          "battery_version": {
+            "title": "Battery Version",
+            "type": "string"
+          },
+          "demo_mode": {
+            "title": "Demo Mode",
+            "type": "boolean"
+          },
+          "design_version": {
+            "title": "Design Version",
+            "type": "string"
+          },
+          "file_names": {
+            "additionalProperties": true,
+            "title": "File Names",
+            "type": "object"
+          },
+          "forms": {
+            "additionalProperties": true,
+            "title": "Forms",
+            "type": "object"
+          },
+          "instrument_url": {
+            "title": "Instrument Url",
+            "type": "string"
+          },
+          "instrument_url_source": {
+            "title": "Instrument Url Source",
+            "type": "string"
+          },
+          "intake": {
+            "additionalProperties": true,
+            "description": "battery.json intake texts: consent, instructions, covariates, financial_literacy_quiz, questions, delay_page",
+            "title": "Intake",
+            "type": "object"
+          },
+          "storage_note": {
+            "title": "Storage Note",
+            "type": "string"
+          },
+          "url_params": {
+            "additionalProperties": true,
+            "title": "Url Params",
+            "type": "object"
+          }
+        },
+        "required": [
+          "instrument_url",
+          "instrument_url_source",
+          "battery_version",
+          "design_version",
+          "forms",
+          "url_params",
+          "file_names",
+          "demo_mode",
+          "storage_note"
+        ],
+        "title": "IntakeConfig",
+        "type": "object"
+      },
+      "IntakeResponsesIn": {
+        "additionalProperties": false,
+        "description": "``POST /clients/{client_id}/responses``: schema rows of one intake session plus the\nrandomized assignment and the session record.",
+        "properties": {
+          "assignment": {
+            "additionalProperties": true,
+            "description": "bre.design.BatteryAssignment.to_dict() plus the presentation order and repeats",
+            "title": "Assignment",
+            "type": "object"
+          },
+          "display_label": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Label"
+          },
+          "rows": {
+            "description": "DecisionEvent rows (bre.schema.COLUMNS), one per elicited decision",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "maxItems": 2000,
+            "minItems": 1,
+            "title": "Rows",
+            "type": "array"
+          },
+          "session": {
+            "additionalProperties": true,
+            "description": "form, seed, consent, timings, text versions shown",
+            "title": "Session",
+            "type": "object"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "title": "IntakeResponsesIn",
+        "type": "object"
+      },
+      "IntakeResponsesOut": {
+        "properties": {
+          "client_id": {
+            "title": "Client Id",
+            "type": "string"
+          },
+          "consent_training": {
+            "title": "Consent Training",
+            "type": "boolean"
+          },
+          "dataset": {
+            "title": "Dataset",
+            "type": "string"
+          },
+          "demo_mode": {
+            "title": "Demo Mode",
+            "type": "boolean"
+          },
+          "document_version": {
+            "title": "Document Version",
+            "type": "integer"
+          },
+          "is_synthetic": {
+            "title": "Is Synthetic",
+            "type": "boolean"
+          },
+          "n_rows": {
+            "title": "N Rows",
+            "type": "integer"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "client_id",
+          "session_id",
+          "n_rows",
+          "is_synthetic",
+          "consent_training",
+          "dataset",
+          "document_version",
+          "note",
+          "demo_mode"
+        ],
+        "title": "IntakeResponsesOut",
+        "type": "object"
+      },
+      "Interference": {
+        "properties": {
+          "definitions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Definitions"
+          },
+          "ltp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ltp"
+          },
+          "mix": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mix"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "order_effect": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order Effect"
+          }
+        },
+        "title": "Interference",
+        "type": "object"
+      },
+      "InterventionOut": {
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "mapped_context_transform": {
+            "additionalProperties": true,
+            "title": "Mapped Context Transform",
+            "type": "object"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "script": {
+            "title": "Script",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "script",
+          "mapped_context_transform",
+          "active",
+          "label"
+        ],
+        "title": "InterventionOut",
+        "type": "object"
+      },
+      "InterventionPut": {
+        "additionalProperties": false,
+        "properties": {
+          "active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active"
+          },
+          "mapped_context_transform": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mapped Context Transform"
+          },
+          "name": {
+            "maxLength": 80,
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "script": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Script"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "InterventionPut",
+        "type": "object"
+      },
+      "InterventionVersionOut": {
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "history": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "History"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "mapped_context_transform": {
+            "additionalProperties": true,
+            "title": "Mapped Context Transform",
+            "type": "object"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "script": {
+            "title": "Script",
+            "type": "string"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "script",
+          "mapped_context_transform",
+          "active",
+          "label",
+          "version",
+          "updated_at"
+        ],
+        "title": "InterventionVersionOut",
+        "type": "object"
+      },
+      "MarketResponse": {
+        "properties": {
+          "demo_mode": {
+            "title": "Demo Mode",
+            "type": "boolean"
+          },
+          "market_state": {
+            "additionalProperties": true,
+            "title": "Market State",
+            "type": "object"
+          },
+          "scenario": {
+            "additionalProperties": true,
+            "title": "Scenario",
+            "type": "object"
+          }
+        },
+        "required": [
+          "market_state",
+          "scenario",
+          "demo_mode"
+        ],
+        "title": "MarketResponse",
+        "type": "object"
+      },
+      "MarketState": {
+        "additionalProperties": false,
+        "description": "The dashboard's market-state bar (``bre.market.latest_market_state`` fields plus the\nadvisor's framing inputs). ``drawdown_pct`` and ``recovery_pct`` are fractions (``-0.12``);\na magnitude above 1 is read as a percentage.",
+        "properties": {
+          "cause_frame": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "free text: the stated cause of the fall",
+            "title": "Cause Frame"
+          },
+          "drawdown_pct": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": -100.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "signed drawdown from the trailing peak, fraction (or percent when |x| > 1)",
+            "title": "Drawdown Pct"
+          },
+          "duration_days": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Days"
+          },
+          "media_intensity": {
+            "anyOf": [
+              {
+                "enum": [
+                  "none",
+                  "low",
+                  "medium",
+                  "high",
+                  "extreme"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "none/low/medium/high/extreme or a number in [0, 1]",
+            "title": "Media Intensity"
+          },
+          "recovery_pct": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "recovery from the trough, fraction (or percent)",
+            "title": "Recovery Pct"
+          },
+          "social_cue_prevalence": {
+            "anyOf": [
+              {
+                "enum": [
+                  "none",
+                  "low",
+                  "medium",
+                  "high",
+                  "extreme"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "none/low/medium/high/extreme or a number in [0, 1]",
+            "title": "Social Cue Prevalence"
+          },
+          "vix_bucket": {
+            "anyOf": [
+              {
+                "enum": [
+                  "low",
+                  "medium",
+                  "high",
+                  "extreme"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vix Bucket"
+          }
+        },
+        "title": "MarketState",
+        "type": "object"
+      },
+      "ModelInfo": {
+        "properties": {
+          "calibrated_contexts": {
+            "additionalProperties": true,
+            "title": "Calibrated Contexts",
+            "type": "object"
+          },
+          "calibration_rule": {
+            "title": "Calibration Rule",
+            "type": "string"
+          },
+          "capacity_definition": {
+            "description": "the first-crossing definition of the behavioral drawdown capacity at the default target",
+            "title": "Capacity Definition",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "decision_rule": {
+            "title": "Decision Rule",
+            "type": "string"
+          },
+          "demo_mode": {
+            "title": "Demo Mode",
+            "type": "boolean"
+          },
+          "design_version": {
+            "title": "Design Version",
+            "type": "string"
+          },
+          "evaluation_status": {
+            "title": "Evaluation Status",
+            "type": "string"
+          },
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "interval_source": {
+            "title": "Interval Source",
+            "type": "string"
+          },
+          "is_synthetic_training": {
+            "title": "Is Synthetic Training",
+            "type": "boolean"
+          },
+          "loss_response": {
+            "additionalProperties": true,
+            "description": "the loss-response diagnostic of the served book: monotone_share, n_clients, loss_levels, mean_p_sell_by_loss, p_sell_by_loss_ci80, definition",
+            "title": "Loss Response",
+            "type": "object"
+          },
+          "loss_response_monotone_share": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "share of the served book's clients whose predicted P(sell | L, no context) is non-decreasing over the five design loss levels",
+            "title": "Loss Response Monotone Share"
+          },
+          "metrics": {
+            "additionalProperties": true,
+            "title": "Metrics",
+            "type": "object"
+          },
+          "model_type": {
+            "title": "Model Type",
+            "type": "string"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "n_draws": {
+            "title": "N Draws",
+            "type": "integer"
+          },
+          "n_params": {
+            "title": "N Params",
+            "type": "integer"
+          },
+          "n_params_population": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Params Population"
+          },
+          "notes": {
+            "title": "Notes",
+            "type": "string"
+          },
+          "promoted_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Promoted At"
+          },
+          "provenance": {
+            "additionalProperties": true,
+            "title": "Provenance",
+            "type": "object"
+          },
+          "synthetic": {
+            "description": "true when the served model was trained on synthetic data",
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "training_data_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Training Data Refs",
+            "type": "array"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          },
+          "wording": {
+            "default": "predicted probability of selling",
+            "title": "Wording",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model_version",
+          "model_type",
+          "family",
+          "synthetic",
+          "demo_mode",
+          "version",
+          "n_params",
+          "n_params_population",
+          "design_version",
+          "created_at",
+          "promoted_at",
+          "metrics",
+          "calibrated_contexts",
+          "calibration_rule",
+          "training_data_refs",
+          "provenance",
+          "is_synthetic_training",
+          "interval_source",
+          "decision_rule",
+          "evaluation_status",
+          "notes",
+          "n_draws",
+          "loss_response_monotone_share",
+          "loss_response",
+          "capacity_definition"
+        ],
+        "title": "ModelInfo",
+        "type": "object"
+      },
+      "PredictRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "client_id": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:\\-]{0,63}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Id"
+          },
+          "context_tags": {
+            "description": "ordered contexts, at most two",
+            "items": {
+              "enum": [
+                "none",
+                "news:recession",
+                "news:technical",
+                "social:friend_sells",
+                "market:recovered_5pct"
+              ],
+              "type": "string"
+            },
+            "title": "Context Tags",
+            "type": "array"
+          },
+          "covariates": {
+            "$ref": "#/components/schemas/Covariates"
+          },
+          "display_label": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "the only identifying text accepted",
+            "title": "Display Label"
+          },
+          "loss_pct": {
+            "description": "signed portfolio loss, e.g. -0.20; design grid -0.05 .. -0.30",
+            "maximum": 0.0,
+            "minimum": -1.0,
+            "title": "Loss Pct",
+            "type": "number"
+          },
+          "mix_weights": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "propertyNames": {
+                  "enum": [
+                    "none",
+                    "news:recession",
+                    "news:technical",
+                    "social:friend_sells",
+                    "market:recovered_5pct"
+                  ]
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "weights of a mixed cause frame for the delta_mix term",
+            "title": "Mix Weights"
+          },
+          "prior_responses": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PriorResponse"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "intake answers to refine the subject's random effects first",
+            "title": "Prior Responses"
+          },
+          "question_order_id": {
+            "default": "scenario-first",
+            "enum": [
+              "tolerance-first",
+              "scenario-first"
+            ],
+            "title": "Question Order Id",
+            "type": "string"
+          },
+          "tol_answer": {
+            "anyOf": [
+              {
+                "enum": [
+                  0,
+                  1
+                ],
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "prior tolerance answer for a tolerance-first scenario",
+            "title": "Tol Answer"
+          }
+        },
+        "required": [
+          "loss_pct"
+        ],
+        "title": "PredictRequest",
+        "type": "object"
+      },
+      "PredictResponse": {
+        "properties": {
+          "ci80": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci80"
+          },
+          "ci95": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci95"
+          },
+          "client_id": {
+            "title": "Client Id",
+            "type": "string"
+          },
+          "demo_mode": {
+            "title": "Demo Mode",
+            "type": "boolean"
+          },
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "interference": {
+            "$ref": "#/components/schemas/Interference"
+          },
+          "interval_note": {
+            "title": "Interval Note",
+            "type": "string"
+          },
+          "model_type": {
+            "title": "Model Type",
+            "type": "string"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "n_calibration": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Calibration"
+            },
+            "title": "N Calibration",
+            "type": "object"
+          },
+          "n_draws": {
+            "title": "N Draws",
+            "type": "integer"
+          },
+          "p": {
+            "description": "predicted probability of selling",
+            "title": "P",
+            "type": "number"
+          },
+          "prediction_log_id": {
+            "title": "Prediction Log Id",
+            "type": "integer"
+          },
+          "refined": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refined"
+          },
+          "scenario": {
+            "additionalProperties": true,
+            "title": "Scenario",
+            "type": "object"
+          },
+          "synthetic": {
+            "description": "true when the served model was trained on synthetic data",
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "top_driver": {
+            "$ref": "#/components/schemas/TopDriver"
+          },
+          "wording": {
+            "default": "predicted probability of selling",
+            "title": "Wording",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model_version",
+          "model_type",
+          "family",
+          "synthetic",
+          "demo_mode",
+          "p",
+          "ci80",
+          "ci95",
+          "interval_note",
+          "n_draws",
+          "interference",
+          "top_driver",
+          "n_calibration",
+          "scenario",
+          "client_id",
+          "prediction_log_id"
+        ],
+        "title": "PredictResponse",
+        "type": "object"
+      },
+      "PriorResponse": {
+        "additionalProperties": false,
+        "description": "One intake answer already given: the scenario and the sell/hold response (1 = sell).",
+        "properties": {
+          "context_tags": {
+            "items": {
+              "enum": [
+                "none",
+                "news:recession",
+                "news:technical",
+                "social:friend_sells",
+                "market:recovered_5pct"
+              ],
+              "type": "string"
+            },
+            "title": "Context Tags",
+            "type": "array"
+          },
+          "loss_pct": {
+            "anyOf": [
+              {
+                "maximum": 0.0,
+                "minimum": -1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Loss Pct"
+          },
+          "question_order_id": {
+            "default": "scenario-first",
+            "enum": [
+              "tolerance-first",
+              "scenario-first"
+            ],
+            "title": "Question Order Id",
+            "type": "string"
+          },
+          "response": {
+            "enum": [
+              0,
+              1
+            ],
+            "title": "Response",
+            "type": "integer"
+          },
+          "tol_answer": {
+            "anyOf": [
+              {
+                "enum": [
+                  0,
+                  1
+                ],
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "answer to the tolerance question in that item (1 = yes)",
+            "title": "Tol Answer"
+          }
+        },
+        "required": [
+          "response"
+        ],
+        "title": "PriorResponse",
+        "type": "object"
+      },
+      "ProfileRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "client_id": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:\\-]{0,63}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Id"
+          },
+          "covariates": {
+            "$ref": "#/components/schemas/Covariates"
+          },
+          "display_label": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "the only identifying text accepted",
+            "title": "Display Label"
+          },
+          "include_book_r2": {
+            "default": true,
+            "description": "compute the risk-score R^2 across the served book",
+            "title": "Include Book R2",
+            "type": "boolean"
+          },
+          "prior_responses": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PriorResponse"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prior Responses"
+          }
+        },
+        "title": "ProfileRequest",
+        "type": "object"
+      },
+      "ProfileResponse": {
+        "properties": {
+          "baseline": {
+            "additionalProperties": true,
+            "title": "Baseline",
+            "type": "object"
+          },
+          "client_id": {
+            "title": "Client Id",
+            "type": "string"
+          },
+          "consistency": {
+            "additionalProperties": true,
+            "title": "Consistency",
+            "type": "object"
+          },
+          "demo_mode": {
+            "title": "Demo Mode",
+            "type": "boolean"
+          },
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "known_subject": {
+            "title": "Known Subject",
+            "type": "boolean"
+          },
+          "model_type": {
+            "title": "Model Type",
+            "type": "string"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "prediction_log_id": {
+            "title": "Prediction Log Id",
+            "type": "integer"
+          },
+          "refined": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refined"
+          },
+          "risk_score": {
+            "additionalProperties": true,
+            "title": "Risk Score",
+            "type": "object"
+          },
+          "sensitivities": {
+            "additionalProperties": true,
+            "title": "Sensitivities",
+            "type": "object"
+          },
+          "subject_id": {
+            "title": "Subject Id",
+            "type": "string"
+          },
+          "synthetic": {
+            "description": "true when the served model was trained on synthetic data",
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "wording": {
+            "default": "predicted probability of selling",
+            "title": "Wording",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model_version",
+          "model_type",
+          "family",
+          "synthetic",
+          "demo_mode",
+          "subject_id",
+          "client_id",
+          "known_subject",
+          "baseline",
+          "sensitivities",
+          "consistency",
+          "risk_score",
+          "prediction_log_id"
+        ],
+        "title": "ProfileResponse",
+        "type": "object"
+      },
+      "RankRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "client_id": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:\\-]{0,63}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Id"
+          },
+          "covariates": {
+            "$ref": "#/components/schemas/Covariates"
+          },
+          "display_label": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "the only identifying text accepted",
+            "title": "Display Label"
+          },
+          "market_state": {
+            "$ref": "#/components/schemas/MarketState"
+          },
+          "prior_responses": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PriorResponse"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prior Responses"
+          }
+        },
+        "required": [
+          "market_state"
+        ],
+        "title": "RankRequest",
+        "type": "object"
+      },
+      "RankResponse": {
+        "properties": {
+          "ci80_before": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci80 Before"
+          },
+          "client_id": {
+            "title": "Client Id",
+            "type": "string"
+          },
+          "demo_mode": {
+            "title": "Demo Mode",
+            "type": "boolean"
+          },
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "inactive": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Inactive",
+            "type": "array"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "model_type": {
+            "title": "Model Type",
+            "type": "string"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "n_calibration": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Calibration"
+            },
+            "title": "N Calibration",
+            "type": "object"
+          },
+          "p_before": {
+            "title": "P Before",
+            "type": "number"
+          },
+          "prediction_log_id": {
+            "title": "Prediction Log Id",
+            "type": "integer"
+          },
+          "ranked": {
+            "items": {
+              "$ref": "#/components/schemas/RankedIntervention"
+            },
+            "title": "Ranked",
+            "type": "array"
+          },
+          "scenario": {
+            "additionalProperties": true,
+            "title": "Scenario",
+            "type": "object"
+          },
+          "synthetic": {
+            "description": "true when the served model was trained on synthetic data",
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "wording": {
+            "default": "predicted probability of selling",
+            "title": "Wording",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model_version",
+          "model_type",
+          "family",
+          "synthetic",
+          "demo_mode",
+          "client_id",
+          "scenario",
+          "p_before",
+          "ci80_before",
+          "ranked",
+          "inactive",
+          "label",
+          "n_calibration",
+          "prediction_log_id"
+        ],
+        "title": "RankResponse",
+        "type": "object"
+      },
+      "RankedIntervention": {
+        "properties": {
+          "contexts_after": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Contexts After",
+            "type": "array"
+          },
+          "delta_ci80": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delta Ci80"
+          },
+          "delta_ci95": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delta Ci95"
+          },
+          "delta_p": {
+            "title": "Delta P",
+            "type": "number"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "no_change": {
+            "title": "No Change",
+            "type": "boolean"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "p_after": {
+            "title": "P After",
+            "type": "number"
+          },
+          "p_before": {
+            "title": "P Before",
+            "type": "number"
+          },
+          "question_order_after": {
+            "title": "Question Order After",
+            "type": "string"
+          },
+          "rank": {
+            "title": "Rank",
+            "type": "integer"
+          },
+          "script": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Script"
+          },
+          "transform": {
+            "additionalProperties": true,
+            "title": "Transform",
+            "type": "object"
+          }
+        },
+        "required": [
+          "rank",
+          "name",
+          "id",
+          "script",
+          "transform",
+          "p_before",
+          "p_after",
+          "delta_p",
+          "delta_ci80",
+          "delta_ci95",
+          "contexts_after",
+          "question_order_after",
+          "notes",
+          "label",
+          "no_change"
+        ],
+        "title": "RankedIntervention",
+        "type": "object"
+      },
+      "RegistryOut": {
+        "properties": {
+          "active_version": {
+            "title": "Active Version",
+            "type": "string"
+          },
+          "admin": {
+            "title": "Admin",
+            "type": "boolean"
+          },
+          "admin_rule": {
+            "title": "Admin Rule",
+            "type": "string"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/RegistryRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "selectable_model_types": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Selectable Model Types",
+            "type": "array"
+          }
+        },
+        "required": [
+          "active_version",
+          "rows",
+          "selectable_model_types",
+          "admin",
+          "admin_rule"
+        ],
+        "title": "RegistryOut",
+        "type": "object"
+      },
+      "RegistryRow": {
+        "properties": {
+          "artifact_dir": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artifact Dir"
+          },
+          "artifact_exists": {
+            "title": "Artifact Exists",
+            "type": "boolean"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "family": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Family"
+          },
+          "held_out_nll": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Held Out Nll"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "is_synthetic_training": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Synthetic Training"
+          },
+          "model_type": {
+            "title": "Model Type",
+            "type": "string"
+          },
+          "n_params": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Params"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "promoted_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Promoted At"
+          },
+          "train_nll": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Train Nll"
+          },
+          "training_data_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Training Data Refs",
+            "type": "array"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "model_type",
+          "family",
+          "is_active",
+          "promoted_at",
+          "created_at",
+          "is_synthetic_training",
+          "n_params",
+          "train_nll",
+          "held_out_nll",
+          "training_data_refs",
+          "artifact_dir",
+          "artifact_exists"
+        ],
+        "title": "RegistryRow",
+        "type": "object"
+      },
+      "ResponseRowOut": {
+        "properties": {
+          "consent_training": {
+            "title": "Consent Training",
+            "type": "boolean"
+          },
+          "context_tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Context Tags",
+            "type": "array"
+          },
+          "dataset": {
+            "title": "Dataset",
+            "type": "string"
+          },
+          "elicitation_type": {
+            "title": "Elicitation Type",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "is_synthetic": {
+            "title": "Is Synthetic",
+            "type": "boolean"
+          },
+          "loss_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Loss Pct"
+          },
+          "outcome_behavior": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome Behavior"
+          },
+          "position_in_session": {
+            "title": "Position In Session",
+            "type": "integer"
+          },
+          "question_order_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Question Order Id"
+          },
+          "response": {
+            "title": "Response",
+            "type": "number"
+          },
+          "response_time_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response Time Ms"
+          },
+          "scenario_id": {
+            "title": "Scenario Id",
+            "type": "string"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          },
+          "source_row_ref": {
+            "title": "Source Row Ref",
+            "type": "string"
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp"
+          }
+        },
+        "required": [
+          "id",
+          "dataset",
+          "session_id",
+          "timestamp",
+          "position_in_session",
+          "scenario_id",
+          "loss_pct",
+          "context_tags",
+          "question_order_id",
+          "elicitation_type",
+          "response",
+          "response_time_ms",
+          "outcome_behavior",
+          "consent_training",
+          "is_synthetic",
+          "source_row_ref"
+        ],
+        "title": "ResponseRowOut",
+        "type": "object"
+      },
+      "RetrainIn": {
+        "additionalProperties": false,
+        "properties": {
+          "model_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Q2, Q4 or B2 (default: the active model's type)",
+            "title": "Model Type"
+          },
+          "n_boot": {
+            "anyOf": [
+              {
+                "maximum": 2000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Boot"
+          },
+          "n_samples": {
+            "anyOf": [
+              {
+                "maximum": 500.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Samples"
+          },
+          "restarts": {
+            "anyOf": [
+              {
+                "maximum": 10.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Restarts"
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seed"
+          },
+          "steps": {
+            "anyOf": [
+              {
+                "maximum": 5000.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Steps"
+          }
+        },
+        "title": "RetrainIn",
+        "type": "object"
+      },
+      "RetrainOut": {
+        "properties": {
+          "active_version": {
+            "title": "Active Version",
+            "type": "string"
+          },
+          "demo_mode": {
+            "title": "Demo Mode",
+            "type": "boolean"
+          },
+          "model_type": {
+            "title": "Model Type",
+            "type": "string"
+          },
+          "nll_new": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nll New"
+          },
+          "nll_reference": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nll Reference"
+          },
+          "promoted": {
+            "title": "Promoted",
+            "type": "boolean"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "recorded_reference_nll": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recorded Reference Nll"
+          },
+          "result": {
+            "additionalProperties": true,
+            "title": "Result",
+            "type": "object"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          }
+        },
+        "required": [
+          "run_id",
+          "status",
+          "promoted",
+          "reason",
+          "version",
+          "model_type",
+          "nll_new",
+          "nll_reference",
+          "recorded_reference_nll",
+          "active_version",
+          "demo_mode",
+          "result"
+        ],
+        "title": "RetrainOut",
+        "type": "object"
+      },
+      "ScenarioIn": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "maxLength": 80,
+            "title": "Key",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "text": {
+            "maxLength": 4000,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "text"
+        ],
+        "title": "ScenarioIn",
+        "type": "object"
+      },
+      "ScenarioOut": {
+        "properties": {
+          "actor": {
+            "title": "Actor",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "key",
+          "text",
+          "version",
+          "updated_at",
+          "actor"
+        ],
+        "title": "ScenarioOut",
+        "type": "object"
+      },
+      "ScenariosOut": {
+        "properties": {
+          "design_version": {
+            "title": "Design Version",
+            "type": "string"
+          },
+          "history": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "History"
+          },
+          "keys": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Keys",
+            "type": "array"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "texts": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ScenarioOut"
+            },
+            "title": "Texts",
+            "type": "object"
+          }
+        },
+        "required": [
+          "texts",
+          "keys",
+          "design_version",
+          "note"
+        ],
+        "title": "ScenariosOut",
+        "type": "object"
+      },
+      "ScoreBookRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "clients": {
+            "items": {
+              "$ref": "#/components/schemas/ClientIn"
+            },
+            "maxItems": 5000,
+            "minItems": 1,
+            "title": "Clients",
+            "type": "array"
+          },
+          "market_state": {
+            "$ref": "#/components/schemas/MarketState"
+          },
+          "register_unknown": {
+            "default": false,
+            "description": "create client rows for unknown client_ids (else their predictions are logged under the batch client)",
+            "title": "Register Unknown",
+            "type": "boolean"
+          },
+          "target": {
+            "default": 0.25,
+            "description": "drawdown-capacity target P(sell)",
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Target",
+            "type": "number"
+          }
+        },
+        "required": [
+          "clients",
+          "market_state"
+        ],
+        "title": "ScoreBookRequest",
+        "type": "object"
+      },
+      "ScoreBookResponse": {
+        "properties": {
+          "demo_mode": {
+            "title": "Demo Mode",
+            "type": "boolean"
+          },
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "meta": {
+            "additionalProperties": true,
+            "title": "Meta",
+            "type": "object"
+          },
+          "model_type": {
+            "title": "Model Type",
+            "type": "string"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "n_calibration": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Calibration"
+            },
+            "title": "N Calibration",
+            "type": "object"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ScoreRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "scenario": {
+            "additionalProperties": true,
+            "title": "Scenario",
+            "type": "object"
+          },
+          "synthetic": {
+            "description": "true when the served model was trained on synthetic data",
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "wording": {
+            "default": "predicted probability of selling",
+            "title": "Wording",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model_version",
+          "model_type",
+          "family",
+          "synthetic",
+          "demo_mode",
+          "rows",
+          "scenario",
+          "n_calibration",
+          "meta"
+        ],
+        "title": "ScoreBookResponse",
+        "type": "object"
+      },
+      "ScoreRow": {
+        "properties": {
+          "capacity_status": {
+            "title": "Capacity Status",
+            "type": "string"
+          },
+          "change_vs_baseline": {
+            "title": "Change Vs Baseline",
+            "type": "number"
+          },
+          "ci80_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci80 High"
+          },
+          "ci80_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci80 Low"
+          },
+          "client_id": {
+            "title": "Client Id",
+            "type": "string"
+          },
+          "display_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Label"
+          },
+          "drawdown_capacity": {
+            "title": "Drawdown Capacity",
+            "type": "number"
+          },
+          "known_client": {
+            "title": "Known Client",
+            "type": "boolean"
+          },
+          "p_baseline": {
+            "title": "P Baseline",
+            "type": "number"
+          },
+          "p_sell": {
+            "title": "P Sell",
+            "type": "number"
+          },
+          "prediction_log_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prediction Log Id"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "suggested_delta": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggested Delta"
+          },
+          "suggested_intervention": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggested Intervention"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "top_driver": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top Driver"
+          },
+          "top_driver_delta": {
+            "title": "Top Driver Delta",
+            "type": "number"
+          }
+        },
+        "required": [
+          "client_id",
+          "display_label",
+          "p_sell",
+          "p_baseline",
+          "change_vs_baseline",
+          "ci80_low",
+          "ci80_high",
+          "top_driver",
+          "top_driver_delta",
+          "suggested_intervention",
+          "suggested_delta",
+          "drawdown_capacity",
+          "capacity_status",
+          "status",
+          "known_client",
+          "synthetic"
+        ],
+        "title": "ScoreRow",
+        "type": "object"
+      },
+      "SettingsOut": {
+        "properties": {
+          "defaults": {
+            "additionalProperties": true,
+            "title": "Defaults",
+            "type": "object"
+          },
+          "demo_mode": {
+            "description": "the effective demo mode: forced by the setting, or by a synthetic model / database",
+            "title": "Demo Mode",
+            "type": "boolean"
+          },
+          "demo_mode_forced_by_data": {
+            "title": "Demo Mode Forced By Data",
+            "type": "boolean"
+          },
+          "rules": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Rules",
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": true,
+            "title": "Settings",
+            "type": "object"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "settings",
+          "defaults",
+          "rules",
+          "version",
+          "updated_at",
+          "demo_mode",
+          "demo_mode_forced_by_data"
+        ],
+        "title": "SettingsOut",
+        "type": "object"
+      },
+      "SettingsPatch": {
+        "additionalProperties": false,
+        "description": "``PUT /settings`` body: any subset of the settings keys (``api.store.DEFAULT_SETTINGS``\ndocuments the defaults and ``SETTINGS_RULES`` the ranges; unknown keys are refused).",
+        "properties": {
+          "alert_threshold": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alert Threshold"
+          },
+          "capacity_target": {
+            "anyOf": [
+              {
+                "exclusiveMaximum": 1.0,
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capacity Target"
+          },
+          "demo_mode": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Demo Mode"
+          },
+          "prior_strength": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prior Strength"
+          },
+          "retrain": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "{steps, restarts, n_samples, val_frac, seed}",
+            "title": "Retrain"
+          },
+          "status_thresholds": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "{elevated, high}, 0 <= elevated <= high <= 1",
+            "title": "Status Thresholds"
+          },
+          "typical_crisis_contexts": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 2,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Typical Crisis Contexts"
+          }
+        },
+        "title": "SettingsPatch",
+        "type": "object"
+      },
+      "TopDriver": {
+        "properties": {
+          "candidates": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidates"
+          },
+          "delta_p": {
+            "title": "Delta P",
+            "type": "number"
+          },
+          "driver": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Driver"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "p_without": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Without"
+          }
+        },
+        "required": [
+          "driver",
+          "delta_p"
+        ],
+        "title": "TopDriver",
+        "type": "object"
+      },
+      "TransparencyOut": {
+        "properties": {
+          "calibration_plot": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calibration Plot"
+          },
+          "decision_rule": {
+            "title": "Decision Rule",
+            "type": "string"
+          },
+          "demo_mode": {
+            "title": "Demo Mode",
+            "type": "boolean"
+          },
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "is_synthetic_training": {
+            "title": "Is Synthetic Training",
+            "type": "boolean"
+          },
+          "model_card": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Card"
+          },
+          "model_card_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Card Path"
+          },
+          "model_type": {
+            "title": "Model Type",
+            "type": "string"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "n_params": {
+            "title": "N Params",
+            "type": "integer"
+          },
+          "n_params_population": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Params Population"
+          },
+          "n_target": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Target"
+          },
+          "phase4_metrics": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "held-out metrics of Phase 4; null until the verdict exists",
+            "title": "Phase4 Metrics"
+          },
+          "provenance": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Provenance",
+            "type": "array"
+          },
+          "real_data_numbers_shown": {
+            "title": "Real Data Numbers Shown",
+            "type": "boolean"
+          },
+          "retrain_rule": {
+            "title": "Retrain Rule",
+            "type": "string"
+          },
+          "training_metrics": {
+            "additionalProperties": true,
+            "title": "Training Metrics",
+            "type": "object"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "reports/phase4/verdict.json when it exists",
+            "title": "Verdict"
+          },
+          "verdict_status": {
+            "description": "the verdict sentence, or exactly \"Decision rule not yet run: no real-data numbers are shown\"",
+            "title": "Verdict Status",
+            "type": "string"
+          },
+          "wording": {
+            "default": "predicted probability of selling",
+            "title": "Wording",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model_version",
+          "model_type",
+          "family",
+          "n_params",
+          "n_params_population",
+          "is_synthetic_training",
+          "demo_mode",
+          "decision_rule",
+          "verdict",
+          "verdict_status",
+          "phase4_metrics",
+          "real_data_numbers_shown",
+          "training_metrics",
+          "calibration_plot",
+          "n_target",
+          "provenance",
+          "model_card",
+          "model_card_path",
+          "retrain_rule"
+        ],
+        "title": "TransparencyOut",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "BRE scoring service (Phase 5): the only source of predictions for the dashboard.\n\nRun with ``make api`` (``uvicorn api.main:app --port $BRE_API_PORT``). Every number a screen\nshows comes from ``bre.predict`` through these endpoints; no model code lives in the UI.\n\nEndpoints\n---------\n* ``GET /health`` \u2014 liveness, served model version, demo mode.\n* ``GET /model`` \u2014 version, type, metrics, calibrated contexts, provenance (training data refs\n  and the ``data/CATALOG.md`` entry names), ``is_synthetic_training``, ``demo_mode``, the\n  pre-registered decision rule, the evaluation status, the loss-response diagnostic of the\n  served book (``loss_response_monotone_share``, ``loss_response``) and the first-crossing\n  definition of the drawdown capacity (``capacity_definition``).\n* ``GET /clients``, ``GET /interventions``, ``GET /market`` \u2014 the served book, the intervention\n  table, the current market state (cached files unless ``BRE_MARKET_NETWORK=1``) with its\n  mapping to a scenario.\n* ``POST /predict`` \u2014 one investor, one scenario: predicted probability of selling with its\n  80/95% intervals, interference terms, top driver and calibration counts.\n* ``POST /profile`` \u2014 decision-state profile (baseline state, context sensitivities,\n  consistency score, classical-equivalent risk score with its R\u00b2 against the state angle).\n* ``POST /score_book`` (JSON) and ``POST /score_book/csv`` (CSV upload) \u2014 the triage table of a\n  book under one market state.\n* ``POST /interventions/rank`` \u2014 interventions ranked by predicted change in P(sell), labelled\n  \"predicted effect, not causally validated\".\n\nPhase 6 endpoints (``api/phase6.py``, mounted here): ``GET/PUT /settings``, ``GET/POST /contexts``,\n``GET/POST /scenarios``, ``PUT /interventions`` and ``GET /interventions/versions``,\n``POST /clients/{client_id}/responses``, ``POST /intake/upload``, ``GET /intake/config``,\n``GET /clients/{client_id}/responses``, ``GET /clients/{client_id}/export``,\n``DELETE /clients/{client_id}``, ``GET /model/registry``, ``POST /model/activate`` (admin),\n``GET /transparency``, ``POST /retrain``. ``demo_mode`` is also forced on by the ``demo_mode``\nsetting; it can never be switched off while the data is synthetic.\n\nEvery prediction shown is written to ``predictions_log`` (under the request's ``client_id``,\ncreated on first use, or the anonymous API client / the batch client for uploads) and\n``audit_log``. Input validation errors return 422 with the field names. Every response derived\nfrom a synthetic-training model carries ``synthetic: true``; ``demo_mode`` is true when the\nserved model was trained on synthetic data or the database lives under ``data/synthetic``.\n\nEnvironment: ``BRE_DB_URL`` (default ``sqlite:///<bre>/data/synthetic/demo.db``),\n``BRE_MODELS_ROOT`` (default ``runs/models``), ``BRE_API_AUTOSEED`` (default 1: seed the demo\nbook and fit the demo model when the database has no active model), ``BRE_API_WARMUP``\n(default 1), ``BRE_MARKET_NETWORK`` (default 0).\n",
+    "title": "Behavioral Risk Engine API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/clients": {
+      "get": {
+        "operationId": "list_clients_clients_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ClientOut"
+                  },
+                  "title": "Response List Clients Clients Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Clients"
+      }
+    },
+    "/clients/{client_id}": {
+      "delete": {
+        "operationId": "delete_client_data_clients__client_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "client_id",
+            "required": true,
+            "schema": {
+              "title": "Client Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Client Data",
+        "tags": [
+          "clients"
+        ]
+      }
+    },
+    "/clients/{client_id}/export": {
+      "get": {
+        "operationId": "export_client_data_clients__client_id__export_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "client_id",
+            "required": true,
+            "schema": {
+              "title": "Client Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Client Data",
+        "tags": [
+          "clients"
+        ]
+      }
+    },
+    "/clients/{client_id}/responses": {
+      "get": {
+        "operationId": "client_responses_clients__client_id__responses_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "client_id",
+            "required": true,
+            "schema": {
+              "title": "Client Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ResponseRowOut"
+                  },
+                  "title": "Response Client Responses Clients  Client Id  Responses Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Client Responses",
+        "tags": [
+          "intake"
+        ]
+      },
+      "post": {
+        "operationId": "post_client_responses_clients__client_id__responses_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "client_id",
+            "required": true,
+            "schema": {
+              "title": "Client Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntakeResponsesIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntakeResponsesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Client Responses",
+        "tags": [
+          "intake"
+        ]
+      }
+    },
+    "/contexts": {
+      "get": {
+        "operationId": "get_contexts_contexts_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ContextOut"
+                  },
+                  "title": "Response Get Contexts Contexts Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Contexts",
+        "tags": [
+          "editor"
+        ]
+      },
+      "post": {
+        "operationId": "post_context_contexts_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContextIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContextOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Context",
+        "tags": [
+          "editor"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health"
+      }
+    },
+    "/intake/config": {
+      "get": {
+        "operationId": "intake_config_intake_config_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntakeConfig"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Intake Config",
+        "tags": [
+          "intake"
+        ]
+      }
+    },
+    "/intake/upload": {
+      "post": {
+        "operationId": "intake_upload_intake_upload_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_intake_upload_intake_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntakeResponsesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Intake Upload",
+        "tags": [
+          "intake"
+        ]
+      }
+    },
+    "/interventions": {
+      "get": {
+        "operationId": "list_interventions_interventions_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/InterventionOut"
+                  },
+                  "title": "Response List Interventions Interventions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Interventions"
+      },
+      "put": {
+        "operationId": "put_intervention_interventions_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InterventionPut"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterventionVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Intervention",
+        "tags": [
+          "editor"
+        ]
+      }
+    },
+    "/interventions/rank": {
+      "post": {
+        "operationId": "rank_interventions_rank_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RankRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RankResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Rank"
+      }
+    },
+    "/interventions/versions": {
+      "get": {
+        "operationId": "interventions_versions_interventions_versions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "history",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "History",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/InterventionVersionOut"
+                  },
+                  "title": "Response Interventions Versions Interventions Versions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Interventions Versions",
+        "tags": [
+          "editor"
+        ]
+      }
+    },
+    "/market": {
+      "get": {
+        "operationId": "market_market_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarketResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Market"
+      }
+    },
+    "/model": {
+      "get": {
+        "operationId": "model_info_model_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Model Info"
+      }
+    },
+    "/model/activate": {
+      "post": {
+        "operationId": "model_activate_model_activate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivateOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Model Activate",
+        "tags": [
+          "model"
+        ]
+      }
+    },
+    "/model/registry": {
+      "get": {
+        "operationId": "model_registry_model_registry_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Model Registry",
+        "tags": [
+          "model"
+        ]
+      }
+    },
+    "/predict": {
+      "post": {
+        "operationId": "predict_predict_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PredictRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PredictResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Predict"
+      }
+    },
+    "/profile": {
+      "post": {
+        "operationId": "profile_profile_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Profile"
+      }
+    },
+    "/retrain": {
+      "post": {
+        "operationId": "retrain_endpoint_retrain_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetrainIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetrainOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Retrain Endpoint",
+        "tags": [
+          "model"
+        ]
+      }
+    },
+    "/scenarios": {
+      "get": {
+        "operationId": "get_scenarios_scenarios_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "history",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "History",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenariosOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Scenarios",
+        "tags": [
+          "editor"
+        ]
+      },
+      "post": {
+        "operationId": "post_scenario_scenarios_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenarioIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Scenario",
+        "tags": [
+          "editor"
+        ]
+      }
+    },
+    "/score_book": {
+      "post": {
+        "operationId": "score_book_score_book_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScoreBookRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoreBookResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Score Book"
+      }
+    },
+    "/score_book/csv": {
+      "post": {
+        "operationId": "score_book_csv_score_book_csv_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_score_book_csv_score_book_csv_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoreBookResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Score Book Csv"
+      }
+    },
+    "/settings": {
+      "get": {
+        "operationId": "get_settings_settings_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Settings",
+        "tags": [
+          "settings"
+        ]
+      },
+      "put": {
+        "operationId": "put_settings_settings_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettingsPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Settings",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/transparency": {
+      "get": {
+        "operationId": "transparency_transparency_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransparencyOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Transparency",
+        "tags": [
+          "model"
+        ]
+      }
+    }
+  }
+}

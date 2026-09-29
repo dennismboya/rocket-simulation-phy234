@@ -1,0 +1,1957 @@
+{
+ "artifact": {
+  "calibrated_contexts": {
+   "market:recovered_5pct": {
+    "n_responses": 418,
+    "status": "calibrated"
+   },
+   "news:recession": {
+    "n_responses": 431,
+    "status": "calibrated"
+   },
+   "news:technical": {
+    "n_responses": 413,
+    "status": "calibrated"
+   },
+   "social:friend_sells": {
+    "n_responses": 428,
+    "status": "calibrated"
+   }
+  },
+  "created_at": "2026-09-29T05:35:18+00:00",
+  "design_version": "1.0.0",
+  "family": "quantum",
+  "is_synthetic_training": true,
+  "model_name": "Q4",
+  "n_params": 435,
+  "n_samples": 200,
+  "notes": "Demo model fitted on the synthetic demo book only (bre.demo.build_demo_book; 65 synthetic investors, 1040 sell responses). Every number it produces is a synthetic-training result. MAP via Adam (1500 steps, 3 restarts, best objective kept). Intervals: diagonal Laplace at the MAP over the population-level parameters; per-subject blocks fixed (200 draws). Calibrated context = at least 30 training sell rows.",
+  "path": "/home/user/rocket-simulation-phy234/bre/runs/models/demo-q4-v2",
+  "training_data_refs": [
+   "dataset:synthetic_demo_book (bre.demo.build_demo_book seed=0, 60 G_Q investors + 5 archetypes, 16 items each)",
+   "db:/home/user/rocket-simulation-phy234/bre/data/synthetic/demo.db",
+   "generator:bre.sim.gq POPULATION_DEFAULTS (synthetic default, not fitted to data); archetypes: bre.demo.ARCHETYPES (synthetic design choice (hand-written archetype), not a fitted value)"
+  ],
+  "version": "demo-q4-v2"
+ },
+ "book_loss_response": {
+  "context": "none",
+  "definition": "share of the book's clients whose predicted P(sell | L, no context, scenario-first) is non-decreasing over the five design loss levels [-0.05, -0.1, -0.15, -0.2, -0.3] (each client with its fitted random effects when known to the model, else at the population mean), and the mean predicted P(sell) per loss level across the book. A diagnostic of the served model's loss response, not a test of the data: the loss enters as a rotation of the state, so a non-monotone response is possible under the model.",
+  "loss_levels": [
+   -0.05,
+   -0.1,
+   -0.15,
+   -0.2,
+   -0.3
+  ],
+  "mean_p_sell_by_loss": [
+   0.33681745908064586,
+   0.3454395899885787,
+   0.3606850092520689,
+   0.38184921863075755,
+   0.4377936581645105
+  ],
+  "monotone_share": 0.5384615384615384,
+  "n_clients": 65,
+  "n_monotone": 35,
+  "p_sell_by_loss_ci80": [
+   [
+    0.06621362644466124,
+    0.0810695787719565,
+    0.08075962666022525,
+    0.0675479444941212,
+    0.11487860073066995
+   ],
+   [
+    0.7351827976058624,
+    0.7294736021731728,
+    0.7467361157233581,
+    0.6738484106744849,
+    0.7530154936627236
+   ]
+  ],
+  "question_order_id": "scenario-first"
+ },
+ "capacity_definition": "behavioral drawdown capacity: the largest loss L on the design grid [0.05, 0.1, 0.15, 0.2, 0.3] such that P(sell | L', ['news:recession', 'social:friend_sells'], scenario-first) <= 0.25 for every grid loss L' <= L, i.e. the last grid loss before P(sell) first crosses the target (0 when the smallest grid loss already crosses it). The loss enters the model as a rotation of the state, so P(sell | L) is not guaranteed to be monotone in L; the capacity therefore uses this first-crossing (prefix) rule, not the value at L alone.",
+ "clients_source": "data/synthetic/demo_book.clients.json",
+ "db": "/home/user/rocket-simulation-phy234/bre/data/synthetic/demo.db",
+ "drawdown_target": 0.25,
+ "generated_at": "2026-09-29T17:28:58+00:00",
+ "generator": "python -m bre.report (bre.report.generate_profiles): bre.predict.profile + predict_sell + Scorer.predict + drawdown_capacity; no fitting",
+ "inputs": [
+  {
+   "bytes": 6713344,
+   "file": "data/synthetic/demo.db",
+   "modified_utc": "2026-09-29T05:58:25+00:00",
+   "sha256": "0798672cbd4e126771a012736aa474df6a0d2ee1f3840f5cf76c7de0f5e86222"
+  },
+  {
+   "bytes": 7012,
+   "file": "runs/models/demo-q4-v2/artifact.json",
+   "modified_utc": "2026-09-29T05:35:19+00:00",
+   "sha256": "d789f5b025b1b16820843245d2e64fc272ada0d78f559efdff72e6ed3486f451"
+  },
+  {
+   "bytes": 5984,
+   "file": "runs/models/demo-q4-v2/params.npz",
+   "modified_utc": "2026-09-29T05:35:19+00:00",
+   "sha256": "4c5c8e7cf2196929c686675f14a9a96045d151af3ad3bdef6fbb0bb109b6cd8d"
+  },
+  {
+   "bytes": 698504,
+   "file": "runs/models/demo-q4-v2/samples.npz",
+   "modified_utc": "2026-09-29T05:35:19+00:00",
+   "sha256": "b469ee7c92197741a0312f361c0247d01c36ca125f2677b38a28e99532e4b43f"
+  },
+  {
+   "bytes": 128426,
+   "file": "data/synthetic/demo_book.clients.json",
+   "modified_utc": "2026-09-29T05:59:34+00:00",
+   "sha256": "696c76e64b83fa917835a7cc66b6ce9355adb1950d3bb6aecb63b3a57bc28e26"
+  }
+ ],
+ "is_synthetic": true,
+ "label": "SYNTHETIC",
+ "loss_levels": [
+  -0.05,
+  -0.1,
+  -0.15,
+  -0.2,
+  -0.3
+ ],
+ "note": "Predictions of a synthetic-trained model for synthetic archetype clients; every number is SYNTHETIC and traces to the artifact below.",
+ "profiles": [
+  {
+   "archetype": "steady",
+   "client_id": "DEMO-A-steady",
+   "covariates": {
+    "age_band": "45-59",
+    "education": "graduate",
+    "financial_literacy_score": 5,
+    "invest_experience_yrs": 22,
+    "self_reported_risk_tolerance": 4,
+    "wealth_band": "250k-1M"
+   },
+   "crisis_grid": {
+    "contexts": [
+     "news:recession",
+     "social:friend_sells"
+    ],
+    "is_synthetic": true,
+    "losses": [
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.3
+    ],
+    "p": [
+     0.12025574040289996,
+     0.18436957163317527,
+     0.26312992123638695,
+     0.3528972351440973,
+     0.5485430436600661
+    ],
+    "question_order_id": "scenario-first"
+   },
+   "description": "Rarely sells: low resting sell amplitude, weak context rotations, half the population loss rotation, strong dephasing (context effects compose like a classical chain).",
+   "display_label": "Demo archetype: steady",
+   "drawdown_capacity": {
+    "capacity": 0.1,
+    "is_synthetic": true,
+    "status": "within grid",
+    "target": 0.25
+   },
+   "is_synthetic": true,
+   "loss_grid": [
+    {
+     "ci80": [
+      0.14186338625826633,
+      0.5991063284068067
+     ],
+     "ci95": [
+      0.0802035162860871,
+      0.7717222249835171
+     ],
+     "interference": {
+      "definitions": "PLAN.md section 4: ltp = P(sell | scenario-first) - sum_a P(a, sell | tolerance-first); order_effect = P(sell | c1, c2) - P(sell | c2, c1); mix = coherent minus classical mixture of the weighted cause frames",
+      "ltp": -0.14700176386988079,
+      "mix": null,
+      "order_effect": null
+     },
+     "is_synthetic": true,
+     "known_subject": true,
+     "loss_pct": -0.05,
+     "n_calibration": {
+      "none": {
+       "n_responses": 65,
+       "status": "calibrated"
+      }
+     },
+     "n_draws": 200,
+     "p": 0.3032515411186001,
+     "top_driver": {
+      "candidates": {
+       "loss": -0.0843823839925682
+      },
+      "delta_p": -0.0843823839925682,
+      "driver": "loss",
+      "p_without": 0.3876339251111683
+     }
+    },
+    {
+     "ci80": [
+      0.08998748504803958,
+      0.5354655226043693
+     ],
+     "ci95": [
+      0.04366810494700412,
+      0.7329950148356484
+     ],
+     "interference": {
+      "definitions": "PLAN.md section 4: ltp = P(sell | scenario-first) - sum_a P(a, sell | tolerance-first); order_effect = P(sell | c1, c2) - P(sell | c2, c1); mix = coherent minus classical mixture of the weighted cause frames",
+      "ltp": -0.20569745898013742,
+      "mix": null,
+      "order_effect": null
+     },
+     "is_synthetic": true,
+     "known_subject": true,
+     "loss_pct": -0.1,
+     "n_calibration": {
+      "none": {
+       "n_responses": 65,
+       "status": "calibrated"
+      }
+     },
+     "n_draws": 200,
+     "p": 0.2304525024993242,
+     "top_driver": {
+      "candidates": {
+       "loss": -0.1571814226118441
+      },
+      "delta_p": -0.1571814226118441,
+      "driver": "loss",
+      "p_without": 0.3876339251111683
+     }
+    },
+    {
+     "ci80": [
+      0.054116317953673054,
+      0.46304507945549167
+     ],
+     "ci95": [
+      0.016616881968526218,
+      0.6853068232560142
+     ],
+     "interference": {
+      "definitions": "PLAN.md section 4: ltp = P(sell | scenario-first) - sum_a P(a, sell | tolerance-first); order_effect = P(sell | c1, c2) - P(sell | c2, c1); mix = coherent minus classical mixture of the weighted cause frames",
+      "ltp": -0.25735269118012255,
+      "mix": null,
+      "order_effect": null
+     },
+     "is_synthetic": true,
+     "known_subject": true,
+     "loss_pct": -0.15,
+     "n_calibration": {
+      "none": {
+       "n_responses": 65,
+       "status": "calibrated"
+      }
+     },
+     "n_draws": 200,
+     "p": 0.17260088824130837,
+     "top_driver": {
+      "candidates": {
+       "loss": -0.21503303686985992
+      },
+      "delta_p": -0.21503303686985992,
+      "driver": "loss",
+      "p_without": 0.3876339251111683
+     }
+    },
+    {
+     "ci80": [
+      0.02983825455480765,
+      0.40671866106002863
+     ],
+     "ci95": [
+      0.00894760977783416,
+      0.6300904724591875
+     ],
+     "interference": {
+      "definitions": "PLAN.md section 4: ltp = P(sell | scenario-first) - sum_a P(a, sell | tolerance-first); order_effect = P(sell | c1, c2) - P(sell | c2, c1); mix = coherent minus classical mixture of the weighted cause frames",
+      "ltp": -0.2995804470619896,
+      "mix": null,
+      "order_effect": null
+     },
+     "is_synthetic": true,
+     "known_subject": true,
+     "loss_pct": -0.2,
+     "n_calibration": {
+      "none": {
+       "n_responses": 65,
+       "status": "calibrated"
+      }
+     },
+     "n_draws": 200,
+     "p": 0.13237004958155432,
+     "top_driver": {
+      "candidates": {
+       "loss": -0.25526387552961394
+      },
+      "delta_p": -0.25526387552961394,
+      "driver": "loss",
+      "p_without": 0.3876339251111683
+     }
+    },
+    {
+     "ci80": [
+      0.021474032336566886,
+      0.3741101887302966
+     ],
+     "ci95": [
+      0.0055266464624266565,
+      0.52672592082952
+     ],
+     "interference": {
+      "definitions": "PLAN.md section 4: ltp = P(sell | scenario-first) - sum_a P(a, sell | tolerance-first); order_effect = P(sell | c1, c2) - P(sell | c2, c1); mix = coherent minus classical mixture of the weighted cause frames",
+      "ltp": -0.34847389110586613,
+      "mix": null,
+      "order_effect": null
+     },
+     "is_synthetic": true,
+     "known_subject": true,
+     "loss_pct": -0.3,
+     "n_calibration": {
+      "none": {
+       "n_responses": 65,
+       "status": "calibrated"
+      }
+     },
+     "n_draws": 200,
+     "p": 0.11130687164709568,
+     "top_driver": {
+      "candidates": {
+       "loss": -0.2763270534640726
+      },
+      "delta_p": -0.2763270534640726,
+      "driver": "loss",
+      "p_without": 0.3876339251111683
+     }
+    }
+   ],
+   "profile": {
+    "baseline": {
+     "bloch_phi": 0.7828602003527938,
+     "bloch_theta": 1.3441281808669912,
+     "ci80": [
+      0.19864756152485222,
+      0.6759770048016044
+     ],
+     "ci95": [
+      0.12572658738055256,
+      0.8240484122955177
+     ],
+     "note": "P(sell | L = 0, no context) = sin^2(bloch_theta / 2); the state is the encoder output for the covariates plus the subject's random effect",
+     "p_sell_base": 0.38763392511116757,
+     "p_sell_base_model": 0.3876339251111683
+    },
+    "consistency": {
+     "ci80": [
+      0.008527726677385264,
+      0.008999769706968058
+     ],
+     "ci95": [
+      0.00839257731389638,
+      0.009104521948020501
+     ],
+     "gamma": 0.008767185798606017,
+     "source": "fitted subject value"
+    },
+    "family": "quantum",
+    "known_subject": true,
+    "model_type": "Q4",
+    "model_version": "demo-q4-v2",
+    "refined": null,
+    "risk_score": {
+     "ci80": [
+      -1.7094663164260504,
+      0.4401932104846108
+     ],
+     "ci95": [
+      -2.8985995210018376,
+      0.9193249506048683
+     ],
+     "definition": "logit P(sell | contexts ['news:recession', 'social:friend_sells'], loss -0.2, scenario-first)",
+     "p_sell": 0.3528972351440973,
+     "r2_ci95": [
+      0.3885816046975857,
+      0.6394659503957077
+     ],
+     "r2_note": "R^2 of the linear regression of the risk score on the state angle over 65 book clients; bootstrap 95% interval over clients (200 resamples)",
+     "r2_vs_angle": 0.5342886457238358,
+     "value": -0.6063282187632193
+    },
+    "sensitivities": {
+     "market:recovered_5pct": {
+      "delta_p_at_risk_loss": 0.20012880352455817,
+      "delta_p_ci80": [
+       -0.004231067181224514,
+       0.2946495265509269
+      ],
+      "n_calibration": {
+       "n_responses": 418,
+       "status": "calibrated"
+      },
+      "theta_norm": 0.3977735466101,
+      "theta_norm_ci80": [
+       0.3469732923244978,
+       0.4587963908384342
+      ],
+      "theta_norm_ci95": [
+       0.31062527694595804,
+       0.4994116659751542
+      ]
+     },
+     "news:recession": {
+      "delta_p_at_risk_loss": -0.03440036374199694,
+      "delta_p_ci80": [
+       -0.06706262077013597,
+       0.012151883946541701
+      ],
+      "n_calibration": {
+       "n_responses": 431,
+       "status": "calibrated"
+      },
+      "theta_norm": 0.08541930272988607,
+      "theta_norm_ci80": [
+       0.06421438240589036,
+       0.17954247123386005
+      ],
+      "theta_norm_ci95": [
+       0.03920911572281416,
+       0.2008983341635339
+      ]
+     },
+     "news:technical": {
+      "delta_p_at_risk_loss": -0.020443026139349618,
+      "delta_p_ci80": [
+       -0.05125745838362554,
+       0.015594562176379896
+      ],
+      "n_calibration": {
+       "n_responses": 413,
+       "status": "calibrated"
+      },
+      "theta_norm": 0.036528061729818276,
+      "theta_norm_ci80": [
+       0.040899380238694605,
+       0.1352753733065143
+      ],
+      "theta_norm_ci95": [
+       0.027235834697392797,
+       0.17819885218610504
+      ]
+     },
+     "social:friend_sells": {
+      "delta_p_at_risk_loss": 0.19756423222846567,
+      "delta_p_ci80": [
+       -0.2555187280610339,
+       0.4361600019850943
+      ],
+      "n_calibration": {
+       "n_responses": 428,
+       "status": "calibrated"
+      },
+      "theta_norm": 0.8294663207059867,
+      "theta_norm_ci80": [
+       0.771223878355807,
+       0.889823036850907
+      ],
+      "theta_norm_ci95": [
+       0.7316170977564908,
+       0.9343303612140302
+      ]
+     }
+    },
+    "subject_id": "DEMO-A-steady",
+    "synthetic": true,
+    "wording": "predicted probability of selling"
+   },
+   "source": "synthetic design choice (hand-written archetype), not a fitted value: steady",
+   "truth": {
+    "truth_bloch_phi": 0.2234766011,
+    "truth_bloch_theta": 0.4437904859,
+    "truth_gamma": 3.0,
+    "truth_p_sell_base": 0.048434675,
+    "truth_p_sell_mean": 0.2791600286,
+    "truth_source": "synthetic design choice (hand-written archetype), not a fitted value"
+   }
+  },
+  {
+   "archetype": "panic-prone",
+   "client_id": "DEMO-A-panic_prone",
+   "covariates": {
+    "age_band": "30-44",
+    "education": "some_college",
+    "financial_literacy_score": 2,
+    "invest_experience_yrs": 2,
+    "self_reported_risk_tolerance": 3,
+    "wealth_band": "<50k"
+   },
+   "crisis_grid": {
+    "contexts": [
+     "news:recession",
+     "social:friend_sells"
+    ],
+    "is_synthetic": true,
+    "losses": [
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.3
+    ],
+    "p": [
+     0.7125814942473767,
+     0.8002606364116419,
+     0.8740716878712879,
+     0.9306038040326962,
+     0.9823009113069393
+    ],
+    "question_order_id": "scenario-first"
+   },
+   "description": "Sells readily after losses: high resting sell amplitude, 1.5x the population loss rotation, a recession frame and a selling friend both rotate towards sell, near-zero dephasing (full interference: order effects and LTP violations).",
+   "display_label": "Demo archetype: panic-prone",
+   "drawdown_capacity": {
+    "capacity": 0.0,
+    "is_synthetic": true,
+    "status": "below smallest grid loss",
+    "target": 0.25
+   },
+   "is_synthetic": true,
+   "loss_grid": [
+    {
+     "ci80": [
+      0.029120586751201428,
+      0.3598822741453887
+     ],
+     "ci95": [
+      0.006616900236867122,
+      0.4946890963128017
+     ],
+     "interference": {
+      "definitions": "PLAN.md section 4: ltp = P(sell | scenario-first) - sum_a P(a, sell | tolerance-first); order_effect = P(sell | c1, c2) - P(sell | c2, c1); mix = coherent minus classical mixture of the weighted cause frames",
+      "ltp": -0.3875824901214169,
+      "mix": null,
+      "order_effect": null
+     },
+     "is_synthetic": true,
+     "known_subject": true,
+     "loss_pct": -0.05,
+     "n_calibration": {
+      "none": {
+       "n_responses": 65,
+       "status": "calibrated"
+      }
+     },
+     "n_draws": 200,
+     "p": 0.08810943030727017,
+     "top_driver": {
+      "candidates": {
+       "loss": 0.034352901265741
+      },
+      "delta_p": 0.034352901265741,
+      "driver": "loss",
+      "p_without": 0.05375652904152917
+     }
+    },
+    {
+     "ci80": [
+      0.04401510139896758,
+      0.4111733693858958
+     ],
+     "ci95": [
+      0.00915057249250064,
+      0.5681215273980926
+     ],
+     "interference": {
+      "definitions": "PLAN.md section 4: ltp = P(sell | scenario-first) - sum_a P(a, sell | tolerance-first); order_effect = P(sell | c1, c2) - P(sell | c2, c1); mix = coherent minus classical mixture of the weighted cause frames",
+      "ltp": -0.3270149565459816,
+      "mix": null,
+      "order_effect": null
+     },
+     "is_synthetic": true,
+     "known_subject": true,
+     "loss_pct": -0.1,
+     "n_calibration": {
+      "none": {
+       "n_responses": 65,
+       "status": "calibrated"
+      }
+     },
+     "n_draws": 200,
+     "p": 0.14178554735424198,
+     "top_driver": {
+      "candidates": {
+       "loss": 0.08802901831271281
+      },
+      "delta_p": 0.08802901831271281,
+      "driver": "loss",
+      "p_without": 0.05375652904152917
+     }
+    },
+    {
+     "ci80": [
+      0.06510046574696733,
+      0.5027947798981981
+     ],
+     "ci95": [
+      0.021778741418694608,
+      0.6593562999242376
+     ],
+     "interference": {
+      "definitions": "PLAN.md section 4: ltp = P(sell | scenario-first) - sum_a P(a, sell | tolerance-first); order_effect = P(sell | c1, c2) - P(sell | c2, c1); mix = coherent minus classical mixture of the weighted cause frames",
+      "ltp": -0.25346824118932065,
+      "mix": null,
+      "order_effect": null
+     },
+     "is_synthetic": true,
+     "known_subject": true,
+     "loss_pct": -0.15,
+     "n_calibration": {
+      "none": {
+       "n_responses": 65,
+       "status": "calibrated"
+      }
+     },
+     "n_draws": 200,
+     "p": 0.21230448070275174,
+     "top_driver": {
+      "candidates": {
+       "loss": 0.15854795166122257
+      },
+      "delta_p": 0.15854795166122257,
+      "driver": "loss",
+      "p_without": 0.05375652904152917
+     }
+    },
+    {
+     "ci80": [
+      0.1002619079879589,
+      0.6066934248581213
+     ],
+     "ci95": [
+      0.03616874708412277,
+      0.7539743940664408
+     ],
+     "interference": {
+      "definitions": "PLAN.md section 4: ltp = P(sell | scenario-first) - sum_a P(a, sell | tolerance-first); order_effect = P(sell | c1, c2) - P(sell | c2, c1); mix = coherent minus classical mixture of the weighted cause frames",
+      "ltp": -0.17034097354514577,
+      "mix": null,
+      "order_effect": null
+     },
+     "is_synthetic": true,
+     "known_subject": true,
+     "loss_pct": -0.2,
+     "n_calibration": {
+      "none": {
+       "n_responses": 65,
+       "status": "calibrated"
+      }
+     },
+     "n_draws": 200,
+     "p": 0.2964075161385599,
+     "top_driver": {
+      "candidates": {
+       "loss": 0.24265098709703076
+      },
+      "delta_p": 0.24265098709703076,
+      "driver": "loss",
+      "p_without": 0.05375652904152917
+     }
+    },
+    {
+     "ci80": [
+      0.22124717301807598,
+      0.7667956384531464
+     ],
+     "ci95": [
+      0.09268441026013388,
+      0.8830350181732591
+     ],
+     "interference": {
+      "definitions": "PLAN.md section 4: ltp = P(sell | scenario-first) - sum_a P(a, sell | tolerance-first); order_effect = P(sell | c1, c2) - P(sell | c2, c1); mix = coherent minus classical mixture of the weighted cause frames",
+      "ltp": 0.009024601442703173,
+      "mix": null,
+      "order_effect": null
+     },
+     "is_synthetic": true,
+     "known_subject": true,
+     "loss_pct": -0.3,
+     "n_calibration": {
+      "none": {
+       "n_responses": 65,
+       "status": "calibrated"
+      }
+     },
+     "n_draws": 200,
+     "p": 0.48937199097135153,
+     "top_driver": {
+      "candidates": {
+       "loss": 0.43561546192982237
+      },
+      "delta_p": 0.43561546192982237,
+      "driver": "loss",
+      "p_without": 0.05375652904152917
+     }
+    }
+   ],
+   "profile": {
+    "baseline": {
+     "bloch_phi": -0.9167336167529728,
+     "bloch_theta": 0.4679674899371375,
+     "ci80": [
+      0.016790199399028566,
+      0.32092379316424974
+     ],
+     "ci95": [
+      0.007085636782637836,
+      0.45835829009684087
+     ],
+     "note": "P(sell | L = 0, no context) = sin^2(bloch_theta / 2); the state is the encoder output for the covariates plus the subject's random effect",
+     "p_sell_base": 0.05375652904152884,
+     "p_sell_base_model": 0.05375652904152917
+    },
+    "consistency": {
+     "ci80": [
+      0.008527726677385264,
+      0.008999769706968058
+     ],
+     "ci95": [
+      0.00839257731389638,
+      0.009104521948020501
+     ],
+     "gamma": 0.008748897756764181,
+     "source": "fitted subject value"
+    },
+    "family": "quantum",
+    "known_subject": true,
+    "model_type": "Q4",
+    "model_version": "demo-q4-v2",
+    "refined": null,
+    "risk_score": {
+     "ci80": [
+      0.645908585661239,
+      3.518425210736404
+     ],
+     "ci95": [
+      0.19741214331657905,
+      3.917338204251352
+     ],
+     "definition": "logit P(sell | contexts ['news:recession', 'social:friend_sells'], loss -0.2, scenario-first)",
+     "p_sell": 0.9306038040326962,
+     "r2_note": "pass the book to compute the R^2 between the score and the state angle",
+     "r2_vs_angle": null,
+     "value": 2.5960015742634703
+    },
+    "sensitivities": {
+     "market:recovered_5pct": {
+      "delta_p_at_risk_loss": 0.2669117897825077,
+      "delta_p_ci80": [
+       0.07265237283928679,
+       0.3312245006862794
+      ],
+      "n_calibration": {
+       "n_responses": 418,
+       "status": "calibrated"
+      },
+      "theta_norm": 0.3977735466101,
+      "theta_norm_ci80": [
+       0.3469732923244978,
+       0.4587963908384342
+      ],
+      "theta_norm_ci95": [
+       0.31062527694595804,
+       0.4994116659751542
+      ]
+     },
+     "news:recession": {
+      "delta_p_at_risk_loss": -0.020480393532530894,
+      "delta_p_ci80": [
+       -0.07297154543078622,
+       0.03434319998531234
+      ],
+      "n_calibration": {
+       "n_responses": 431,
+       "status": "calibrated"
+      },
+      "theta_norm": 0.08541930272988607,
+      "theta_norm_ci80": [
+       0.06421438240589036,
+       0.17954247123386005
+      ],
+      "theta_norm_ci95": [
+       0.03920911572281416,
+       0.2008983341635339
+      ]
+     },
+     "news:technical": {
+      "delta_p_at_risk_loss": 0.013074257877066009,
+      "delta_p_ci80": [
+       -0.03937284771131251,
+       0.05481680847319475
+      ],
+      "n_calibration": {
+       "n_responses": 413,
+       "status": "calibrated"
+      },
+      "theta_norm": 0.036528061729818276,
+      "theta_norm_ci80": [
+       0.040899380238694605,
+       0.1352753733065143
+      ],
+      "theta_norm_ci95": [
+       0.027235834697392797,
+       0.17819885218610504
+      ]
+     },
+     "social:friend_sells": {
+      "delta_p_at_risk_loss": 0.6350953858592157,
+      "delta_p_ci80": [
+       0.23502822198236278,
+       0.688232993620731
+      ],
+      "n_calibration": {
+       "n_responses": 428,
+       "status": "calibrated"
+      },
+      "theta_norm": 0.8294663207059867,
+      "theta_norm_ci80": [
+       0.771223878355807,
+       0.889823036850907
+      ],
+      "theta_norm_ci95": [
+       0.7316170977564908,
+       0.9343303612140302
+      ]
+     }
+    },
+    "subject_id": "DEMO-A-panic_prone",
+    "synthetic": true,
+    "wording": "predicted probability of selling"
+   },
+   "source": "synthetic design choice (hand-written archetype), not a fitted value: panic-prone",
+   "truth": {
+    "truth_bloch_phi": 0.3805063771,
+    "truth_bloch_theta": 1.3589273587,
+    "truth_gamma": 0.05,
+    "truth_p_sell_base": 0.3948562784,
+    "truth_p_sell_mean": 0.5140940171,
+    "truth_source": "synthetic design choice (hand-written archetype), not a fitted value"
+   }
+  },
+  {
+   "archetype": "gain-chaser",
+   "client_id": "DEMO-A-gain_chaser",
+   "covariates": {
+    "age_band": "18-29",
+    "education": "bachelor",
+    "financial_literacy_score": 3,
+    "invest_experience_yrs": 4,
+    "self_reported_risk_tolerance": 6,
+    "wealth_band": "50-250k"
+   },
+   "crisis_grid": {
+    "contexts": [
+     "news:recession",
+     "social:friend_sells"
+    ],
+    "is_synthetic": true,
+    "losses": [
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.3
+    ],
+    "p": [
+     0.6380654772050618,
+     0.7060601078017997,
+     0.764669021264202,
+     0.8111838711906405,
+     0.8599916858569949
+    ],
+    "question_order_id": "scenario-first"
+   },
+   "description": "Locks in gains: low resting sell amplitude and a small loss rotation, but a partial recovery rotates strongly towards sell; news and social cues barely move the state.",
+   "display_label": "Demo archetype: gain-chaser",
+   "drawdown_capacity": {
+    "capacity": 0.0,
+    "is_synthetic": true,
+    "status": "below smallest grid loss",
+    "target": 0.25
+   },
+   "is_synthetic": true,
+   "loss_grid": [
+    {
+     "ci80": [
+      0.1629216307204181,
+      0.46000096872604007
+     ],
+     "ci95": [
+      0.1138167423913727,
+      0.5324079613519366
+     ],
+     "interference": {
+      "definitions": "PLAN.md section 4: ltp = P(sell | scenario-first) - sum_a P(a, sell | tolerance-first); order_effect = P(sell | c1, c2) - P(sell | c2, c1); mix = coherent minus classical mixture of the weighted cause frames",
+      "ltp": -0.14308481014262664,
+      "mix": null,
+      "order_effect": null
+     },
+     "is_synthetic": true,
+     "known_subject": true,
+     "loss_pct": -0.05,
+     "n_calibration": {
+      "none": {
+       "n_responses": 65,
+       "status": "calibrated"
+      }
+     },
+     "n_draws": 200,
+     "p": 0.29916036694179476,
+     "top_driver": {
+      "candidates": {
+       "loss": 0.020594707855989713
+      },
+      "delta_p": 0.020594707855989713,
+      "driver": "loss",
+      "p_without": 0.27856565908580505
+     }
+    },
+    {
+     "ci80": [
+      0.1948017849208747,
+      0.5021228667211352
+     ],
+     "ci95": [
+      0.12681397749254977,
+      0.5808188004531716
+     ],
+     "interference": {
+      "definitions": "PLAN.md section 4: ltp = P(sell | scenario-first) - sum_a P(a, sell | tolerance-first); order_effect = P(sell | c1, c2) - P(sell | c2, c1); mix = coherent minus classical mixture of the weighted cause frames",
+      "ltp": -0.0912711342761156,
+      "mix": null,
+      "order_effect": null
+     },
+     "is_synthetic": true,
+     "known_subject": true,
+     "loss_pct": -0.1,
+     "n_calibration": {
+      "none": {
+       "n_responses": 65,
+       "status": "calibrated"
+      }
+     },
+     "n_draws": 200,
+     "p": 0.33460037001069826,
+     "top_driver": {
+      "candidates": {
+       "loss": 0.056034710924893205
+      },
+      "delta_p": 0.056034710924893205,
+      "driver": "loss",
+      "p_without": 0.27856565908580505
+     }
+    },
+    {
+     "ci80": [
+      0.22499122060245003,
+      0.5591720130980348
+     ],
+     "ci95": [
+      0.15216989082288154,
+      0.6345368244895839
+     ],
+     "interference": {
+      "definitions": "PLAN.md section 4: ltp = P(sell | scenario-first) - sum_a P(a, sell | tolerance-first); order_effect = P(sell | c1, c2) - P(sell | c2, c1); mix = coherent minus classical mixture of the weighted cause frames",
+      "ltp": -0.03542967197471392,
+      "mix": null,
+      "order_effect": null
+     },
+     "is_synthetic": true,
+     "known_subject": true,
+     "loss_pct": -0.15,
+     "n_calibration": {
+      "none": {
+       "n_responses": 65,
+       "status": "calibrated"
+      }
+     },
+     "n_draws": 200,
+     "p": 0.3832479685107768,
+     "top_driver": {
+      "candidates": {
+       "loss": 0.10468230942497175
+      },
+      "delta_p": 0.10468230942497175,
+      "driver": "loss",
+      "p_without": 0.27856565908580505
+     }
+    },
+    {
+     "ci80": [
+      0.2715070077661128,
+      0.622998757362901
+     ],
+     "ci95": [
+      0.20170248071857552,
+      0.7144082039888032
+     ],
+     "interference": {
+      "definitions": "PLAN.md section 4: ltp = P(sell | scenario-first) - sum_a P(a, sell | tolerance-first); order_effect = P(sell | c1, c2) - P(sell | c2, c1); mix = coherent minus classical mixture of the weighted cause frames",
+      "ltp": 0.0218591156243379,
+      "mix": null,
+      "order_effect": null
+     },
+     "is_synthetic": true,
+     "known_subject": true,
+     "loss_pct": -0.2,
+     "n_calibration": {
+      "none": {
+       "n_responses": 65,
+       "status": "calibrated"
+      }
+     },
+     "n_draws": 200,
+     "p": 0.44285513325053116,
+     "top_driver": {
+      "candidates": {
+       "loss": 0.1642894741647261
+      },
+      "delta_p": 0.1642894741647261,
+      "driver": "loss",
+      "p_without": 0.27856565908580505
+     }
+    },
+    {
+     "ci80": [
+      0.3813219924250308,
+      0.7539765740517071
+     ],
+     "ci95": [
+      0.3014143631789327,
+      0.834860805206474
+     ],
+     "interference": {
+      "definitions": "PLAN.md section 4: ltp = P(sell | scenario-first) - sum_a P(a, sell | tolerance-first); order_effect = P(sell | c1, c2) - P(sell | c2, c1); mix = coherent minus classical mixture of the weighted cause frames",
+      "ltp": 0.13024474913210005,
+      "mix": null,
+      "order_effect": null
+     },
+     "is_synthetic": true,
+     "known_subject": true,
+     "loss_pct": -0.3,
+     "n_calibration": {
+      "none": {
+       "n_responses": 65,
+       "status": "calibrated"
+      }
+     },
+     "n_draws": 200,
+     "p": 0.5835510959263048,
+     "top_driver": {
+      "candidates": {
+       "loss": 0.3049854368404998
+      },
+      "delta_p": 0.3049854368404998,
+      "driver": "loss",
+      "p_without": 0.27856565908580505
+     }
+    }
+   ],
+   "profile": {
+    "baseline": {
+     "bloch_phi": -0.49891233329270857,
+     "bloch_theta": 1.11200061278368,
+     "ci80": [
+      0.15834054971818312,
+      0.43813618282833855
+     ],
+     "ci95": [
+      0.11296441365064971,
+      0.5167775805175994
+     ],
+     "note": "P(sell | L = 0, no context) = sin^2(bloch_theta / 2); the state is the encoder output for the covariates plus the subject's random effect",
+     "p_sell_base": 0.27856565908580505,
+     "p_sell_base_model": 0.27856565908580505
+    },
+    "consistency": {
+     "ci80": [
+      0.008527726677385264,
+      0.008999769706968058
+     ],
+     "ci95": [
+      0.00839257731389638,
+      0.009104521948020501
+     ],
+     "gamma": 0.008764618326451083,
+     "source": "fitted subject value"
+    },
+    "family": "quantum",
+    "known_subject": true,
+    "model_type": "Q4",
+    "model_version": "demo-q4-v2",
+    "refined": null,
+    "risk_score": {
+     "ci80": [
+      0.6227863761391993,
+      2.2829598346236653
+     ],
+     "ci95": [
+      0.039390906785528645,
+      3.002958498077358
+     ],
+     "definition": "logit P(sell | contexts ['news:recession', 'social:friend_sells'], loss -0.2, scenario-first)",
+     "p_sell": 0.8111838711906405,
+     "r2_note": "pass the book to compute the R^2 between the score and the state angle",
+     "r2_vs_angle": null,
+     "value": 1.4577210719064098
+    },
+    "sensitivities": {
+     "market:recovered_5pct": {
+      "delta_p_at_risk_loss": 0.33659899246351277,
+      "delta_p_ci80": [
+       0.24927778664384057,
+       0.36777089957796405
+      ],
+      "n_calibration": {
+       "n_responses": 418,
+       "status": "calibrated"
+      },
+      "theta_norm": 0.3977735466101,
+      "theta_norm_ci80": [
+       0.3469732923244978,
+       0.4587963908384342
+      ],
+      "theta_norm_ci95": [
+       0.31062527694595804,
+       0.4994116659751542
+      ]
+     },
+     "news:recession": {
+      "delta_p_at_risk_loss": -0.05785686368744286,
+      "delta_p_ci80": [
+       -0.10544529699237781,
+       -0.006414042174918486
+      ],
+      "n_calibration": {
+       "n_responses": 431,
+       "status": "calibrated"
+      },
+      "theta_norm": 0.08541930272988607,
+      "theta_norm_ci80": [
+       0.06421438240589036,
+       0.17954247123386005
+      ],
+      "theta_norm_ci95": [
+       0.03920911572281416,
+       0.2008983341635339
+      ]
+     },
+     "news:technical": {
+      "delta_p_at_risk_loss": -0.006442509621224279,
+      "delta_p_ci80": [
+       -0.05559829384831917,
+       0.04437357916162591
+      ],
+      "n_calibration": {
+       "n_responses": 413,
+       "status": "calibrated"
+      },
+      "theta_norm": 0.036528061729818276,
+      "theta_norm_ci80": [
+       0.040899380238694605,
+       0.1352753733065143
+      ],
+      "theta_norm_ci95": [
+       0.027235834697392797,
+       0.17819885218610504
+      ]
+     },
+     "social:friend_sells": {
+      "delta_p_at_risk_loss": 0.3372656169301699,
+      "delta_p_ci80": [
+       0.11807281082192382,
+       0.5021648836496742
+      ],
+      "n_calibration": {
+       "n_responses": 428,
+       "status": "calibrated"
+      },
+      "theta_norm": 0.8294663207059867,
+      "theta_norm_ci80": [
+       0.771223878355807,
+       0.889823036850907
+      ],
+      "theta_norm_ci95": [
+       0.7316170977564908,
+       0.9343303612140302
+      ]
+     }
+    },
+    "subject_id": "DEMO-A-gain_chaser",
+    "synthetic": true,
+    "wording": "predicted probability of selling"
+   },
+   "source": "synthetic design choice (hand-written archetype), not a fitted value: gain-chaser",
+   "truth": {
+    "truth_bloch_phi": 0.278299659,
+    "truth_bloch_theta": 0.6981939712,
+    "truth_gamma": 0.5,
+    "truth_p_sell_base": 0.1169977925,
+    "truth_p_sell_mean": 0.4051583292,
+    "truth_source": "synthetic design choice (hand-written archetype), not a fitted value"
+   }
+  },
+  {
+   "archetype": "news-reactive",
+   "client_id": "DEMO-A-news_reactive",
+   "covariates": {
+    "age_band": "60+",
+    "education": "graduate",
+    "financial_literacy_score": 4,
+    "invest_experience_yrs": 30,
+    "self_reported_risk_tolerance": 3,
+    "wealth_band": ">1M"
+   },
+   "crisis_grid": {
+    "contexts": [
+     "news:recession",
+     "social:friend_sells"
+    ],
+    "is_synthetic": true,
+    "losses": [
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.3
+    ],
+    "p": [
+     0.9053912946734914,
+     0.8623872173595752,
+     0.8027271766947378,
+     0.7291680921799553,
+     0.5544347987568162
+    ],
+    "question_order_id": "scenario-first"
+   },
+   "description": "Reacts to the stated cause of a loss: a recession frame rotates strongly towards sell and a technical-fault frame strongly away from it; social cue and recovery are weak; population loss rotation; moderate dephasing.",
+   "display_label": "Demo archetype: news-reactive",
+   "drawdown_capacity": {
+    "capacity": 0.0,
+    "is_synthetic": true,
+    "status": "below smallest grid loss",
+    "target": 0.25
+   },
+   "is_synthetic": true,
+   "loss_grid": [
+    {
+     "ci80": [
+      0.5217539160770234,
+      0.8920986182685591
+     ],
+     "ci95": [
+      0.43459822643209417,
+      0.9592433394441398
+     ],
+     "interference": {
+      "definitions": "PLAN.md section 4: ltp = P(sell | scenario-first) - sum_a P(a, sell | tolerance-first); order_effect = P(sell | c1, c2) - P(sell | c2, c1); mix = coherent minus classical mixture of the weighted cause frames",
+      "ltp": 0.2328863737955879,
+      "mix": null,
+      "order_effect": null
+     },
+     "is_synthetic": true,
+     "known_subject": true,
+     "loss_pct": -0.05,
+     "n_calibration": {
+      "none": {
+       "n_responses": 65,
+       "status": "calibrated"
+      }
+     },
+     "n_draws": 200,
+     "p": 0.7325024102217812,
+     "top_driver": {
+      "candidates": {
+       "loss": 0.08678485859558738
+      },
+      "delta_p": 0.08678485859558738,
+      "driver": "loss",
+      "p_without": 0.6457175516261938
+     }
+    },
+    {
+     "ci80": [
+      0.5966574864438765,
+      0.9412699320352408
+     ],
+     "ci95": [
+      0.5282008508526186,
+      0.9804676446581748
+     ],
+     "interference": {
+      "definitions": "PLAN.md section 4: ltp = P(sell | scenario-first) - sum_a P(a, sell | tolerance-first); order_effect = P(sell | c1, c2) - P(sell | c2, c1); mix = coherent minus classical mixture of the weighted cause frames",
+      "ltp": 0.31271239802351325,
+      "mix": null,
+      "order_effect": null
+     },
+     "is_synthetic": true,
+     "known_subject": true,
+     "loss_pct": -0.1,
+     "n_calibration": {
+      "none": {
+       "n_responses": 65,
+       "status": "calibrated"
+      }
+     },
+     "n_draws": 200,
+     "p": 0.8122195795765317,
+     "top_driver": {
+      "candidates": {
+       "loss": 0.16650202795033786
+      },
+      "delta_p": 0.16650202795033786,
+      "driver": "loss",
+      "p_without": 0.6457175516261938
+     }
+    },
+    {
+     "ci80": [
+      0.676898055134289,
+      0.9653341850152068
+     ],
+     "ci95": [
+      0.6143729750439143,
+      0.9944088944207081
+     ],
+     "interference": {
+      "definitions": "PLAN.md section 4: ltp = P(sell | scenario-first) - sum_a P(a, sell | tolerance-first); order_effect = P(sell | c1, c2) - P(sell | c2, c1); mix = coherent minus classical mixture of the weighted cause frames",
+      "ltp": 0.38172593495405943,
+      "mix": null,
+      "order_effect": null
+     },
+     "is_synthetic": true,
+     "known_subject": true,
+     "loss_pct": -0.15,
+     "n_calibration": {
+      "none": {
+       "n_responses": 65,
+       "status": "calibrated"
+      }
+     },
+     "n_draws": 200,
+     "p": 0.8811852905158413,
+     "top_driver": {
+      "candidates": {
+       "loss": 0.23546773888964745
+      },
+      "delta_p": 0.23546773888964745,
+      "driver": "loss",
+      "p_without": 0.6457175516261938
+     }
+    },
+    {
+     "ci80": [
+      0.7519033494021822,
+      0.981645461559763
+     ],
+     "ci95": [
+      0.6705792198002659,
+      0.9934468101491585
+     ],
+     "interference": {
+      "definitions": "PLAN.md section 4: ltp = P(sell | scenario-first) - sum_a P(a, sell | tolerance-first); order_effect = P(sell | c1, c2) - P(sell | c2, c1); mix = coherent minus classical mixture of the weighted cause frames",
+      "ltp": 0.436737835473766,
+      "mix": null,
+      "order_effect": null
+     },
+     "is_synthetic": true,
+     "known_subject": true,
+     "loss_pct": -0.2,
+     "n_calibration": {
+      "none": {
+       "n_responses": 65,
+       "status": "calibrated"
+      }
+     },
+     "n_draws": 200,
+     "p": 0.9362126039885695,
+     "top_driver": {
+      "candidates": {
+       "loss": 0.2904950523623757
+      },
+      "delta_p": 0.2904950523623757,
+      "driver": "loss",
+      "p_without": 0.6457175516261938
+     }
+    },
+    {
+     "ci80": [
+      0.8477362949871445,
+      0.9933833269494369
+     ],
+     "ci95": [
+      0.7819836033019496,
+      0.9990047257744334
+     ],
+     "interference": {
+      "definitions": "PLAN.md section 4: ltp = P(sell | scenario-first) - sum_a P(a, sell | tolerance-first); order_effect = P(sell | c1, c2) - P(sell | c2, c1); mix = coherent minus classical mixture of the weighted cause frames",
+      "ltp": 0.4953527158859801,
+      "mix": null,
+      "order_effect": null
+     },
+     "is_synthetic": true,
+     "known_subject": true,
+     "loss_pct": -0.3,
+     "n_calibration": {
+      "none": {
+       "n_responses": 65,
+       "status": "calibrated"
+      }
+     },
+     "n_draws": 200,
+     "p": 0.9950422887899575,
+     "top_driver": {
+      "candidates": {
+       "loss": 0.34932473716376367
+      },
+      "delta_p": 0.34932473716376367,
+      "driver": "loss",
+      "p_without": 0.6457175516261938
+     }
+    }
+   ],
+   "profile": {
+    "baseline": {
+     "bloch_phi": -1.540512391100501,
+     "bloch_theta": 1.866523049628007,
+     "ci80": [
+      0.4308504248331959,
+      0.834111574233507
+     ],
+     "ci95": [
+      0.3633922389223012,
+      0.9231936656112144
+     ],
+     "note": "P(sell | L = 0, no context) = sin^2(bloch_theta / 2); the state is the encoder output for the covariates plus the subject's random effect",
+     "p_sell_base": 0.6457175516261939,
+     "p_sell_base_model": 0.6457175516261938
+    },
+    "consistency": {
+     "ci80": [
+      0.008527726677385264,
+      0.008999769706968058
+     ],
+     "ci95": [
+      0.00839257731389638,
+      0.009104521948020501
+     ],
+     "gamma": 0.008779354714728179,
+     "source": "fitted subject value"
+    },
+    "family": "quantum",
+    "known_subject": true,
+    "model_type": "Q4",
+    "model_version": "demo-q4-v2",
+    "refined": null,
+    "risk_score": {
+     "ci80": [
+      -0.14266635926822924,
+      2.1789827980528735
+     ],
+     "ci95": [
+      -0.7917283381518551,
+      2.814510099015674
+     ],
+     "definition": "logit P(sell | contexts ['news:recession', 'social:friend_sells'], loss -0.2, scenario-first)",
+     "p_sell": 0.7291680921799553,
+     "r2_note": "pass the book to compute the R^2 between the score and the state angle",
+     "r2_vs_angle": null,
+     "value": 0.9904059224631518
+    },
+    "sensitivities": {
+     "market:recovered_5pct": {
+      "delta_p_at_risk_loss": 0.012622791002381728,
+      "delta_p_ci80": [
+       -0.12931816936452947,
+       0.17667349432534515
+      ],
+      "n_calibration": {
+       "n_responses": 418,
+       "status": "calibrated"
+      },
+      "theta_norm": 0.3977735466101,
+      "theta_norm_ci80": [
+       0.3469732923244978,
+       0.4587963908384342
+      ],
+      "theta_norm_ci95": [
+       0.31062527694595804,
+       0.4994116659751542
+      ]
+     },
+     "news:recession": {
+      "delta_p_at_risk_loss": -0.018449769685255357,
+      "delta_p_ci80": [
+       -0.06442472259064463,
+       0.02329815365555844
+      ],
+      "n_calibration": {
+       "n_responses": 431,
+       "status": "calibrated"
+      },
+      "theta_norm": 0.08541930272988607,
+      "theta_norm_ci80": [
+       0.06421438240589036,
+       0.17954247123386005
+      ],
+      "theta_norm_ci95": [
+       0.03920911572281416,
+       0.2008983341635339
+      ]
+     },
+     "news:technical": {
+      "delta_p_at_risk_loss": 0.004876484248043544,
+      "delta_p_ci80": [
+       -0.03234491186697992,
+       0.03087555387797271
+      ],
+      "n_calibration": {
+       "n_responses": 413,
+       "status": "calibrated"
+      },
+      "theta_norm": 0.036528061729818276,
+      "theta_norm_ci80": [
+       0.040899380238694605,
+       0.1352753733065143
+      ],
+      "theta_norm_ci95": [
+       0.027235834697392797,
+       0.17819885218610504
+      ]
+     },
+     "social:friend_sells": {
+      "delta_p_at_risk_loss": -0.22004039180987067,
+      "delta_p_ci80": [
+       -0.48982671399448474,
+       0.11252621559178483
+      ],
+      "n_calibration": {
+       "n_responses": 428,
+       "status": "calibrated"
+      },
+      "theta_norm": 0.8294663207059867,
+      "theta_norm_ci80": [
+       0.771223878355807,
+       0.889823036850907
+      ],
+      "theta_norm_ci95": [
+       0.7316170977564908,
+       0.9343303612140302
+      ]
+     }
+    },
+    "subject_id": "DEMO-A-news_reactive",
+    "synthetic": true,
+    "wording": "predicted probability of selling"
+   },
+   "source": "synthetic design choice (hand-written archetype), not a fitted value: news-reactive",
+   "truth": {
+    "truth_bloch_phi": 0.4182243296,
+    "truth_bloch_theta": 0.9151673296,
+    "truth_gamma": 0.3,
+    "truth_p_sell_base": 0.1951710262,
+    "truth_p_sell_mean": 0.4603742311,
+    "truth_source": "synthetic design choice (hand-written archetype), not a fitted value"
+   }
+  },
+  {
+   "archetype": "socially-driven",
+   "client_id": "DEMO-A-socially_driven",
+   "covariates": {
+    "age_band": "30-44",
+    "education": "hs",
+    "financial_literacy_score": 2,
+    "invest_experience_yrs": 8,
+    "self_reported_risk_tolerance": 4,
+    "wealth_band": "50-250k"
+   },
+   "crisis_grid": {
+    "contexts": [
+     "news:recession",
+     "social:friend_sells"
+    ],
+    "is_synthetic": true,
+    "losses": [
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.3
+    ],
+    "p": [
+     0.7547079827003897,
+     0.7818672698758773,
+     0.7961629882431172,
+     0.7969345257021514,
+     0.7583890519371435
+    ],
+    "question_order_id": "scenario-first"
+   },
+   "description": "Follows the crowd: a friend who sells rotates strongly towards sell; news frames and recovery are weak; population loss rotation; low dephasing.",
+   "display_label": "Demo archetype: socially-driven",
+   "drawdown_capacity": {
+    "capacity": 0.0,
+    "is_synthetic": true,
+    "status": "below smallest grid loss",
+    "target": 0.25
+   },
+   "is_synthetic": true,
+   "loss_grid": [
+    {
+     "ci80": [
+      0.3439623984105349,
+      0.6579681622349601
+     ],
+     "ci95": [
+      0.3002890805271588,
+      0.7183894254949194
+     ],
+     "interference": {
+      "definitions": "PLAN.md section 4: ltp = P(sell | scenario-first) - sum_a P(a, sell | tolerance-first); order_effect = P(sell | c1, c2) - P(sell | c2, c1); mix = coherent minus classical mixture of the weighted cause frames",
+      "ltp": 0.042518402366647445,
+      "mix": null,
+      "order_effect": null
+     },
+     "is_synthetic": true,
+     "known_subject": true,
+     "loss_pct": -0.05,
+     "n_calibration": {
+      "none": {
+       "n_responses": 65,
+       "status": "calibrated"
+      }
+     },
+     "n_draws": 200,
+     "p": 0.4940980079792536,
+     "top_driver": {
+      "candidates": {
+       "loss": 0.04849403645594841
+      },
+      "delta_p": 0.04849403645594841,
+      "driver": "loss",
+      "p_without": 0.44560397152330516
+     }
+    },
+    {
+     "ci80": [
+      0.3964395565679975,
+      0.7127689754358678
+     ],
+     "ci95": [
+      0.35084280211724483,
+      0.7710268072952102
+     ],
+     "interference": {
+      "definitions": "PLAN.md section 4: ltp = P(sell | scenario-first) - sum_a P(a, sell | tolerance-first); order_effect = P(sell | c1, c2) - P(sell | c2, c1); mix = coherent minus classical mixture of the weighted cause frames",
+      "ltp": 0.1116065074823861,
+      "mix": null,
+      "order_effect": null
+     },
+     "is_synthetic": true,
+     "known_subject": true,
+     "loss_pct": -0.1,
+     "n_calibration": {
+      "none": {
+       "n_responses": 65,
+       "status": "calibrated"
+      }
+     },
+     "n_draws": 200,
+     "p": 0.5494587799579972,
+     "top_driver": {
+      "candidates": {
+       "loss": 0.10385480843469203
+      },
+      "delta_p": 0.10385480843469203,
+      "driver": "loss",
+      "p_without": 0.44560397152330516
+     }
+    },
+    {
+     "ci80": [
+      0.4473819287044215,
+      0.7597807756164406
+     ],
+     "ci95": [
+      0.3858552247105859,
+      0.8163423292074843
+     ],
+     "interference": {
+      "definitions": "PLAN.md section 4: ltp = P(sell | scenario-first) - sum_a P(a, sell | tolerance-first); order_effect = P(sell | c1, c2) - P(sell | c2, c1); mix = coherent minus classical mixture of the weighted cause frames",
+      "ltp": 0.1773069465995173,
+      "mix": null,
+      "order_effect": null
+     },
+     "is_synthetic": true,
+     "known_subject": true,
+     "loss_pct": -0.15,
+     "n_calibration": {
+      "none": {
+       "n_responses": 65,
+       "status": "calibrated"
+      }
+     },
+     "n_draws": 200,
+     "p": 0.6091280392559395,
+     "top_driver": {
+      "candidates": {
+       "loss": 0.16352406773263434
+      },
+      "delta_p": 0.16352406773263434,
+      "driver": "loss",
+      "p_without": 0.44560397152330516
+     }
+    },
+    {
+     "ci80": [
+      0.5046713235364177,
+      0.7981445000834942
+     ],
+     "ci95": [
+      0.42409893185641157,
+      0.8807206622115392
+     ],
+     "interference": {
+      "definitions": "PLAN.md section 4: ltp = P(sell | scenario-first) - sum_a P(a, sell | tolerance-first); order_effect = P(sell | c1, c2) - P(sell | c2, c1); mix = coherent minus classical mixture of the weighted cause frames",
+      "ltp": 0.23658367046620843,
+      "mix": null,
+      "order_effect": null
+     },
+     "is_synthetic": true,
+     "known_subject": true,
+     "loss_pct": -0.2,
+     "n_calibration": {
+      "none": {
+       "n_responses": 65,
+       "status": "calibrated"
+      }
+     },
+     "n_draws": 200,
+     "p": 0.6703484403745827,
+     "top_driver": {
+      "candidates": {
+       "loss": 0.22474446885127758
+      },
+      "delta_p": 0.22474446885127758,
+      "driver": "loss",
+      "p_without": 0.44560397152330516
+     }
+    },
+    {
+     "ci80": [
+      0.6011116671601014,
+      0.8847651888146729
+     ],
+     "ci95": [
+      0.5282435725573948,
+      0.945975345667003
+     ],
+     "interference": {
+      "definitions": "PLAN.md section 4: ltp = P(sell | scenario-first) - sum_a P(a, sell | tolerance-first); order_effect = P(sell | c1, c2) - P(sell | c2, c1); mix = coherent minus classical mixture of the weighted cause frames",
+      "ltp": 0.32533257052685005,
+      "mix": null,
+      "order_effect": null
+     },
+     "is_synthetic": true,
+     "known_subject": true,
+     "loss_pct": -0.3,
+     "n_calibration": {
+      "none": {
+       "n_responses": 65,
+       "status": "calibrated"
+      }
+     },
+     "n_draws": 200,
+     "p": 0.7861856215886178,
+     "top_driver": {
+      "candidates": {
+       "loss": 0.34058165006531266
+      },
+      "delta_p": 0.34058165006531266,
+      "driver": "loss",
+      "p_without": 0.44560397152330516
+     }
+    }
+   ],
+   "profile": {
+    "baseline": {
+     "bloch_phi": -0.8158081409344226,
+     "bloch_theta": 1.4617885134848863,
+     "ci80": [
+      0.31063218595564446,
+      0.6178406048717682
+     ],
+     "ci95": [
+      0.2508770916149799,
+      0.679681184243225
+     ],
+     "note": "P(sell | L = 0, no context) = sin^2(bloch_theta / 2); the state is the encoder output for the covariates plus the subject's random effect",
+     "p_sell_base": 0.44560397152330533,
+     "p_sell_base_model": 0.44560397152330516
+    },
+    "consistency": {
+     "ci80": [
+      0.008527726677385264,
+      0.008999769706968058
+     ],
+     "ci95": [
+      0.00839257731389638,
+      0.009104521948020501
+     ],
+     "gamma": 0.008776052719622517,
+     "source": "fitted subject value"
+    },
+    "family": "quantum",
+    "known_subject": true,
+    "model_type": "Q4",
+    "model_version": "demo-q4-v2",
+    "refined": null,
+    "risk_score": {
+     "ci80": [
+      0.47544590987801394,
+      2.101535734667467
+     ],
+     "ci95": [
+      0.2398672311340459,
+      2.4451279621703015
+     ],
+     "definition": "logit P(sell | contexts ['news:recession', 'social:friend_sells'], loss -0.2, scenario-first)",
+     "p_sell": 0.7969345257021514,
+     "r2_note": "pass the book to compute the R^2 between the score and the state angle",
+     "r2_vs_angle": null,
+     "value": 1.3672440639513297
+    },
+    "sensitivities": {
+     "market:recovered_5pct": {
+      "delta_p_at_risk_loss": 0.26185192932168333,
+      "delta_p_ci80": [
+       0.17168771064779997,
+       0.3279535545933532
+      ],
+      "n_calibration": {
+       "n_responses": 418,
+       "status": "calibrated"
+      },
+      "theta_norm": 0.3977735466101,
+      "theta_norm_ci80": [
+       0.3469732923244978,
+       0.4587963908384342
+      ],
+      "theta_norm_ci95": [
+       0.31062527694595804,
+       0.4994116659751542
+      ]
+     },
+     "news:recession": {
+      "delta_p_at_risk_loss": -0.05683444726751263,
+      "delta_p_ci80": [
+       -0.10036402973881309,
+       -0.005037648927907075
+      ],
+      "n_calibration": {
+       "n_responses": 431,
+       "status": "calibrated"
+      },
+      "theta_norm": 0.08541930272988607,
+      "theta_norm_ci80": [
+       0.06421438240589036,
+       0.17954247123386005
+      ],
+      "theta_norm_ci95": [
+       0.03920911572281416,
+       0.2008983341635339
+      ]
+     },
+     "news:technical": {
+      "delta_p_at_risk_loss": -0.006452658050152826,
+      "delta_p_ci80": [
+       -0.05599763927813126,
+       0.04252679703978752
+      ],
+      "n_calibration": {
+       "n_responses": 413,
+       "status": "calibrated"
+      },
+      "theta_norm": 0.036528061729818276,
+      "theta_norm_ci80": [
+       0.040899380238694605,
+       0.1352753733065143
+      ],
+      "theta_norm_ci95": [
+       0.027235834697392797,
+       0.17819885218610504
+      ]
+     },
+     "social:friend_sells": {
+      "delta_p_at_risk_loss": 0.09243394178235564,
+      "delta_p_ci80": [
+       -0.14843825454791193,
+       0.27680888673347076
+      ],
+      "n_calibration": {
+       "n_responses": 428,
+       "status": "calibrated"
+      },
+      "theta_norm": 0.8294663207059867,
+      "theta_norm_ci80": [
+       0.771223878355807,
+       0.889823036850907
+      ],
+      "theta_norm_ci95": [
+       0.7316170977564908,
+       0.9343303612140302
+      ]
+     }
+    },
+    "subject_id": "DEMO-A-socially_driven",
+    "synthetic": true,
+    "wording": "predicted probability of selling"
+   },
+   "source": "synthetic design choice (hand-written archetype), not a fitted value: socially-driven",
+   "truth": {
+    "truth_bloch_phi": 0.4182243296,
+    "truth_bloch_theta": 0.9151673296,
+    "truth_gamma": 0.15,
+    "truth_p_sell_base": 0.1951710262,
+    "truth_p_sell_mean": 0.5120843046,
+    "truth_source": "synthetic design choice (hand-written archetype), not a fitted value"
+   }
+  }
+ ],
+ "risk_score_loss": -0.2,
+ "risk_score_r2": {
+  "ci95": [
+   0.3885816046975857,
+   0.6394659503957077
+  ],
+  "note": "R^2 of the linear regression of the risk score on the state angle over 65 book clients; bootstrap 95% interval over clients (200 resamples)",
+  "r2": 0.5342886457238358
+ },
+ "typical_crisis_contexts": [
+  "news:recession",
+  "social:friend_sells"
+ ]
+}

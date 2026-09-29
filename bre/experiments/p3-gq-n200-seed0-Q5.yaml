@@ -1,0 +1,31 @@
+# Phase 3 fit of Q5 on the G_Q synthetic table gq_n200_seed0 (SYNTHETIC; written by `make sim`
+# or `make recover`). Split (a): 20% of the subjects held out and scored after the fit.
+# Every knob that affects a number is stated here (experiments/README.md).
+name: p3-gq-n200-seed0-Q5
+dataset: data/synthetic/gq_n200_seed0.parquet
+data: {}                      # build_model_data options (sell_types, subject_key, ...)
+model: Q5
+model_kwargs:
+  l2: 0.0                     # optional ridge on b_ctx (module default 0)
+  w_l2: 0.0
+split:
+  type: subjects              # (a) held-out subjects, stratified by dataset
+  test_frac: 0.2
+  seed: 0
+fit:
+  restarts: 5
+  steps: 1500
+  lr: 0.02
+  val_frac: 0.2               # within-subject validation fold for early stopping (bre.fit)
+  seed: 0
+  early_stopping_patience: 5
+  eval_every: 25
+  lbfgs_polish: true
+  lbfgs_steps: 100
+  n_samples: 50               # MAP models: diagonal-Laplace draws (bre.artifact)
+bootstrap:
+  n_draws: 1000
+  seed: 0
+output:
+  artifact_dir: runs/fits/p3-gq-n200-seed0-Q5
+  metrics_path: reports/fits/p3-gq-n200-seed0-Q5.json

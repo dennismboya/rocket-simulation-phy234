@@ -1,0 +1,8 @@
+# experiments/eval_all.yaml — what `make eval` runs (python -m bre.eval experiments/eval_all.yaml).
+# Each entry is an evaluation YAML for `bre.eval`: dataset, models, the four pre-registered splits
+# of PLAN.md section 6, fit settings, bootstrap draws. The first-pass entry evaluates the
+# SYNTHETIC G_Q table gq_n200_seed0 (the decision rule never returns "Q-model supported" on
+# synthetic data; it is exercised end to end here). Real-data evaluations (CPC18 split (b) analog,
+# PLAN.md section 6) are added once Phase 3 fits exist.
+experiments:
+  - experiments/p4-eval-gq-n200-seed0.yaml

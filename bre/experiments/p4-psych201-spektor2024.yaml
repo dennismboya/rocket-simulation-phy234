@@ -1,0 +1,37 @@
+# Phase 4 secondary dataset (REAL): Psych-201 spektor2024lossaversion (catalog C; 282 participants,
+# described 50/50 lotteries over two sessions). bre.realdata mapping: context = domain:gain|loss|mixed
+# (one tag per row), loss_pct = min(0, worst outcome on the table / max |outcome|) over both lotteries
+# (choice-independent), response = lower-variance lottery chosen. Splits: (a) held-out subjects and
+# (d) temporal (session 1 then 2, last 20% of each subject's trials); (b) is not applicable (no
+# ordered two-context rows) and (c) is not applicable (no question order), both listed with the
+# reason — so the decision rule cannot return the positive verdict here; the run measures held-out
+# prediction and the domain-context effects only. Run:
+#   python -m bre.phase4 --config experiments/p4-psych201-spektor2024.yaml
+name: psych201-spektor2024
+dataset: psych201_spektor2024lossaversion
+subjects: null              # all 282 participants
+seed: 0
+models: [B1, B2, B3, B4, B5, B6, Q2, Q3, Q4, Q5]
+splits: [a, b, c, d]
+model_kwargs:
+  B5: {n_threads: 1}
+fit:
+  restarts: 5
+  steps: 1500
+  lr: 0.02
+  val_frac: 0.2
+  seed: 0
+  early_stopping_patience: 5
+  eval_every: 25
+  lbfgs_polish: true
+  lbfgs_steps: 100
+  n_samples: 50
+  svi_steps: 2000
+  svi_lr: 0.01
+  svi_particles: 1
+bootstrap:
+  n_draws: 1000
+workers: 4
+output:
+  dir: reports/phase4/psych201-spektor2024
+  runs_dir: runs/phase4/psych201-spektor2024

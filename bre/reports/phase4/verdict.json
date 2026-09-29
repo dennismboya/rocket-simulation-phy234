@@ -1,0 +1,41 @@
+{
+ "best_classical": "B6",
+ "best_quantum": "Q4",
+ "ci95": [
+  0.12616496239780717,
+  0.13337631409815406
+ ],
+ "conditions": {
+  "beats_best_classical_nll_ci_excludes_zero": false,
+  "interference_ci_excludes_zero": false,
+  "param_count_matched_or_lower": false,
+  "real_data": true
+ },
+ "data": "cpc18 pairs split (b)",
+ "dataset_key": "cpc18_pairs",
+ "failed_conditions": [
+  "beats_best_classical_nll_ci_excludes_zero",
+  "param_count_matched_or_lower",
+  "interference_ci_excludes_zero"
+ ],
+ "generated_at": "2026-09-29T16:45:40+00:00",
+ "interference_ci": [
+  -0.13821394738371381,
+  0.03793003728674692
+ ],
+ "is_real_data": true,
+ "n_params_c": 58,
+ "n_params_q": 3546,
+ "n_test_rows_split_b": 367740,
+ "n_train_rows_split_b": 40860,
+ "nll_classical": 0.5374286465558039,
+ "nll_diff": 0.1298052191622486,
+ "nll_quantum": 0.6672338657180525,
+ "reason": null,
+ "rule": "\"Q-model supported\" only if, on real data, the best Q-model beats the best classical baseline on split (b) by held-out NLL with a bootstrap 95% CI excluding zero, at matched or lower parameter count, and the interference-term CI excludes zero. Otherwise the conclusion is \"no evidence of a quantum-probability advantage in the available data\", and the report names the data that would resolve it. The dashboard serves whichever model wins on held-out NLL; if that is a classical model, the screen says so.",
+ "served_model": "B6",
+ "served_model_family": "classical",
+ "smoke": false,
+ "subjects": null,
+ "verdict": "no evidence of a quantum-probability advantage in the available data"
+}
