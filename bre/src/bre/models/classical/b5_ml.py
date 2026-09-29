@@ -224,7 +224,8 @@ class B5(ModelBase):
         rows = data.sell_rows()
         X = self.features(data)[rows]
         y = np.asarray(data.y)[rows].astype(np.int64)
-        r = permutation_importance(ests["gbt"], X, y, scoring="neg_log_loss", n_repeats=int(n_repeats), random_state=int(seed))
+        with threadpool_limits(limits=self.n_threads):
+            r = permutation_importance(ests["gbt"], X, y, scoring="neg_log_loss", n_repeats=int(n_repeats), random_state=int(seed))
         return pd.Series(r.importances_mean, index=list(self.columns), dtype="float64")
 
     def subject_summary(self, params: Params, data: ModelData) -> pd.DataFrame | None:

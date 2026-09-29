@@ -239,8 +239,9 @@ def test_b5_variants_and_artifact_byte_round_trip(gc_data, b5_fit):
     # a subset (split) is scored with the same estimators
     sub = data.subset(np.arange(0, data.n, 3))
     assert np.allclose(np.asarray(model.predict_proba(params, sub)), p_ens[::3])
-    imp = model.feature_importance(params, data, n_repeats=1)
-    assert list(imp.index) == list(model.columns)
+    imp = model.feature_importance(params, data.subset(np.flatnonzero(data.sell_mask())[:200]), n_repeats=1)
+    assert list(imp.index) == list(model.columns) and np.isfinite(imp).all()
+    assert mlp_only.feature_importance(params, sub) is None
 
 
 # ---------------------------------------------------------------------------------------------
@@ -280,9 +281,11 @@ def test_b6_state_limits_are_plain_logistic_regressions(models, gc_data):
     p0 = b6.init_params(KEY, data, 0)
     eta = np.asarray(b6.state_logits(p0, data))
     sig = lambda x: 1.0 / (1.0 + np.exp(-x))  # noqa: E731
-    stuck0 = {**p0, "init_logit": jnp.asarray(-40.0), "trans_logit": jnp.asarray([40.0, 40.0])}
+    # logits of +-1e4 (exact in log space): a leak of e^-10000 cannot be overturned by 170 answers,
+    # whereas +-40 (pi_1 = 4e-18) is overturned by a likelihood ratio of e^0.5 per answer over a session
+    stuck0 = {**p0, "init_logit": jnp.asarray(-1e4), "trans_logit": jnp.asarray([1e4, 1e4])}
     assert np.allclose(np.asarray(b6.predict_proba(stuck0, data)), sig(eta[:, 0]), atol=1e-12)
-    stuck1 = {**stuck0, "init_logit": jnp.asarray(40.0)}
+    stuck1 = {**stuck0, "init_logit": jnp.asarray(1e4)}
     assert np.allclose(np.asarray(b6.predict_proba(stuck1, data)), sig(eta[:, 1]), atol=1e-12)
     alpha = np.asarray(b6.filtered_states(stuck1, data))
     assert np.allclose(alpha[:, 1], 1.0)

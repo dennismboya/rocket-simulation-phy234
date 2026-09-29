@@ -185,8 +185,9 @@ def test_q3_recency_is_non_monotone_with_opposing_dissonance(small, models):
     params = {**p3, "enc": enc, "theta_p": jnp.asarray([0.8, 0.0, 0.0]), "theta_d_angles": jnp.asarray([0.0, 0.0]), "w_ctx": jnp.asarray([0.3, 0.0, 0.0, 0.0])}
     assert np.allclose(np.asarray(q3.states(params, data)), [[1.0, 0.0]] * data.n_subjects)
     row = int(np.flatnonzero((data.loss == 0.2) & (data.ctx_idx[:, 0] == 0) & ~data.ctx_mask[:, 1] & (data.order_flag == 0) & data.sell_mask())[0])
+    one = data.subset(np.asarray([row]))  # one-row table: the curve is 80 cheap forward passes
     t_grid = np.linspace(0.0, np.log1p(365.0), 80)
-    curve = np.asarray([float(q3.predict_proba_at(params, data, t=t)[row]) for t in t_grid])
+    curve = np.asarray([float(q3.predict_proba_at(params, one, t=t)[0]) for t in t_grid])
     h = np.array([0.16, 0.0, 0.3])
     closed = (h[0] ** 2 / (h @ h)) * np.sin(np.linalg.norm(h) * t_grid) ** 2
     assert np.allclose(curve, closed, atol=1e-10)
@@ -196,7 +197,7 @@ def test_q3_recency_is_non_monotone_with_opposing_dissonance(small, models):
     assert curve[k] == pytest.approx(h[0] ** 2 / (h @ h), abs=1e-3) and curve[k] < 0.3
     assert curve[0] == 0.0
     no_diss = {**params, "w_ctx": jnp.zeros(4)}
-    mono = np.asarray([float(q3.predict_proba_at(no_diss, data, t=t)[row]) for t in t_grid])
+    mono = np.asarray([float(q3.predict_proba_at(no_diss, one, t=t)[0]) for t in t_grid])
     assert np.all(np.diff(mono) > 0) and np.allclose(mono, np.sin(0.16 * t_grid) ** 2, atol=1e-10)
     # the same row without any context is monotone too (payoff only), and the dissonance lowers the peak
     assert mono.max() > curve.max()
