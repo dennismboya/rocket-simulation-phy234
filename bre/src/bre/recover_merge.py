@@ -28,6 +28,7 @@ def load(path: Path) -> dict[str, Any]:
 
 
 def merge(inputs: list[Path], out: Path, items_per_subject: int = 170) -> dict[str, Any]:
+    out.mkdir(parents=True, exist_ok=True)
     payloads = [load(p) for p in inputs]
     fits: dict[tuple, dict[str, Any]] = {}
     recovery: dict[tuple, dict[str, Any]] = {}
