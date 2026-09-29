@@ -20,11 +20,11 @@ first unfinished item in "Next up".
 |---|---|---|
 | 0 Plan + scaffold | done | schema + validators, shared design, SQLAlchemy layer, packaging, 217 tests green; review findings fixed (df29e0a) |
 | 1 Data | done (public part) | 8 processed tables under data/processed (README lists counts); owner downloads for E–J still pending |
-| 2 Recovery | in progress | fit.py/eval.py/recover.py being written; N=200 pass (gq/gc/gf × B1,B2,B4,Q2,Q4, seeds 0–2) to run in background under runs/recover/ |
+| 2 Recovery | first pass done | N=200 × 3 seeds × 3 generators × 5 models: 9/9 correct family selection (reports/recovery/); extended grid N∈{50,100,200,400} running in background (runs/recover/grid_n50_400.*) |
 | 3 Models | nearly done | core, Q1, B1, B2, B4, Q2, Q4, G_Q/G_C/G_F all present with tests (554+ passing); B3, B5, B6, Q3, Q5 still to write |
 | 4 Evaluation | not started | protocol pre-registered in PLAN.md §6 |
-| 5 API | in progress | predict facade, demo book (60 G_Q investors + 5 archetypes), FastAPI endpoints being written (agent) |
-| 6 Dashboard | not started | |
+| 5 API | in progress | predict facade, demo book and endpoints exist (3f62e10); 8 contract tests being fixed (agent) |
+| 6 Dashboard | in progress | pages 1–3 (market bar, book triage, client profile) being built against the API (agent) |
 | 7 Instrument | nearly done | battery browser-verified (0460ab2); document consistency fixes from the honesty review landing (agent) |
 | 8 Report | not started | |
 
@@ -62,6 +62,14 @@ first unfinished item in "Next up".
 4. Loader defaults decided: drop first-order dominated choices13k problems only; CPC18 loss normalised by the largest absolute outcome.
 5. Still missing: Wang 2014 SI, Psych-101, FINRA, UAS/LISS (gated), GPS, Robintrack — see data/REGISTRATION.md.
 
+## Phase 2 summary (five lines, first pass at N=200)
+
+1. Model selection by held-out NLL picks the true generator's family in 9 of 9 (generator × seed) cells: Q4 on G_Q data, B2 on G_C and on G_F.
+2. Q4 recovers the population context parameters at r = 0.92–0.99 after gauge alignment and per-subject decoherence ranks at Spearman 0.78–0.83; Q2 alone recovers them poorly on mixed-decoherence data (r ≈ 0.5), as expected.
+3. B2 recovers G_C context means at r = 1.00 and subject intercepts at Spearman 0.98; B1 attenuates (marginal vs conditional coefficients).
+4. N_target = 200 is an upper bound so far (only N tested); the extended grid N ∈ {50, 100, 200, 400} is running to find the smallest N; "responses needed for calibration" = N_target × 170 on the shared design.
+5. Runtime: 45 fits in 16 min on 4 cores; Q4 is the slowest (2–4 min per fit at N=200).
+
 ## Decisions
 
 * Project lives in bre/; JAX stack (see PLAN.md §0).
@@ -90,3 +98,4 @@ Phases 0–8 as planned; no long runs started yet.
 
 * 2026-09-17 20:25 UTC — recovery study (N=200) and API build started in background agents; check runs/recover/*.log.
 * 2026-09-17 20:34 UTC — check-in: recovery runner still being written; no run log yet
+* 2026-09-29 04:55 UTC — extended recovery grid launched (N 50/100/200/400, seeds 0–2, 3 workers, capped at 110 min); API fixes and dashboard pages 1–3 in agents.
