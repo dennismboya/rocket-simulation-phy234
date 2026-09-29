@@ -121,3 +121,4 @@ Phases 0–8 as planned; no long runs started yet.
 * 2026-09-29 15:05 UTC — full fast test suite: 702 passed (the earlier collection error was transient under memory pressure). Phase 4 classical split (b) and grid N=50 running.
 * 2026-09-29 15:08 UTC — push succeeded; draft PR #1 opened; Phase 4 quantum split (b) batch running (4 jobs, ~42 min est.).
 * 2026-09-29 15:22 UTC — third container restart (~15:20). grid N=50 finished before it (reports/recovery_n50: 9/9 correct family, 45 fits, 25.5 min, 1 worker). Phase 4 quantum batch relaunched (Q4 job cached; Q2/Q3/Q5 fitting); grid N=100 launched (1 worker).
+* 2026-09-29 15:49 UTC — fourth restart (~15:48) killed the quantum batch (no new job cached) and grid N=100 (2/45). New policy: one single-worker process at a time; quantum Phase 4 jobs relaunched with 1 worker (per-job cache); grid N=100 to run per generator afterwards.
