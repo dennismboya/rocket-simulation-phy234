@@ -17,7 +17,8 @@ PY := $(VENV)/bin/python
 SYSTEM_PYTHON ?= python3.11
 NODE ?= node
 API_HOST ?= 127.0.0.1
-API_PORT ?= $(or $(BRE_API_PORT),8000)
+BRE_API_PORT ?= 8000
+API_PORT ?= $(BRE_API_PORT)
 PYTEST_ARGS ?=
 
 .PHONY: help setup check-venv test test-instrument data sim recover fit eval api dashboard retrain instrument report clean
@@ -39,7 +40,7 @@ help:
 	@echo "  fit             Phase 3: fit B1-B6 and Q1-Q5"
 	@echo "  eval            Phase 4: pre-registered evaluation and verdict"
 	@echo "  api             Phase 5: uvicorn api.main:app on $(API_HOST):$(API_PORT)"
-	@echo "  dashboard       Phase 6: API in the background + streamlit run app/Home.py"
+	@echo "  dashboard       Phase 6: streamlit run app/Home.py (starts the API in the background unless $(API_HOST):$(API_PORT) is already listening)"
 	@echo "  retrain         Phase 6: retrain on consented intake responses"
 	@echo "  instrument      Phase 7: validate battery.json, regenerate static/battery.data.js, run the balance test"
 	@echo "  report          Phase 8: REPORT.md, MODEL_CARD.md"
@@ -89,22 +90,36 @@ eval: check-venv
 	$(call require,src/bre/eval.py)
 	$(PY) -m bre.eval experiments/eval_all.yaml
 
-# Phase 5: regenerate api/openapi.json from the app, then serve. BRE_API_PORT overrides the port
-# (API_PORT defaults to it); the first start on the default database seeds the demo book and
-# fits the demo model (about a minute), see api/README.md.
+# Phase 5: when the demo database is missing (and BRE_DB_URL does not point elsewhere), seed it
+# first (synthetic book + interventions + demo model, about a minute); then regenerate
+# api/openapi.json from the app and serve on BRE_API_PORT (default 8000). See api/README.md.
 api: check-venv
 	$(call require,api/main.py)
+	@if [ -z "$$BRE_DB_URL" ] && [ ! -e data/synthetic/demo.db ]; then \
+	  echo "seeding the demo database data/synthetic/demo.db (python -m bre.demo --seed-db, about a minute)"; \
+	  PYTHONPATH=src:. $(PY) -m bre.demo --seed-db || exit 1; \
+	fi
 	PYTHONPATH=src:. $(PY) api/export_openapi.py
-	PYTHONPATH=src:. $(PY) -m uvicorn api.main:app --host $(API_HOST) --port $(API_PORT)
+	PYTHONPATH=src:. $(PY) -m uvicorn api.main:app --host $(API_HOST) --port $(BRE_API_PORT)
 
-# The API is started in the background and stopped when streamlit exits (or on Ctrl-C).
+# Phase 6: the API is started in the background only when nothing listens on $(API_HOST):$(API_PORT)
+# (a service you started with `make api` is reused and left running); one started here logs to
+# runs/api.log and is stopped when streamlit exits (or on Ctrl-C). The app reads BRE_API_URL.
+# The first start on the default database seeds the demo book and fits the demo model (about a
+# minute); the pages wait for the service (BRE_API_WAIT_S, default 90 s).
 dashboard: check-venv
 	$(call require,api/main.py)
 	$(call require,app/Home.py)
 	@mkdir -p runs
-	$(PY) -m uvicorn api.main:app --host $(API_HOST) --port $(API_PORT) --log-level warning & echo $$! > runs/.api.pid; \
-	trap 'kill $$(cat runs/.api.pid) 2>/dev/null; rm -f runs/.api.pid' EXIT INT TERM; \
-	$(PY) -m streamlit run app/Home.py
+	@if $(PY) -c "import socket, sys; s = socket.socket(); s.settimeout(1); sys.exit(0 if s.connect_ex(('$(API_HOST)', $(API_PORT))) == 0 else 1)"; then \
+	  echo "API already listening on $(API_HOST):$(API_PORT); reusing it"; \
+	  BRE_API_URL=http://$(API_HOST):$(API_PORT) $(PY) -m streamlit run app/Home.py; \
+	else \
+	  echo "starting the API on $(API_HOST):$(API_PORT) in the background (log: runs/api.log)"; \
+	  PYTHONPATH=src:. $(PY) -m uvicorn api.main:app --host $(API_HOST) --port $(API_PORT) --log-level warning > runs/api.log 2>&1 & echo $$! > runs/.api.pid; \
+	  trap 'kill $$(cat runs/.api.pid) 2>/dev/null; rm -f runs/.api.pid' EXIT INT TERM; \
+	  BRE_API_URL=http://$(API_HOST):$(API_PORT) BRE_API_WAIT_S=$${BRE_API_WAIT_S:-180} $(PY) -m streamlit run app/Home.py; \
+	fi
 
 retrain: check-venv
 	$(call require,src/bre/retrain.py)

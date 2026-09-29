@@ -25,13 +25,19 @@ from typing import Any
 from bre.models.base import Model, count_params
 from bre.models.classical.b1_logistic import B1
 from bre.models.classical.b2_hier import B2
+from bre.models.classical.b3_cpt import B3
 from bre.models.classical.b4_bayes_updater import B4
+from bre.models.classical.b5_ml import B5
+from bre.models.classical.b6_hmm import B6
 from bre.models.data import ModelData
 from bre.models.quantum.q2_context_unitary import Q2
+from bre.models.quantum.q3_dynamics import Q3
 from bre.models.quantum.q4_open_system import Q4
+from bre.models.quantum.q5_qdt import Q5
 
-MODEL_REGISTRY: dict[str, type] = {"B1": B1, "B2": B2, "B4": B4, "Q2": Q2, "Q4": Q4}
-"""PLAN id -> model class (first-pass models of PLAN.md section 5; Q1 is aggregate-only)."""
+MODEL_REGISTRY: dict[str, type] = {"B1": B1, "B2": B2, "B3": B3, "B4": B4, "B5": B5, "B6": B6, "Q2": Q2, "Q3": Q3, "Q4": Q4, "Q5": Q5}
+"""PLAN id -> model class (B1-B6, Q2-Q5 of PLAN.md section 4; Q1 is aggregate-only). B5 carries
+``requires_external_fit = True`` (fitted through ``B5.fit_external``, not by gradient steps)."""
 
 MODEL_FAMILY: dict[str, str] = {name: cls.family for name, cls in MODEL_REGISTRY.items()}
 """PLAN id -> ``"classical"`` or ``"quantum"``."""
@@ -53,9 +59,14 @@ G_F is a logistic with ordered-pair interactions that only B1 spans."""
 PER_SUBJECT_BLOCKS: dict[str, dict[tuple[str, ...], str]] = {
     "B1": {},
     "B2": {("enc", "u"): "zero", ("beta_ctx",): "mu_ctx"},
+    "B3": {("enc", "u"): "zero"},
     "B4": {("enc", "u"): "zero"},
+    "B5": {},
+    "B6": {},
     "Q2": {("enc", "u"): "zero"},
+    "Q3": {("enc", "u"): "zero"},
     "Q4": {("enc", "u"): "zero", ("log_gamma",): "gamma_mu"},
+    "Q5": {("enc", "u"): "zero"},
 }
 """Model id -> ``{path_of_block: fill_rule}``; ``path_of_block`` is the nested-key path inside the
 parameter pytree, the leading axis of the block is the subject axis. Fill rules for an unseen
@@ -69,6 +80,11 @@ PARAM_COUNT_NOTES: dict[str, str] = {
     "B4": "(d_x + 1 + n_subjects + 1) + V + 5; without u: d_x + 2 + V + 5.",
     "Q2": "(4 d_x + 4 + 4 n_subjects + 4) + 3 + 3 V_free + 1; without u: 4 d_x + 8 + 3 + 3 V_free + 1. Two of the four encoder outputs per subject are identifiable (gauge).",
     "Q4": "Q2's count + n_subjects (log_gamma) + 2; without random effects: Q2's population count + 2.",
+    "B3": "(3 d_x + 3 + 3 n_subjects + 3) + 2 V + 6 (+1 with separate_beta): encoder to (log lambda, log alpha, log gamma), reference-point and recovery vectors, kappa, tau; without u: 3 d_x + 6 + 2 V + 6.",
+    "B5": "leaves of the boosting trees + weights and biases of the MLP (model.n_params; count_params on the pytree would count pickle bytes); no per-subject block.",
+    "B6": "d_x + 2 d_row + 5: shared covariate weights, two state-specific row-feature weight vectors, two intercepts (a0, log_da), two transition logits, one initial logit; no per-subject block.",
+    "Q3": "(4 d_x + 4 + 4 n_subjects + 4) + 3 + 2 + V_free + 1: encoder, theta_p, the two angles of theta_d, one dissonance weight per free context, phi; without u: 4 d_x + 8 + 6 + V_free.",
+    "Q5": "(d_x + 1 + n_subjects + 1) + V + 6: encoder (attraction baseline), b_ctx, b_order, b_tol, pr_logit, log_rho, log_kappa, log_tau; without u: d_x + 2 + V + 6.",
 }
 """One line per model on what ``n_params`` counts (INTERFACE.md section 2)."""
 

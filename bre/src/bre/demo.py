@@ -363,7 +363,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--n", type=int, default=N_GENERATED, help="generated investors (plus 5 archetypes)")
     parser.add_argument("--items", type=int, default=BATTERY_ITEMS, help="battery items per client (12-16)")
     parser.add_argument("--out", default=None, help="output directory (must be under data/synthetic)")
+    parser.add_argument("--seed-db", action="store_true", help="seed the demo database instead of writing files: book, interventions and the demo model (db.demo_seed.seed_demo); `make api` runs this when data/synthetic/demo.db is missing")
+    parser.add_argument("--db", default=None, help="with --seed-db: the SQLite file, under data/synthetic/ (default db.demo_seed.DEMO_DB_PATH)")
+    parser.add_argument("--steps", type=int, default=None, help="with --seed-db: Adam steps of the demo fit (default db.demo_seed.FIT_STEPS)")
     args = parser.parse_args(argv)
+    if args.seed_db:
+        # the db package lives in bre/ next to src/: run as `PYTHONPATH=src:. python -m bre.demo --seed-db`
+        from bre.artifact import jsonable
+        from db.demo_seed import FIT_STEPS, demo_engine, seed_demo
+
+        summary = seed_demo(demo_engine(args.db), seed=args.seed, n_generated=args.n, n_items=args.items, fit_steps=args.steps or FIT_STEPS)
+        print(json.dumps(jsonable(summary), indent=1))
+        return 0
     clients, responses = build_demo_book(args.seed, args.n, args.items)
     pq_path, clients_path = write_demo_book(clients, responses, args.out)
     print(f"wrote {pq_path} ({len(responses)} rows, {len(clients)} clients) and {clients_path}")

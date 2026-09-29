@@ -37,6 +37,8 @@ from __future__ import annotations
 
 import io
 import json
+import logging
+import math
 import os
 import re
 import time
@@ -46,6 +48,7 @@ from typing import Any
 
 import pandas as pd
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
@@ -56,6 +59,7 @@ from api import schemas as Sch
 from bre import __version__ as bre_version
 from bre import predict as P
 from bre import schema as S
+from bre.data_cli import DATASETS as LOADER_DATASETS
 from bre.market import latest_market_state
 from db.models import Client, Intervention, PredictionLog, Response
 from db.session import get_engine, init_db, session_scope, sqlite_file_path, write_audit
@@ -65,6 +69,8 @@ BATCH_CLIENT_ID = "api:batch"
 """Reserved client rows: predictions without a client, and batch rows for unknown clients."""
 
 ACTOR = "api"
+
+log = logging.getLogger("bre.api")
 
 DECISION_RULE = (
     '"Q-model supported" only if, on real data, the best Q-model beats the best classical baseline '
@@ -92,6 +98,42 @@ def catalog_entries(path: Path | None = None) -> list[dict[str, str]]:
         if m:
             out.append({"id": m.group(1), "name": m.group(2).strip(), "status": (m.group(3) or "").strip()})
     return out
+
+
+_DATASET_REF = re.compile(r"^dataset:([^\s(]+)")
+
+CATALOG_MATCH_RULE = (
+    "a catalog entry is 'used in training' when a training_data_refs entry names one of its loader datasets "
+    "(bre.data_cli.DATASETS: dataset name, processed parquet stem, catalog entry letter): the id after 'dataset:' "
+    "(up to whitespace or '(') or the stem of a parquet path, compared exactly (also its first ':' segment and "
+    "with ':' as '_'). No fuzzy matching; entries without a loader are never reported as used."
+)
+
+
+def dataset_ids_of_refs(refs: list[str]) -> list[str]:
+    """Dataset identifiers named by ``training_data_refs``: the id after ``dataset:`` (up to
+    whitespace or a parenthesis; ``db.demo_seed`` writes this form) or the stem of a parquet
+    path (``bre.fit`` writes the path relative to ``bre/``). ``db:``, ``generator:`` and
+    ``artifact:`` refs name no dataset."""
+    out: list[str] = []
+    for r in refs:
+        text = str(r).strip()
+        m = _DATASET_REF.match(text)
+        if m:
+            out.append(m.group(1))
+        elif text.lower().endswith(".parquet"):
+            out.append(Path(text).stem)
+    return out
+
+
+def catalog_entries_used(entries: list[dict[str, str]], refs: list[str]) -> list[dict[str, str]]:
+    """The catalog entries whose loader datasets the training refs name (:data:`CATALOG_MATCH_RULE`)."""
+    ids: set[str] = set()
+    for d in dataset_ids_of_refs(refs):
+        d = d.lower()
+        ids.update({d, d.split(":", 1)[0], d.replace(":", "_")})
+    letters = {spec.catalog_entry for spec in LOADER_DATASETS.values() if {spec.name.lower(), Path(spec.filename).stem.lower()} & ids}
+    return [e for e in entries if e["id"] in letters]
 
 
 # ---------------------------------------------------------------------------------------------
@@ -161,7 +203,12 @@ def build_state(db_url: str | None = None, *, autoseed: bool | None = None, warm
     state.artifact = P.load_active_artifact(state.engine)
     warm = _env_flag("BRE_API_WARMUP") if warm is None else warm
     if warm:
-        state.warmup = P.warm_up(state.artifact)
+        # the served interventions and the served book size: a book scored with the five
+        # interventions, or of the demo book's size, lands in row buckets a plain 300-client
+        # warm-up would not compile (bre.predict.warm_up)
+        with session_scope(state.engine) as s:
+            n_book = int(s.execute(select(func.count()).select_from(Client)).scalar_one()) - 2  # minus the two reserved rows
+        state.warmup = P.warm_up(state.artifact, (*P.WARM_UP_BOOK_SIZES, max(n_book, 1)), _interventions(state))
     return state
 
 
@@ -186,10 +233,36 @@ def service(request: Request) -> ServiceState:
     return st
 
 
+def _clean_errors(errors: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Pydantic's error dicts made JSON-safe: ``loc`` as strings, the raw exception object that
+    pydantic puts in ``ctx`` replaced by its message, ``input`` passed through
+    ``jsonable_encoder``. The 422 body always names the offending field in ``loc``."""
+    out: list[dict[str, Any]] = []
+    for e in errors:
+        d: dict[str, Any] = {"loc": [str(x) for x in e.get("loc", ())], "msg": str(e.get("msg", "")), "type": str(e.get("type", "value_error"))}
+        if "input" in e:
+            try:
+                d["input"] = jsonable_encoder(e["input"])
+            except Exception:  # noqa: BLE001 - never let the error report itself fail
+                d["input"] = repr(e["input"])
+        ctx = e.get("ctx")
+        if isinstance(ctx, dict) and ctx:
+            d["ctx"] = {str(k): (str(v) if isinstance(v, BaseException) else jsonable_encoder(v)) for k, v in ctx.items()}
+        out.append(d)
+    return out
+
+
 @app.exception_handler(ValueError)
 async def _value_error(request: Request, exc: ValueError) -> JSONResponse:
     """Facade-level validation (e.g. an unknown context tag for the served vocabulary) as a 422
-    with the same shape FastAPI uses."""
+    with the same shape FastAPI uses. A pydantic ``ValidationError`` (a ``ValueError`` subclass)
+    that reaches this handler was raised while *building a response* from a valid request; that
+    is a service bug and is reported as 500, not as a client error."""
+    if isinstance(exc, ValidationError):
+        log.exception("response construction failed on %s %s", request.method, request.url.path)
+        first = exc.errors()[0] if exc.errors() else {}
+        return JSONResponse(status_code=500, content={"detail": [{"loc": ["response", *[str(x) for x in first.get("loc", ())]],
+                                                                  "msg": f"internal error building the response: {first.get('msg', exc)}", "type": "internal_error"}]})
     return JSONResponse(status_code=422, content={"detail": [{"loc": ["body"], "msg": str(exc), "type": "value_error"}]})
 
 
@@ -228,6 +301,12 @@ def _log(session, st: ServiceState, client_id: str, kind: str, inputs: dict[str,
     return int(row.id)
 
 
+def _clean_row(row: dict[str, Any]) -> dict[str, Any]:
+    """A ``score_book`` table row with pandas' missing values (NaN in a string or float column)
+    as ``None``, so the row validates as a ``ScoreRow`` and serializes as JSON."""
+    return {k: (None if isinstance(v, float) and math.isnan(v) else v) for k, v in row.items()}
+
+
 def _strip_outputs(d: dict[str, Any]) -> dict[str, Any]:
     """Logged outputs: everything except the long free-text scripts."""
     return {k: v for k, v in d.items() if k not in ("ranked",)}
@@ -254,7 +333,7 @@ def model_info(request: Request) -> Any:
     row = st.registry_row or {}
     entries = catalog_entries()
     refs = list(a.training_data_refs)
-    used = [e for e in entries if any(e["name"].split(" ")[0].lower() in r.lower() for r in refs)]
+    used = catalog_entries_used(entries, refs)
     metrics = P.jsonable(a.metrics)
     return Sch.ModelInfo(
         **_served(st), version=a.version, n_params=int(a.n_params), n_params_population=metrics.get("n_params_population"),
@@ -264,6 +343,8 @@ def model_info(request: Request) -> Any:
             "training_data_refs": refs,
             "catalog_entries": entries,
             "catalog_entries_used_in_training": used,
+            "dataset_ids": dataset_ids_of_refs(refs),
+            "matching_rule": CATALOG_MATCH_RULE,
             "note": ("the served model was fitted on the synthetic demo book only; no catalogued dataset entered its training"
                      if a.is_synthetic_training else "see training_data_refs for the catalogued datasets behind this fit"),
             "registry_row": {k: row.get(k) for k in ("version", "model_type", "promoted_at", "is_active")},
@@ -366,7 +447,7 @@ def _score(st: ServiceState, clients: list[Sch.ClientIn], market_state: Sch.Mark
     frame = pd.DataFrame([{"client_id": c.client_id, "display_label": c.display_label, "covariates": c.covariates.record()} for c in clients])
     table = P.score_book(st.artifact, frame, market_state.model_dump(), _interventions(st), target=target)
     seconds = time.time() - t0
-    rows = table.to_dict(orient="records")
+    rows = [_clean_row(r) for r in table.to_dict(orient="records")]
     ms = market_state.model_dump()
     with session_scope(st.engine) as s:
         existing = set(s.scalars(select(Client.client_id)).all())
@@ -455,8 +536,9 @@ def rank(req: Sch.RankRequest, request: Request) -> Any:
 
 @app.exception_handler(RequestValidationError)
 async def _validation(request: Request, exc: RequestValidationError) -> JSONResponse:
-    """Default 422 shape, kept explicit so the contract is visible in this file."""
-    return JSONResponse(status_code=422, content={"detail": P.jsonable(exc.errors())})
+    """Default 422 shape, kept explicit so the contract is visible in this file (``loc`` names
+    the field; ``ctx`` carries the validator message, never a raw exception object)."""
+    return JSONResponse(status_code=422, content={"detail": _clean_errors(exc.errors())})
 
 
-__all__ = ["ANON_CLIENT_ID", "BATCH_CLIENT_ID", "DECISION_RULE", "ServiceState", "app", "build_state", "catalog_entries", "default_db_url"]
+__all__ = ["ANON_CLIENT_ID", "BATCH_CLIENT_ID", "CATALOG_MATCH_RULE", "DECISION_RULE", "ServiceState", "app", "build_state", "catalog_entries", "catalog_entries_used", "dataset_ids_of_refs", "default_db_url"]

@@ -550,22 +550,35 @@ def scorer_for(artifact: ModelArtifact) -> Scorer:
     return sc
 
 
-def warm_up(artifact: ModelArtifact, n_clients: int = 300) -> dict[str, float]:
-    """Compile the forward passes for the buckets a book of ``n_clients`` uses (point pass on
-    the full scenario stack, draw pass on the main rows, single-row pass); returns seconds."""
+WARM_UP_BOOK_SIZES: tuple[int, ...] = (300, 3)
+"""Book sizes :func:`warm_up` compiles by default: the 300-client batch of the acceptance test
+and a three-client book (one curl, one screen), which share no row bucket."""
+
+
+def warm_up(artifact: ModelArtifact, n_clients: int | tuple[int, ...] | list[int] = WARM_UP_BOOK_SIZES, interventions: Any = None) -> dict[str, float]:
+    """Compile the forward passes a service needs before its first request: the single-row
+    passes (both question orders, with and without a tolerance answer) and, for every book size
+    in ``n_clients``, the point pass on the full scenario stack and the draw pass on the main
+    rows. ``interventions`` should be the served table: every active intervention adds one
+    counterfactual row per client, so a book scored with them lands in a different row bucket
+    (:data:`ROW_BUCKETS`) than one scored without. Returns seconds per step."""
     import time
 
     sc = scorer_for(artifact)
     cov = covariates_text({})
+    sizes = [int(n_clients)] if isinstance(n_clients, int) else [int(n) for n in n_clients]
+    sizes = [n for n in dict.fromkeys(sizes) if n > 0]
     out: dict[str, float] = {}
     t0 = time.time()
     for order, tol in ((D.SCENARIO_FIRST, None), (D.TOLERANCE_FIRST, None), (D.TOLERANCE_FIRST, 1.0)):
         predict_sell(artifact, {}, -0.1, ("news:recession", "social:friend_sells"), order, tol, subject_id="warm")
     out["single"] = time.time() - t0
-    t0 = time.time()
-    clients = pd.DataFrame({"client_id": [f"warm{i}" for i in range(n_clients)], "display_label": "warm", "covariates": cov})
-    score_book(artifact, clients, {"drawdown_pct": -0.12, "cause_frame": "recession fears", "social_cue_prevalence": "high"})
-    out["book"] = time.time() - t0
+    market = {"drawdown_pct": -0.12, "cause_frame": "recession fears", "social_cue_prevalence": "high"}
+    for n in sizes:
+        t0 = time.time()
+        clients = pd.DataFrame({"client_id": [f"warm{i}" for i in range(n)], "display_label": "warm", "covariates": cov})
+        score_book(artifact, clients, market, interventions)
+        out[f"book_{n}"] = time.time() - t0
     return out
 
 
@@ -1281,7 +1294,11 @@ def score_book(
     if len(set(ids)) != len(ids):
         raise ValueError("client_id values must be unique")
     covs = [covariates_text(c) for c in clients["covariates"].tolist()]
-    labels = clients["display_label"].tolist() if "display_label" in clients.columns else ids
+    if "display_label" in clients.columns:
+        # pandas' string dtype stores a missing label as NaN; the table carries None
+        labels = [None if lbl is None or (isinstance(lbl, float) and math.isnan(lbl)) else str(lbl) for lbl in clients["display_label"].tolist()]
+    else:
+        labels = list(ids)
     items = [it for it in _interventions_list(interventions) if it.get("active", True)]
     grid = sorted(abs(x) for x in D.LOSS_PCTS)
     sc = scorer_for(artifact)
@@ -1334,6 +1351,8 @@ def score_book(
             "status": _status(pm, calibration), "known_client": cid in known, "synthetic": bool(artifact.is_synthetic_training),
         })
     out = pd.DataFrame(rows)
+    for col in ("display_label", "top_driver", "suggested_intervention"):
+        out[col] = pd.Series([r[col] for r in rows], dtype="object")  # keep None: the string dtype would turn it into NaN
     out.attrs.update({
         "scenario": scen, "n_calibration": calibration, "target": target, "interval": "80% " + INTERVAL_SOURCE if smp is not None else _no_samples_reason(artifact),
         "intervention_label": INTERVENTION_LABEL, "capacity_definition": f"largest design-grid loss before P(sell | L, {list(TYPICAL_CRISIS_CONTEXTS)}) first exceeds {target}",
@@ -1356,6 +1375,7 @@ __all__ = [
     "Scenario",
     "Scorer",
     "TYPICAL_CRISIS_CONTEXTS",
+    "WARM_UP_BOOK_SIZES",
     "WEAK_MATCH_THRESHOLD",
     "active_registry_row",
     "apply_transform",

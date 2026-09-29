@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from bre import design as D
 from bre.market import VIX_BUCKET_LABELS
@@ -159,12 +159,15 @@ class ScoreBookRequest(BaseModel):
     target: float = Field(default=0.25, gt=0.0, lt=1.0, description="drawdown-capacity target P(sell)")
     register_unknown: bool = Field(default=False, description="create client rows for unknown client_ids (else their predictions are logged under the batch client)")
 
-    @model_validator(mode="after")
-    def _unique(self) -> "ScoreBookRequest":
-        ids = [c.client_id for c in self.clients]
+    @field_validator("clients")
+    @classmethod
+    def _unique(cls, v: list[ClientIn]) -> list[ClientIn]:
+        """A field validator (not a model validator) so the 422 names ``clients`` in ``loc``."""
+        ids = [c.client_id for c in v]
         if len(set(ids)) != len(ids):
-            raise ValueError("client_id values must be unique")
-        return self
+            dup = sorted({i for i in ids if ids.count(i) > 1})
+            raise ValueError(f"client_id values must be unique; duplicated: {dup}")
+        return v
 
 
 class RankRequest(ClientRef):
