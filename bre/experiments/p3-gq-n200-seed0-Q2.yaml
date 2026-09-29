@@ -1,0 +1,29 @@
+# Phase 3 fit of Q2 on the G_Q synthetic table gq_n200_seed0 (SYNTHETIC; written by `make sim`
+# or `make recover`). Split (a): 20% of the subjects held out and scored after the fit.
+# Every knob that affects a number is stated here (experiments/README.md).
+name: p3-gq-n200-seed0-Q2
+dataset: data/synthetic/gq_n200_seed0.parquet
+data: {}                      # build_model_data options (sell_types, subject_key, ...)
+model: Q2
+model_kwargs: {}
+split:
+  type: subjects              # (a) held-out subjects, stratified by dataset
+  test_frac: 0.2
+  seed: 0
+fit:
+  restarts: 3          # 3 instead of the 5 of PLAN.md section 4: 3 x 1500 Q2 steps ~ 5 min on 4 cores; raise for final fits
+  steps: 1500
+  lr: 0.02
+  val_frac: 0.2               # within-subject validation fold for early stopping (bre.fit)
+  seed: 0
+  early_stopping_patience: 5
+  eval_every: 25
+  lbfgs_polish: true
+  lbfgs_steps: 100
+  n_samples: 50               # B2: posterior draws; MAP models: diagonal-Laplace draws (bre.artifact)
+bootstrap:
+  n_draws: 1000
+  seed: 0
+output:
+  artifact_dir: runs/fits/p3-gq-n200-seed0-Q2
+  metrics_path: reports/fits/p3-gq-n200-seed0-Q2.json

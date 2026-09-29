@@ -1,0 +1,12 @@
+# Phase 2 recovery study, first pass (PLAN.md section 5): the exact command `make recover` runs,
+# recorded here so the grid is traceable. bre.recover is command-line driven; this file is
+# documentation of the knobs, not read by the code.
+command: python -m bre.recover --n 200 --seeds 0,1,2 --generators gq,gc,gf --models B1,B2,B4,Q2,Q4 --workers 4
+selection_fold: within-subject 20% of the sell rows per subject, stratified by (n_contexts, question order)
+fit_settings:
+  classical: {restarts: 3, steps: 1000, lr: 0.05, lbfgs_steps: 50, early_stopping: "patience 5 x 25 steps on a within-subject 20% validation fold of the fit fold"}
+  quantum: {restarts: 2, steps: 1000, lr: 0.02, lbfgs_steps: 50}
+  B2: {restarts: 3, svi_steps: 2000, svi_lr: 0.01, posterior_draws: 20}
+selection: held-out NLL per response on the selection fold (WAIC / PSIS-LOO recorded for B2)
+n_target_rule: smallest N with >= 90% correct family-level selection over (generator, seed) cells
+outputs: reports/recovery/{confusion_N200.md, recovery_scatter_gq_N200.png, recovery_scatter_gc_N200.png, N_target.json, results.json, summary.md}; runs/recover/<timestamp>.log

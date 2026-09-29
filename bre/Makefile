@@ -17,7 +17,7 @@ PY := $(VENV)/bin/python
 SYSTEM_PYTHON ?= python3.11
 NODE ?= node
 API_HOST ?= 127.0.0.1
-API_PORT ?= 8000
+API_PORT ?= $(or $(BRE_API_PORT),8000)
 PYTEST_ARGS ?=
 
 .PHONY: help setup check-venv test test-instrument data sim recover fit eval api dashboard retrain instrument report clean
@@ -73,21 +73,29 @@ sim: check-venv
 	$(call require,src/bre/sim/cli.py)
 	$(PY) -m bre.sim.cli --generators gq,gc,gf --n 200 --seeds 5 --out data/synthetic
 
+# Phase 2 first pass: N=200, seeds 0-2, generators gq/gc/gf, models B1 B2 B4 Q2 Q4 (~30-40 min on 4 cores;
+# outputs under reports/recovery/, log under runs/recover/). Options: python -m bre.recover --help.
 recover: check-venv
 	$(call require,src/bre/recover.py)
-	$(PY) -m bre.recover
+	$(PY) -m bre.recover --n 200 --seeds 0,1,2
 
+# Phase 3: every experiment listed in experiments/fit_all.yaml (artifacts under runs/fits/, metrics under reports/fits/).
 fit: check-venv
 	$(call require,src/bre/fit.py)
-	$(PY) -m bre.fit
+	$(PY) -m bre.fit experiments/fit_all.yaml
 
+# Phase 4: every evaluation listed in experiments/eval_all.yaml (metrics + markdown under reports/eval/).
 eval: check-venv
 	$(call require,src/bre/eval.py)
-	$(PY) -m bre.eval
+	$(PY) -m bre.eval experiments/eval_all.yaml
 
+# Phase 5: regenerate api/openapi.json from the app, then serve. BRE_API_PORT overrides the port
+# (API_PORT defaults to it); the first start on the default database seeds the demo book and
+# fits the demo model (about a minute), see api/README.md.
 api: check-venv
 	$(call require,api/main.py)
-	$(PY) -m uvicorn api.main:app --host $(API_HOST) --port $(API_PORT)
+	PYTHONPATH=src:. $(PY) api/export_openapi.py
+	PYTHONPATH=src:. $(PY) -m uvicorn api.main:app --host $(API_HOST) --port $(API_PORT)
 
 # The API is started in the background and stopped when streamlit exits (or on Ctrl-C).
 dashboard: check-venv

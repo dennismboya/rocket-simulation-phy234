@@ -1,0 +1,17 @@
+{
+ "rule": "N_target is the smallest N of the grid at which the model selected by held-out NLL on the within-subject 20% selection fold belongs to the true generator's family in at least 90% of the (generator, seed) cells at that N; responses needed for calibration = N_target x items per subject (170 on the shared design). Null when no N of the grid reaches 90%.",
+ "threshold": 0.9,
+ "items_per_subject": 170,
+ "grid": [
+  {
+   "n": 200,
+   "correct_share": 1.0,
+   "n_cells": 9,
+   "n_correct": 9
+  }
+ ],
+ "is_synthetic": true,
+ "N_target": 200,
+ "responses_needed_for_calibration": 34000,
+ "reached": true
+}

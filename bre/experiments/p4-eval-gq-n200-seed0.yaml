@@ -1,0 +1,34 @@
+# Phase 4 protocol dry run on SYNTHETIC G_Q data (gq_n200_seed0): every model on every split of
+# PLAN.md section 6, structural tests, decision rule (which cannot return "Q-model supported" on
+# synthetic data). Fits: 20 (5 models x 4 splits); with the settings below about 50 minutes on
+# 4 cores — run in the background (make eval > runs/eval.log &).
+name: p4-eval-gq-n200-seed0
+dataset: data/synthetic/gq_n200_seed0.parquet
+data: {}
+models: [B1, B2, B4, Q2, Q4]
+splits:
+  - {type: subjects, test_frac: 0.2, seed: 0}        # (a)
+  - {type: pairs}                                     # (b) train singles + none, test ordered pairs
+  - {type: order, train_order: tolerance-first}       # (c)
+  - {type: temporal, test_frac: 0.2}                  # (d)
+model_kwargs: {}
+fit:
+  restarts: 2
+  steps: 800
+  lr: 0.02
+  val_frac: 0.2
+  seed: 0
+  early_stopping_patience: 4
+  eval_every: 25
+  lbfgs_polish: true
+  lbfgs_steps: 50
+  n_samples: 30
+  svi_steps: 2000
+  svi_lr: 0.01
+bootstrap:
+  n_draws: 1000
+  seed: 0
+output:
+  dir: runs/eval/p4-eval-gq-n200-seed0
+  metrics_path: reports/eval/p4-eval-gq-n200-seed0.json
+  table_path: reports/eval/p4-eval-gq-n200-seed0.md
