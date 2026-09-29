@@ -103,3 +103,4 @@ Phases 0–8 as planned; no long runs started yet.
 * 2026-09-29 05:15 UTC — grid relaunched as two runs under the 2-hour GATE: N 50/100 (seeds 0–2, cap 60 min) then N 400 (seeds 0–1, Q restarts 1, cap 100 min).
 * 2026-09-29 05:25 UTC — DECISION: G_Q population defaults changed (theta_L = (0, -1.5, 0), b = (1, 0.45, 0, 0.15)) so the synthetic loss response rises with the loss; the old-defaults N=200 pass is archived under reports/recovery_pass1_olddefaults and runs/recover/n200_pass1_olddefaults; the full grid (N 50/100/200 seeds 0–2, then N 400 seeds 0–1) relaunched as two capped runs (runs/recover/grid_a.*, grid_b.*).
 * 2026-09-29 05:34 UTC — grid_a: 3 of 135 fits done;  [recover] done gq N=200 seed=1 Q4: selection_nll=0.6705 train_nll=0.6482 val_nll=0.6726 n_params=1110 (458s) [3/135, 8.
+* 2026-09-29 05:57 UTC — grid_a: 15 of 135 fits done;  [recover] done gc N=100 seed=2 Q4: selection_nll=0.5607 train_nll=0.5553 val_nll=0.5759 n_params=610 (589s) [15/135, 26
