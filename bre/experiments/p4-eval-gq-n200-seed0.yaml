@@ -1,11 +1,17 @@
-# Phase 4 protocol dry run on SYNTHETIC G_Q data (gq_n200_seed0): every model on every split of
-# PLAN.md section 6, structural tests, decision rule (which cannot return "Q-model supported" on
-# synthetic data). Fits: 20 (5 models x 4 splits); with the settings below about 50 minutes on
-# 4 cores — run in the background (make eval > runs/eval.log &).
+# Phase 4 protocol dry run on SYNTHETIC G_Q data (gq_n200_seed0): every registered model on every
+# split of PLAN.md section 6, structural tests (data-level, plus the model-level checks: Q5's
+# quarter law, Q3/Q5's zero order effect by construction, Q4's decoherence rates), decision rule
+# (which cannot return "Q-model supported" on synthetic data). Fits: 40 (10 models x 4 splits);
+# the first five models were estimated at about 50 minutes on 4 cores with the settings below;
+# the second five (B3, B5, B6, Q3, Q5) are untimed (bre.recover.SECONDS_PER_STEP_ASSUMED holds
+# the assumed step costs: Q3 like Q2, B5 a few sklearn fits) — run in the background
+# (make eval > runs/eval.log &) and time it before scheduling anything longer. B5 ignores the
+# Adam / L-BFGS / n_samples settings (external fit, no draws). Q3 runs at the default time
+# t = 1 on this table (no news age in the synthetic design).
 name: p4-eval-gq-n200-seed0
 dataset: data/synthetic/gq_n200_seed0.parquet
 data: {}
-models: [B1, B2, B4, Q2, Q4]
+models: [B1, B2, B3, B4, B5, B6, Q2, Q3, Q4, Q5]
 splits:
   - {type: subjects, test_frac: 0.2, seed: 0}        # (a)
   - {type: pairs}                                     # (b) train singles + none, test ordered pairs

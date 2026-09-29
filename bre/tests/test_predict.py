@@ -241,21 +241,37 @@ def test_loss_response_diagnostic(art, demo_env: DemoEnv):
     assert P.loss_response_diagnostic(art, demo_env.clients.head(0))["monotone_share"] is None
 
 
-def test_drawdown_capacity_monotone_in_loss_sensitivity(art, demo_env: DemoEnv):
-    """Scaling ``theta_L`` up (more loss sensitivity) must not increase any client's capacity."""
+def test_drawdown_capacity_first_crossing_properties(rng: np.random.Generator):
+    """The first-crossing rule: (a) it never credits a loss beyond the first crossing even when
+    the curve comes back under the target (a rotation allows that), unlike "max L with P <=
+    target"; (b) it is non-increasing under any pointwise increase of the curve."""
+    grid = sorted(abs(x) for x in D.LOSS_PCTS)
+    dip = np.array([0.1, 0.3, 0.2, 0.2, 0.2])  # crosses at 10%, back under the target at 15%+
+    assert P.drawdown_capacity(dip) == (0.05, "within grid")
+    assert max(L for L, p in zip(grid, dip) if p <= 0.25) == 0.30  # the naive rule would say 30%
+    for _ in range(200):
+        p = rng.uniform(0.0, 0.6, size=len(grid))
+        q = np.clip(p + rng.uniform(0.0, 0.3, size=len(grid)) * rng.integers(0, 2, size=len(grid)), 0.0, 1.0)
+        assert P.drawdown_capacity(q)[0] <= P.drawdown_capacity(p)[0] + 1e-12
+        cap, status = P.drawdown_capacity(p)
+        assert cap in {0.0, *grid} and status in {"below smallest grid loss", "within grid", "at grid maximum"}
+
+
+def test_score_book_capacity_equals_prefix_rule_on_model_curve(art, demo_env: DemoEnv):
+    """``score_book``'s ``drawdown_capacity`` column is the first-crossing rule applied to the
+    model's own ``P(sell | L, typical crisis)`` grid of every client, at the requested target;
+    scaling ``theta_L`` (a rotation) is *not* required to move capacities one way."""
     sc = P.scorer_for(art)
     grid = sorted(abs(x) for x in D.LOSS_PCTS)
-    ids = demo_env.clients["client_id"].tolist()
-    covs = [P.covariates_text(c) for c in demo_env.clients["covariates"]]
-    scen = [P.Scenario(cid, c, -L, P.TYPICAL_CRISIS_CONTEXTS) for cid, c in zip(ids, covs) for L in grid]
-    prev = None
-    for k in (1.0, 1.25, 1.5, 2.0):
-        params = {**art.params, "theta_L": np.asarray(art.params["theta_L"]) * k}
-        p = sc.predict(scen, params=params).reshape(len(ids), len(grid))
-        caps = np.asarray([P.drawdown_capacity(p[i])[0] for i in range(len(ids))])
-        if prev is not None:
-            assert np.all(caps <= prev + 1e-12), f"capacity increased for {int((caps > prev + 1e-12).sum())} clients at k={k}"
-        prev = caps
+    book = demo_env.clients.head(12)
+    ids = book["client_id"].tolist()
+    covs = [P.covariates_text(c) for c in book["covariates"]]
+    p = sc.predict([P.Scenario(cid, c, -L, P.TYPICAL_CRISIS_CONTEXTS) for cid, c in zip(ids, covs) for L in grid]).reshape(len(ids), len(grid))
+    for target in (0.25, 0.5):
+        tab = P.score_book(art, book, MARKET, demo_env.interventions, target=target)
+        expected = [P.drawdown_capacity(p[i], target) for i in range(len(ids))]
+        assert list(tab["drawdown_capacity"]) == [e[0] for e in expected] and list(tab["capacity_status"]) == [e[1] for e in expected]
+        assert str(target) in tab.attrs["capacity_definition"]
 
 
 # ---------------------------------------------------------------------------------------------

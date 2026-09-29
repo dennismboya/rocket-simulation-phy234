@@ -564,6 +564,11 @@
             "title": "Calibration Rule",
             "type": "string"
           },
+          "capacity_definition": {
+            "description": "the first-crossing definition of the behavioral drawdown capacity at the default target",
+            "title": "Capacity Definition",
+            "type": "string"
+          },
           "created_at": {
             "title": "Created At",
             "type": "string"
@@ -595,6 +600,24 @@
           "is_synthetic_training": {
             "title": "Is Synthetic Training",
             "type": "boolean"
+          },
+          "loss_response": {
+            "additionalProperties": true,
+            "description": "the loss-response diagnostic of the served book: monotone_share, n_clients, loss_levels, mean_p_sell_by_loss, p_sell_by_loss_ci80, definition",
+            "title": "Loss Response",
+            "type": "object"
+          },
+          "loss_response_monotone_share": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "share of the served book's clients whose predicted P(sell | L, no context) is non-decreasing over the five design loss levels",
+            "title": "Loss Response Monotone Share"
           },
           "metrics": {
             "additionalProperties": true,
@@ -692,7 +715,10 @@
           "decision_rule",
           "evaluation_status",
           "notes",
-          "n_draws"
+          "n_draws",
+          "loss_response_monotone_share",
+          "loss_response",
+          "capacity_definition"
         ],
         "title": "ModelInfo",
         "type": "object"
@@ -1803,7 +1829,7 @@
     }
   },
   "info": {
-    "description": "BRE scoring service (Phase 5): the only source of predictions for the dashboard.\n\nRun with ``make api`` (``uvicorn api.main:app --port $BRE_API_PORT``). Every number a screen\nshows comes from ``bre.predict`` through these endpoints; no model code lives in the UI.\n\nEndpoints\n---------\n* ``GET /health`` \u2014 liveness, served model version, demo mode.\n* ``GET /model`` \u2014 version, type, metrics, calibrated contexts, provenance (training data refs\n  and the ``data/CATALOG.md`` entry names), ``is_synthetic_training``, ``demo_mode``, the\n  pre-registered decision rule and the evaluation status.\n* ``GET /clients``, ``GET /interventions``, ``GET /market`` \u2014 the served book, the intervention\n  table, the current market state (cached files unless ``BRE_MARKET_NETWORK=1``) with its\n  mapping to a scenario.\n* ``POST /predict`` \u2014 one investor, one scenario: predicted probability of selling with its\n  80/95% intervals, interference terms, top driver and calibration counts.\n* ``POST /profile`` \u2014 decision-state profile (baseline state, context sensitivities,\n  consistency score, classical-equivalent risk score with its R\u00b2 against the state angle).\n* ``POST /score_book`` (JSON) and ``POST /score_book/csv`` (CSV upload) \u2014 the triage table of a\n  book under one market state.\n* ``POST /interventions/rank`` \u2014 interventions ranked by predicted change in P(sell), labelled\n  \"predicted effect, not causally validated\".\n\nEvery prediction shown is written to ``predictions_log`` (under the request's ``client_id``,\ncreated on first use, or the anonymous API client / the batch client for uploads) and\n``audit_log``. Input validation errors return 422 with the field names. Every response derived\nfrom a synthetic-training model carries ``synthetic: true``; ``demo_mode`` is true when the\nserved model was trained on synthetic data or the database lives under ``data/synthetic``.\n\nEnvironment: ``BRE_DB_URL`` (default ``sqlite:///<bre>/data/synthetic/demo.db``),\n``BRE_MODELS_ROOT`` (default ``runs/models``), ``BRE_API_AUTOSEED`` (default 1: seed the demo\nbook and fit the demo model when the database has no active model), ``BRE_API_WARMUP``\n(default 1), ``BRE_MARKET_NETWORK`` (default 0).\n",
+    "description": "BRE scoring service (Phase 5): the only source of predictions for the dashboard.\n\nRun with ``make api`` (``uvicorn api.main:app --port $BRE_API_PORT``). Every number a screen\nshows comes from ``bre.predict`` through these endpoints; no model code lives in the UI.\n\nEndpoints\n---------\n* ``GET /health`` \u2014 liveness, served model version, demo mode.\n* ``GET /model`` \u2014 version, type, metrics, calibrated contexts, provenance (training data refs\n  and the ``data/CATALOG.md`` entry names), ``is_synthetic_training``, ``demo_mode``, the\n  pre-registered decision rule, the evaluation status, the loss-response diagnostic of the\n  served book (``loss_response_monotone_share``, ``loss_response``) and the first-crossing\n  definition of the drawdown capacity (``capacity_definition``).\n* ``GET /clients``, ``GET /interventions``, ``GET /market`` \u2014 the served book, the intervention\n  table, the current market state (cached files unless ``BRE_MARKET_NETWORK=1``) with its\n  mapping to a scenario.\n* ``POST /predict`` \u2014 one investor, one scenario: predicted probability of selling with its\n  80/95% intervals, interference terms, top driver and calibration counts.\n* ``POST /profile`` \u2014 decision-state profile (baseline state, context sensitivities,\n  consistency score, classical-equivalent risk score with its R\u00b2 against the state angle).\n* ``POST /score_book`` (JSON) and ``POST /score_book/csv`` (CSV upload) \u2014 the triage table of a\n  book under one market state.\n* ``POST /interventions/rank`` \u2014 interventions ranked by predicted change in P(sell), labelled\n  \"predicted effect, not causally validated\".\n\nEvery prediction shown is written to ``predictions_log`` (under the request's ``client_id``,\ncreated on first use, or the anonymous API client / the batch client for uploads) and\n``audit_log``. Input validation errors return 422 with the field names. Every response derived\nfrom a synthetic-training model carries ``synthetic: true``; ``demo_mode`` is true when the\nserved model was trained on synthetic data or the database lives under ``data/synthetic``.\n\nEnvironment: ``BRE_DB_URL`` (default ``sqlite:///<bre>/data/synthetic/demo.db``),\n``BRE_MODELS_ROOT`` (default ``runs/models``), ``BRE_API_AUTOSEED`` (default 1: seed the demo\nbook and fit the demo model when the database has no active model), ``BRE_API_WARMUP``\n(default 1), ``BRE_MARKET_NETWORK`` (default 0).\n",
     "title": "Behavioral Risk Engine API",
     "version": "0.1.0"
   },

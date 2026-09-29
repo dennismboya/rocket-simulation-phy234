@@ -289,9 +289,15 @@ def adam_early_stopping(
         return optax.apply_updates(p, upd), s, v
 
     val_sell = np.flatnonzero(val.sell_mask())  # concrete indices: usable inside jit
-    val_fn = jax.jit(lambda p: -jnp.mean(model.log_lik(p, val)[val_sell]))
+
+    def val_nll(p):
+        return -jnp.mean(model.log_lik(p, val)[val_sell])
+
     init_obj = float(objective(params))
-    best_val = float(val_fn(params)) if val.n else float("inf")
+    # The first evaluation on each table is eager: models that cache per-table arrays (B6, Q3)
+    # would otherwise cache tracers created inside the trace and leak them into later traces.
+    best_val = float(val_nll(params)) if val.n else float("inf")
+    val_fn = jax.jit(val_nll)
     best_params = params
     history: list[tuple[int, float]] = [(0, best_val)]
     bad = 0

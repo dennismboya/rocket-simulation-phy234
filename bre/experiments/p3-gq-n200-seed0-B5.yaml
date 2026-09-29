@@ -1,0 +1,37 @@
+# Phase 3 fit of B5 on the G_Q synthetic table gq_n200_seed0 (SYNTHETIC; written by `make sim`
+# or `make recover`). Split (a): 20% of the subjects held out and scored after the fit.
+# B5 is fitted externally (scikit-learn, bre.fit external-fit branch): `restarts` = number of
+# estimator seeds tried, the one with the lowest validation NLL is kept; steps / lr / L-BFGS
+# settings do not apply and n_samples must be 0 (no draws exist: no differentiable objective,
+# so no Laplace approximation; the artifact carries no interval). Every knob that affects a
+# number is stated here (experiments/README.md); the estimator settings are the module defaults.
+name: p3-gq-n200-seed0-B5
+dataset: data/synthetic/gq_n200_seed0.parquet
+data: {}                      # build_model_data options (sell_types, subject_key, ...)
+model: B5
+model_kwargs:
+  estimator: ensemble         # (P_gbt + P_mlp) / 2; "gbt" or "mlp" serve one alone
+  gbt_kwargs: {max_iter: 100, learning_rate: 0.1, max_leaf_nodes: 15, l2_regularization: 1.0, early_stopping: false}
+  mlp_kwargs: {hidden_layer_sizes: [16], alpha: 0.001, max_iter: 300, solver: adam}
+  n_threads: 1                # single-threaded sklearn (bre.models.classical.b5_ml, thread note)
+split:
+  type: subjects              # (a) held-out subjects, stratified by dataset
+  test_frac: 0.2
+  seed: 0
+fit:
+  restarts: 3                 # estimator seeds tried; best validation NLL kept
+  steps: 0                    # not used by the external fit (stated for completeness)
+  lr: 0.0                     # not used
+  val_frac: 0.2               # within-subject validation fold that selects the seed (bre.fit)
+  seed: 0
+  early_stopping_patience: 5  # not used
+  eval_every: 25              # not used
+  lbfgs_polish: false         # not applicable
+  lbfgs_steps: 0
+  n_samples: 0                # no draws for an externally fitted model
+bootstrap:
+  n_draws: 1000
+  seed: 0
+output:
+  artifact_dir: runs/fits/p3-gq-n200-seed0-B5
+  metrics_path: reports/fits/p3-gq-n200-seed0-B5.json

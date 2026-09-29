@@ -28,10 +28,22 @@ Structural tests: the LTP violation estimated from the data (per scenario, ``P(s
 scenario-first) - P(sell | tolerance-first)``, the latter being ``sum_a P(a, sell)``, with a
 subject bootstrap CI), order effects by scenario (``P(sell | c1, c2) - P(sell | c2, c1)``), the
 interference-term interval of a Q-model (mean ``delta_LTP`` and mean ``Delta_order`` over the
-rows, 2.5/97.5 percentiles over ``param_samples``) and the decoherence-rate distribution of Q4.
+rows, 2.5/97.5 percentiles over ``param_samples``) and, per Q-model, the model-level checks of
+:func:`model_structural_checks`: the decoherence-rate distribution of a model with per-subject
+``log_gamma`` (Q4), the quarter-law check of a model with ``quarter_law_check`` (Q5: mean ``|q|``
+with a subject bootstrap interval next to the reference 0.25), whether ``delta_LTP`` is defined
+for the model at all (Q5 returns NaN: no non-commuting tolerance measurement) and whether
+``Delta_order`` is identically zero on every ordered-pair row (Q3 and Q5 compose contexts
+symmetrically, so their zero order effect is a property of the model, not a fitted result).
 
 Decision rule: :func:`decision_rule` implements the PLAN.md section 6 text verbatim; its
-``verdict`` is one of :data:`VERDICT_SUPPORTED` and :data:`VERDICT_NONE`.
+``verdict`` is one of :data:`VERDICT_SUPPORTED` and :data:`VERDICT_NONE`. An interference
+interval that is missing or NaN (no draws, or a model whose ``delta_LTP`` is undefined) does
+**not** exclude zero: the condition fails and the verdict is :data:`VERDICT_NONE`.
+
+Any registered model (``bre.registry.MODEL_REGISTRY``) can be listed under ``models:``; the
+per-model extras are picked by capability (``interference_terms``, ``quarter_law_check``,
+``log_gamma`` in the parameters), not by name.
 
 Config-driven use: ``python -m bre.eval experiments/<name>.yaml`` fits every listed model on the
 training rows of every listed split (through :func:`bre.fit.fit_model`), evaluates the test
@@ -65,6 +77,7 @@ from bre.fit import (
     experiments_listed,
     fit_model,
     fit_settings,
+    interference_summary,
     load_config,
     load_dataset,
     nll_per_response,
@@ -466,30 +479,34 @@ def interference_ci(model, params: dict[str, Any], data: ModelData, rows: np.nda
     """For a Q-model: the mean ``delta_LTP`` over the sell rows and the mean ``Delta_order`` over
     the pair rows at ``params``, and their 2.5/97.5 percentiles over ``param_samples`` (an
     interval from the diagonal Laplace draws for MAP fits, see :mod:`bre.artifact`; ``None``
-    bounds without draws). Returns None for a classical model."""
+    bounds without draws). A model whose ``delta_LTP`` is undefined (NaN on every row, Q5)
+    gets NaN means, NaN bounds and ``ltp_ci_excludes_zero = False`` (``ltp_defined`` says why):
+    a NaN interval never counts as excluding zero. Returns None for a classical model."""
     if not hasattr(model, "interference_terms"):
         return None
     rows = data.sell_rows() if rows is None else np.intersect1d(np.asarray(rows), data.sell_rows())
     sub = data.subset(rows)
-    mask = sub.sell_mask()
 
     def stats(p: dict[str, Any]) -> tuple[float, float, float]:
-        t = model.interference_terms(p, sub)
-        ltp = np.asarray(t["ltp"])[mask]
-        order = np.asarray(t["order"])[mask]
-        return float(np.mean(ltp)), float(np.mean(np.abs(ltp))), float(np.nanmean(order)) if np.isfinite(order).any() else float("nan")
+        t = interference_summary(model, p, sub)
+        return t["ltp_mean"], t["ltp_abs_mean"], t["order_mean"]
 
-    ltp_m, ltp_abs, ord_m = stats(params)
-    out: dict[str, Any] = {"ltp_mean": ltp_m, "ltp_abs_mean": ltp_abs, "order_mean": ord_m, "n_rows": int(mask.sum())}
+    def pct(v: np.ndarray) -> list[float]:
+        fin = v[np.isfinite(v)]
+        return [float(np.percentile(fin, 2.5)), float(np.percentile(fin, 97.5))] if fin.size else [float("nan"), float("nan")]
+
+    base = interference_summary(model, params, sub)
+    out: dict[str, Any] = {"ltp_mean": base["ltp_mean"], "ltp_abs_mean": base["ltp_abs_mean"], "order_mean": base["order_mean"], "n_rows": base["n_rows"], "n_pair_rows": base["n_pair_rows"], "ltp_defined": base["ltp_defined"], "order_zero_by_construction": base["order_zero_by_construction"]}
+    if "mean_abs_q" in base:
+        out["mean_abs_q"] = base["mean_abs_q"]
     if param_samples:
-        draws = np.asarray([stats(s) for s in param_samples])
-        out["ltp_mean_ci95"] = [float(np.percentile(draws[:, 0], 2.5)), float(np.percentile(draws[:, 0], 97.5))]
-        out["ltp_abs_mean_ci95"] = [float(np.percentile(draws[:, 1], 2.5)), float(np.percentile(draws[:, 1], 97.5))]
-        fin = draws[np.isfinite(draws[:, 2]), 2]
-        out["order_mean_ci95"] = [float(np.percentile(fin, 2.5)), float(np.percentile(fin, 97.5))] if fin.size else [float("nan"), float("nan")]
+        draws = np.asarray([stats(s) for s in param_samples], dtype=np.float64).reshape(-1, 3)
+        out["ltp_mean_ci95"] = pct(draws[:, 0])
+        out["ltp_abs_mean_ci95"] = pct(draws[:, 1])
+        out["order_mean_ci95"] = pct(draws[:, 2])
         out["n_samples"] = int(len(param_samples))
         lo, hi = out["ltp_mean_ci95"]
-        out["ltp_ci_excludes_zero"] = bool(hi < 0 or lo > 0)
+        out["ltp_ci_excludes_zero"] = bool(np.isfinite(lo) and np.isfinite(hi) and (hi < 0 or lo > 0))
     else:
         out["ltp_mean_ci95"] = None
         out["ltp_ci_excludes_zero"] = None
@@ -514,6 +531,38 @@ def decoherence_distribution(params: dict[str, Any]) -> dict[str, Any] | None:
         "share_near_classical": float(np.mean(g > 3.0)),
         "share_near_coherent": float(np.mean(g < 0.05)),
     }
+
+
+ORDER_ZERO_NOTE = ("Delta_order = 0 on every ordered-pair row: the model composes contexts symmetrically, so it "
+                   "predicts no order effect by construction (a property of the model, not a fitted result)")
+LTP_UNDEFINED_NOTE = ("delta_LTP is not defined for this model (no non-commuting tolerance measurement; the "
+                      "interference terms return NaN), so the interference-interval condition of the decision "
+                      "rule cannot hold for it")
+
+
+def model_structural_checks(model, params: dict[str, Any], data: ModelData, rows: np.ndarray | None = None, *, n_boot: int = 1000, seed: int = 0) -> dict[str, Any]:
+    """Model-level structural checks of a Q-model at ``params`` on the sell rows among ``rows``
+    (default all): ``ltp`` (whether ``delta_LTP`` is defined, with :data:`LTP_UNDEFINED_NOTE`
+    when it is not), ``order_effect`` (``zero_by_construction`` when every pair row has
+    ``Delta_order = 0`` exactly, with :data:`ORDER_ZERO_NOTE`; ``n_pair_rows``; the mean
+    absolute order term otherwise), ``quarter_law`` (``model.quarter_law_check`` when the model
+    has one: Q5's mean ``|q|`` with a subject bootstrap interval and the reference 0.25) and
+    ``decoherence`` (:func:`decoherence_distribution` when the parameters carry ``log_gamma``).
+    Every entry reports; none asserts a hypothesis."""
+    rows = data.sell_rows() if rows is None else np.intersect1d(np.asarray(rows), data.sell_rows())
+    sub = data.subset(rows)
+    base = interference_summary(model, params, sub)
+    out: dict[str, Any] = {
+        "n_rows": base["n_rows"],
+        "ltp": {"defined": base["ltp_defined"], "mean": base["ltp_mean"], "abs_mean": base["ltp_abs_mean"], "note": None if base["ltp_defined"] else LTP_UNDEFINED_NOTE},
+        "order_effect": {"n_pair_rows": base["n_pair_rows"], "mean": base["order_mean"], "abs_mean": base["order_abs_mean"], "zero_by_construction": base["order_zero_by_construction"], "note": ORDER_ZERO_NOTE if base["order_zero_by_construction"] else None},
+    }
+    if hasattr(model, "quarter_law_check"):
+        out["quarter_law"] = model.quarter_law_check(params, sub, n_boot=int(n_boot), seed=int(seed))
+    dec = decoherence_distribution(params)
+    if dec is not None:
+        out["decoherence"] = dec
+    return out
 
 
 # ---------------------------------------------------------------------------------------------
@@ -571,7 +620,8 @@ def decision_rule(
     paired bootstrap of the NLL difference is computed here) or a precomputed
     ``nll_diff_vs_best_classical`` (``{"diff", "ci95"}``); optionally ``is_synthetic``.
     ``interference_ci``: the :func:`interference_ci` dict of the best Q-model (its
-    ``ltp_mean_ci95`` must exclude zero). ``is_real_data`` defaults to ``not
+    ``ltp_mean_ci95`` must exclude zero; a missing or NaN interval — no draws, or a model whose
+    ``delta_LTP`` is undefined — does not exclude zero). ``is_real_data`` defaults to ``not
     any(is_synthetic)``; on synthetic data the positive verdict is never issued and the details
     say which conditions held. ``param_count_key`` picks the count compared ("matched or lower"
     means ``count_q <= count_c``). Returns ``{"verdict", "details"}`` with ``verdict`` one of
@@ -599,7 +649,8 @@ def decision_rule(
     nq, nc = rq.get(param_count_key, np.nan), rc.get(param_count_key, np.nan)
     count_ok = bool(np.isfinite(nq) and np.isfinite(nc) and nq <= nc)
     ici = (interference_ci or {}).get("ltp_mean_ci95")
-    interf_ok = bool(ici is not None and np.all(np.isfinite(ici)) and (ici[1] < 0 or ici[0] > 0))
+    # a missing or NaN interval (no draws; delta_LTP undefined for the model) does not exclude zero
+    interf_ok = bool(ici is not None and len(ici) == 2 and np.all(np.isfinite(ici)) and (ici[1] < 0 or ici[0] > 0))
     conditions = {"beats_best_classical_nll_ci_excludes_zero": beats, "param_count_matched_or_lower": count_ok, "interference_ci_excludes_zero": interf_ok, "real_data": bool(is_real_data)}
     served = min(results_split_b, key=lambda k: results_split_b[k].get("nll", np.inf))
     details.update({
@@ -697,13 +748,18 @@ def run_experiment(cfg: dict[str, Any] | str | Path, *, echo: bool = True) -> tu
             held = evaluate_model(fit.model, fit.params, data, test_rows, n_boot=n_boot, seed=bseed, param_samples=fit.param_samples, posterior=fit.posterior)
             entry = {k: v for k, v in held.items() if k not in ("rows", "ll", "p", "subject_idx")}
             entry.update({"family": MODEL_FAMILY[m], "n_params": fit.n_params, "n_params_population": fit.n_params_population, "train_nll": fit.train_nll, "val_nll": fit.val_nll, "wall_time_s": fit.wall_time, "is_synthetic": is_syn})
-            for k in ("waic", "loo", "laplace", "interference_train"):
+            for k in ("waic", "loo", "laplace", "interference_train", "external_fit", "param_samples_note"):
                 if k in fit.extra:
                     entry[k] = fit.extra[k]
-            if MODEL_FAMILY[m] == "quantum":
+            if hasattr(fit.model, "interference_terms"):
                 entry["interference_test"] = interference_ci(fit.model, fit.params, data, test_rows, fit.param_samples)
-                if m == "Q4":
-                    entry["decoherence"] = decoherence_distribution(fit.params)
+                checks = model_structural_checks(fit.model, fit.params, data, test_rows, n_boot=n_boot, seed=bseed)
+                entry["structural_checks_test"] = checks
+                if "decoherence" in checks:
+                    entry["decoherence"] = checks["decoherence"]
+                if "quarter_law" in checks:
+                    entry["quarter_law_test"] = checks["quarter_law"]
+                results["structural"].setdefault("model_checks", []).append({"split": stype, "model": m, **checks})
             entry["_ll"], entry["_subject_idx"] = held["ll"], held["subject_idx"]
             per_model[m] = entry
             art = artifact_from_fit(fit, data, training_data_refs=[ref], metrics={"experiment": name, "split": split_cfg, "holdout": {k: v for k, v in entry.items() if not k.startswith("_")}})
@@ -769,6 +825,29 @@ def results_markdown(results: dict[str, Any]) -> str:
         oe = st.get("order_effects_from_data", {})
         lines.append(f"- Order effects by scenario (mean |P(sell | c1,c2) - P(sell | c2,c1)| over {oe.get('n_cells')} cells): {oe.get('mean_abs', float('nan')):.4f}, CI95 {np.round(oe.get('ci95', [np.nan, np.nan]), 4).tolist()}")
         lines.append("")
+        if st.get("model_checks"):
+            lines.append("### Model-level structural checks (Q-models, held-out rows of each split)")
+            lines.append("")
+            for c in st["model_checks"]:
+                tag = f"{c['model']} on split {c['split']} ({c['n_rows']} rows)"
+                ltp, oe_m = c.get("ltp", {}), c.get("order_effect", {})
+                if ltp.get("defined"):
+                    lines.append(f"- {tag}: mean delta_LTP = {ltp.get('mean', float('nan')):.4f}, mean |delta_LTP| = {ltp.get('abs_mean', float('nan')):.4f}")
+                else:
+                    lines.append(f"- {tag}: {ltp.get('note')}")
+                if oe_m.get("zero_by_construction"):
+                    lines.append(f"- {tag}: order effect identically 0 on its {oe_m.get('n_pair_rows')} pair rows — {oe_m.get('note')}")
+                elif oe_m.get("n_pair_rows", 0) > 0:
+                    lines.append(f"- {tag}: mean Delta_order = {oe_m.get('mean', float('nan')):.4f}, mean |Delta_order| = {oe_m.get('abs_mean', float('nan')):.4f} over {oe_m.get('n_pair_rows')} pair rows")
+                else:
+                    lines.append(f"- {tag}: no ordered-pair rows in this fold; the order effect is not evaluated here")
+                if c.get("quarter_law"):
+                    q = c["quarter_law"]
+                    lines.append(f"- {tag}: quarter-law check: mean |q| = {q.get('mean_abs_q', float('nan')):.4f}, CI95 {np.round(q.get('ci95', [np.nan, np.nan]), 4).tolist()} vs reference {q.get('reference')} ({q.get('note')}); share of q > 0: {q.get('share_q_positive', float('nan')):.2f}")
+                if c.get("decoherence"):
+                    d = c["decoherence"]
+                    lines.append(f"- {tag}: decoherence rates gamma_i: median {d['gamma_quantiles']['0.5']:.3f}, 5-95% {d['gamma_quantiles']['0.05']:.3f}-{d['gamma_quantiles']['0.95']:.3f}")
+            lines.append("")
     v = results.get("verdict", {})
     lines.append("## Verdict")
     lines.append("")
@@ -831,6 +910,7 @@ __all__ = [
     "interference_ci",
     "ltp_violation_from_data",
     "markdown_table",
+    "model_structural_checks",
     "nll",
     "order_effects_from_data",
     "paired_nll_difference",

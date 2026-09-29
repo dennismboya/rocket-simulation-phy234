@@ -18,9 +18,13 @@ Documented constants (design choices, changeable here only):
 * :data:`DRAWDOWN_TARGET`: the behavioral drawdown capacity is the largest loss on the design
   grid (:data:`bre.design.LOSS_PCTS`) such that ``P(sell | L', typical crisis) <= target`` for
   every grid loss ``L' <= L`` (the loss the investor is predicted to sit through before the
-  sell probability first crosses the target). The prefix rule makes the capacity non-increasing
-  when the loss rotation ``theta_L`` is scaled up (``tests/test_predict.py``); a plain "max L
-  with P <= target" would not be, because ``P(sell | L)`` is a rotation and need not be monotone.
+  sell probability first crosses the target; :data:`CAPACITY_DEFINITION`). The loss enters the
+  model as a rotation of the state, so ``P(sell | L)`` need not be monotone in ``L``: a plain
+  "max L with P(L) <= target" would credit an investor predicted to sell at 15% with sitting
+  through 30% whenever the curve comes back under the target, the first-crossing rule does not.
+  The capacity is non-increasing under any change that raises ``P(sell | L)`` at every grid loss
+  (``tests/test_predict.py``); it is *not* monotone in the size of ``theta_L`` itself, because a
+  larger rotation can carry a state away from the sell pole at small losses.
 * :data:`STATUS_THRESHOLDS`: triage status from the predicted probability under the market state.
 * :data:`LOSS_RESPONSE_DEFINITION`: the loss-response diagnostic of a book
   (:func:`loss_response_diagnostic`, shown on the dashboard's transparency page and stored in

@@ -53,8 +53,8 @@ of training responses behind it, and a context with fewer than the documented mi
 ## Batch scoring: `POST /score_book`
 
 The command below was run from `bre/` against the demo database (`data/synthetic/demo.db`,
-served model `demo-q4-v1`) on 2026-09-29 and its response pasted from the terminal, abbreviated:
-both rows are complete, `scenario` and `meta` are trimmed to their main fields and two long
+served model `demo-q4-v2`) on 2026-09-29 and its response pasted from the terminal, abbreviated:
+both rows are complete, `scenario` and `meta` are trimmed to their main fields and long
 free-text values are cut at `...`. Every number is a synthetic-training result (`synthetic: true`).
 
 ```bash
@@ -76,7 +76,7 @@ curl -s -X POST http://127.0.0.1:8000/score_book -H 'Content-Type: application/j
 
 ```json
 {
-  "model_version": "demo-q4-v1",
+  "model_version": "demo-q4-v2",
   "model_type": "Q4",
   "family": "quantum",
   "synthetic": true,
@@ -86,40 +86,40 @@ curl -s -X POST http://127.0.0.1:8000/score_book -H 'Content-Type: application/j
     {
       "client_id": "DEMO-C01",
       "display_label": "Demo client 01",
-      "p_sell": 0.6458,
-      "p_baseline": 0.5271,
-      "change_vs_baseline": 0.1187,
-      "ci80_low": 0.4396,
-      "ci80_high": 0.8076,
-      "top_driver": "loss",
-      "top_driver_delta": -0.0336,
-      "suggested_intervention": "show_historical_recoveries",
-      "suggested_delta": -0.1893,
+      "p_sell": 0.7844,
+      "p_baseline": 0.0715,
+      "change_vs_baseline": 0.7129,
+      "ci80_low": 0.5958,
+      "ci80_high": 0.9079,
+      "top_driver": "social:friend_sells",
+      "top_driver_delta": 0.5527,
+      "suggested_intervention": "social_proof_counter",
+      "suggested_delta": -0.5527,
       "drawdown_capacity": 0.0,
       "capacity_status": "below smallest grid loss",
       "status": "high",
       "known_client": true,
       "synthetic": true,
-      "prediction_log_id": 612
+      "prediction_log_id": 1
     },
     {
       "client_id": "DEMO-A-panic_prone",
       "display_label": "Demo archetype: panic-prone",
-      "p_sell": 0.8663,
-      "p_baseline": 0.1611,
-      "change_vs_baseline": 0.7052,
-      "ci80_low": 0.7235,
-      "ci80_high": 0.951,
+      "p_sell": 0.8606,
+      "p_baseline": 0.0538,
+      "change_vs_baseline": 0.8068,
+      "ci80_low": 0.5499,
+      "ci80_high": 0.9551,
       "top_driver": "social:friend_sells",
-      "top_driver_delta": 0.8048,
+      "top_driver_delta": 0.6868,
       "suggested_intervention": "social_proof_counter",
-      "suggested_delta": -0.8048,
+      "suggested_delta": -0.6868,
       "drawdown_capacity": 0.0,
       "capacity_status": "below smallest grid loss",
       "status": "high",
       "known_client": true,
       "synthetic": true,
-      "prediction_log_id": 613
+      "prediction_log_id": 2
     }
   ],
   "scenario": {
@@ -137,7 +137,7 @@ curl -s -X POST http://127.0.0.1:8000/score_book -H 'Content-Type: application/j
     "notes": [
       "duration_days=40 carried only; elapsed time is not a context of th ..."
     ],
-    "...": "8 more fields (cause_scores, media_intensity, social_cue_prevalence, recovery_pct, vix_bucket, duration_days, loss_pct_raw)"
+    "...": "7 more fields: loss_pct_raw, cause_scores, media_intensity, social_cue_prevalence, recovery_pct, vix_bucket, duration_days"
   },
   "n_calibration": {
     "news:recession": {
@@ -152,9 +152,9 @@ curl -s -X POST http://127.0.0.1:8000/score_book -H 'Content-Type: application/j
   "meta": {
     "target": 0.25,
     "n_clients": 2,
-    "seconds": 0.1376,
+    "seconds": 0.1043,
     "intervention_label": "predicted effect, not causally validated",
-    "capacity_definition": "largest design-grid loss before P(sell | L, ['news:recession', 'social:friend_sells']) first exceeds 0.25",
+    "capacity_definition": "behavioral drawdown capacity: the largest loss L on the design grid [-0.05, -0.1, -0.15, -0.2, -0.3] such that P(sel ...",
     "interval": "80% percentiles of P(sell) over the artifact's parameter ...",
     "status_thresholds": {
       "elevated": 0.25,
@@ -168,15 +168,17 @@ Response: one row per client with `p_sell` (predicted probability of selling und
 state), `p_baseline` (no loss, no context), `change_vs_baseline`, `ci80_low`/`ci80_high`,
 `top_driver` (the context or the loss whose removal changes `p_sell` the most),
 `suggested_intervention` (the active intervention with the largest predicted reduction, a
-predicted effect that is not causally validated), `drawdown_capacity` (the largest design-grid
-loss the client is predicted to sit through under the typical-crisis context before P(sell)
-first exceeds `target`), `status` (`stable` < 0.25 ≤ `elevated` < 0.50 ≤ `high`, with
-`uncalibrated context` appended when a scenario context has too few training responses),
-`known_client` (the client's fitted random effects were used), `synthetic` and the
-`prediction_log_id` of the row written to `predictions_log`. `scenario` says how the market
-state was mapped (loss clipped to the design range, cause frame matched to the nearest calibrated
-news context with a `weak_match` flag, contexts in order of arrival); `n_calibration` gives the
-training responses behind each context of the scenario.
+predicted effect that is not causally validated), `drawdown_capacity` with `capacity_status`
+(the behavioral drawdown capacity: the largest design-grid loss L such that P(sell | L', typical
+crisis) stays at or under `target` for every grid loss L' <= L, i.e. the last loss before the
+first crossing; `meta.capacity_definition` carries the full definition, and `GET /model` returns
+it too), `status` (`stable` < 0.25 <= `elevated` < 0.50 <= `high`, with `uncalibrated context`
+appended when a scenario context has too few training responses), `known_client` (the client's
+fitted random effects were used), `synthetic` and the `prediction_log_id` of the row written to
+`predictions_log`. `scenario` says how the market state was mapped (loss clipped to the design
+range, cause frame matched to the nearest calibrated news context with a `weak_match` flag,
+contexts in order of arrival); `n_calibration` gives the training responses behind each context
+of the scenario.
 
 The CSV form takes the same market state as a form field. `book.csv` is a header row plus one
 row per client (`client_id`, optional `display_label`, the six covariate columns, blanks
@@ -198,40 +200,40 @@ curl -s -X POST http://127.0.0.1:8000/score_book/csv \
     {
       "client_id": "DEMO-C01",
       "display_label": "Demo client 01",
-      "p_sell": 0.6458,
-      "p_baseline": 0.5271,
-      "change_vs_baseline": 0.1187,
-      "ci80_low": 0.4396,
-      "ci80_high": 0.8076,
-      "top_driver": "loss",
-      "top_driver_delta": -0.0336,
-      "suggested_intervention": "show_historical_recoveries",
-      "suggested_delta": -0.1893,
+      "p_sell": 0.7844,
+      "p_baseline": 0.0715,
+      "change_vs_baseline": 0.7129,
+      "ci80_low": 0.5958,
+      "ci80_high": 0.9079,
+      "top_driver": "social:friend_sells",
+      "top_driver_delta": 0.5527,
+      "suggested_intervention": "social_proof_counter",
+      "suggested_delta": -0.5527,
       "drawdown_capacity": 0.0,
       "capacity_status": "below smallest grid loss",
       "status": "high",
       "known_client": true,
       "synthetic": true,
-      "prediction_log_id": 616
+      "prediction_log_id": 5
     },
     {
       "client_id": "upload-1",
       "display_label": null,
-      "p_sell": 0.8711,
-      "p_baseline": 0.0522,
-      "change_vs_baseline": 0.8189,
-      "ci80_low": 0.1271,
-      "ci80_high": 0.8486,
+      "p_sell": 0.3575,
+      "p_baseline": 0.1962,
+      "change_vs_baseline": 0.1613,
+      "ci80_low": 0.1399,
+      "ci80_high": 0.8968,
       "top_driver": "social:friend_sells",
-      "top_driver_delta": 0.7052,
+      "top_driver_delta": 0.2576,
       "suggested_intervention": "social_proof_counter",
-      "suggested_delta": -0.7052,
-      "drawdown_capacity": 0.0,
-      "capacity_status": "below smallest grid loss",
-      "status": "high",
+      "suggested_delta": -0.2576,
+      "drawdown_capacity": 0.05,
+      "capacity_status": "within grid",
+      "status": "elevated",
       "known_client": false,
       "synthetic": true,
-      "prediction_log_id": 617
+      "prediction_log_id": 6
     }
   ],
   "scenario": {
@@ -246,7 +248,7 @@ curl -s -X POST http://127.0.0.1:8000/score_book/csv \
   "meta": {
     "target": 0.25,
     "n_clients": 2,
-    "seconds": 0.0893
+    "seconds": 0.0668
   },
   "...": "same shape as the JSON form"
 }
@@ -303,10 +305,10 @@ Rows of clients unknown to the database are logged under the reserved client `ap
 `register_unknown` is true, in which case client rows are created for them (`upload-1` above was
 logged under `api:batch`).
 
-Timing, measured in the same session (build container, 4 CPU cores, after the startup warm-up):
-the two-client book above scored in 0.14 s on the first request; a 300-client JSON book in
-0.58 s (0.80 s end to end over HTTP, including its 300 `predictions_log` rows); the 65-client
-demo book in 0.36 s (0.43 s end to end); one `POST /predict` in 0.15 s. `tests/test_predict.py`
-asserts that scoring 300 clients stays under 2 s and prints its timing (0.49 s, best of three, in
-the last run). A book whose size lands in a row bucket the warm-up did not compile pays a one-off
-compile of about a second on its first request.
+Timing, measured in the same session (build container, 4 CPU cores; the service answered
+`/health` 26 s after start, warm-up included): the two-client book above scored in
+0.10 s on the first request; a 300-client JSON book in 1.45 s on its first request
+(1.66 s end to end over HTTP, including its 300 `predictions_log` rows) and 0.67 s
+(0.89 s end to end) on the next; the 65-client demo book in 1.06 s then 0.46 s;
+one `POST /predict` in 0.19 s. `tests/test_predict.py` asserts that scoring 300 clients
+stays under 2 s once warm and prints its timing.

@@ -1,0 +1,35 @@
+# Phase 3 fit of Q3 on the G_Q synthetic table gq_n200_seed0 (SYNTHETIC; written by `make sim`
+# or `make recover`). Split (a): 20% of the subjects held out and scored after the fit.
+# Every knob that affects a number is stated here (experiments/README.md).
+# The synthetic table carries no news age (x_days_since_news), so every row is evaluated at the
+# design default t = T_DEFAULT = 1 (bre.models.quantum.q3_dynamics); the fitted dynamics are
+# then a static rotation per row and the recency signature of Q3 is not exercised by this table.
+name: p3-gq-n200-seed0-Q3
+dataset: data/synthetic/gq_n200_seed0.parquet
+data: {}                      # build_model_data options (sell_types, subject_key, ...)
+model: Q3
+model_kwargs:
+  t_default: 1.0              # time of rows without a news age (log1p(days) = 1)
+  theta_prior_scale: 2.0      # weak N(0, 2^2) ridge on theta_p and w_ctx (as Q2)
+  w_l2: 0.0
+split:
+  type: subjects              # (a) held-out subjects, stratified by dataset
+  test_frac: 0.2
+  seed: 0
+fit:
+  restarts: 3          # 3 as Q2 (one 2x2 matrix exponential per row; raise for final fits)
+  steps: 1500
+  lr: 0.02
+  val_frac: 0.2               # within-subject validation fold for early stopping (bre.fit)
+  seed: 0
+  early_stopping_patience: 5
+  eval_every: 25
+  lbfgs_polish: true
+  lbfgs_steps: 100
+  n_samples: 50               # MAP models: diagonal-Laplace draws (bre.artifact)
+bootstrap:
+  n_draws: 1000
+  seed: 0
+output:
+  artifact_dir: runs/fits/p3-gq-n200-seed0-Q3
+  metrics_path: reports/fits/p3-gq-n200-seed0-Q3.json

@@ -5,6 +5,11 @@ evaluation module (``bre.eval``) — fast (well under two minutes together with 
   a within-subject validation fold, returns a valid artifact that round-trips through
   ``save`` / ``load`` and scores rows (known subjects exactly, unseen subjects with ``u = 0``).
 * The B2 (SVI) and Q2 paths of ``fit_model`` run and return draws / interference terms.
+* The second-pass models (B3, B5, B6, Q3, Q5) go through ``fit_model`` with tiny settings, their
+  artifacts round-trip through ``save`` / ``load`` and score rows identically; B5 takes the
+  external-fit branch (``fit_external`` per restart, no draws, ``n_params`` from the model,
+  byte blobs restored from float64), Q5 logs its mean ``|q|`` and an undefined ``delta_LTP``,
+  Q3 fits at the default time and reports a zero order effect by construction.
 * Metrics on synthetic probabilities with known answers: perfect calibration gives ECE near 0,
   a random predictor gives AUC near 0.5, a perfect predictor AUC 1; the subject bootstrap
   interval contains the point estimate.
@@ -33,20 +38,34 @@ def gc20():
     return df, truth, build_model_data(df)
 
 
+@pytest.fixture(scope="module")
+def gc6():
+    """A smaller table (6 subjects, 1020 rows) for the second-pass fits: B6's scan and the
+    Laplace Hessians of B3 / Q3 are the costly parts, and they scale with the row count."""
+    df, truth = gc.generate(6, 7)
+    return df, truth, build_model_data(df)
+
+
 # ---------------------------------------------------------------------------------------------
 # fit_model and the artifact contract
 # ---------------------------------------------------------------------------------------------
 
 
-def test_registry_lists_the_first_pass_models_and_generators(gc20):
+def test_registry_lists_the_ten_models_and_generators(gc20):
     _, _, data = gc20
-    assert set(MODEL_REGISTRY) == {"B1", "B2", "B4", "Q2", "Q4"}
+    assert set(MODEL_REGISTRY) == {"B1", "B2", "B3", "B4", "B5", "B6", "Q2", "Q3", "Q4", "Q5"}
     assert GENERATORS == {"gq": "quantum", "gc": "classical", "gf": "classical"}
+    assert F.requires_external_fit(make_model("B5", data)) and not F.requires_external_fit(make_model("B1", data))
     for name in MODEL_REGISTRY:
         m = make_model(name, data)
         assert m.name == name
-        counts = param_counts(name, m.init_params(F.jax.random.PRNGKey(0), data, 0))
-        assert counts["population"] <= counts["all"]
+        p0 = m.init_params(F.jax.random.PRNGKey(0), data, 0)  # B5: a (fast) sklearn fit on the tiny table
+        counts = param_counts(name, p0, m)
+        assert counts["population"] <= counts["all"] == m.n_params(p0) > 0
+        if name != "B5":  # the pytree count agrees with the model's count on a vocabulary without `none` entries
+            assert param_counts(name, p0) == counts
+        else:
+            assert param_counts(name, p0)["all"] > counts["all"]  # bytes of the pickled estimators, not parameters
 
 
 def test_fit_model_b1_improves_nll_and_artifact_round_trips(gc20, tmp_path):
@@ -105,6 +124,50 @@ def test_fit_model_q2_and_b2_paths(gc20, tmp_path):
     p_new = predict_rows(back_b, df_new)  # unseen subjects: beta_ctx = mu_ctx, u = 0
     assert p_new.shape == (len(df_new),) and np.all((p_new > 0) & (p_new < 1))
     assert predict_rows_samples(back_b, df_new).shape == (5, len(df_new))
+
+
+TINY = dict(restarts=1, steps=20, lr=0.03, seed=2, early_stopping_patience=2, eval_every=10, lbfgs_steps=2, n_samples=2)
+
+
+@pytest.mark.parametrize("name", ["B3", "B5", "B6", "Q3", "Q5"])
+def test_second_pass_models_fit_and_their_artifacts_round_trip(gc6, tmp_path, name):
+    df, _, data = gc6
+    r = F.fit_model(name, data, log_path=tmp_path / "fit.log", **TINY)
+    model = r.model
+    assert r.model_name == name and np.isfinite(r.train_nll) and np.isfinite(r.val_nll)
+    assert r.n_params == model.n_params(r.params) and r.n_params_population <= r.n_params
+    tab = r.restarts_table
+    if name == "B5":
+        assert list(tab["method"]) == ["external"] and int(tab["seed"].iloc[0]) == F.external_fit_seed(F.jax.random.PRNGKey(2), 0)
+        assert r.param_samples is None and "laplace" not in r.extra and "no parameter draws" in r.extra["param_samples_note"]
+        assert r.params["blob"]["gbt"].dtype == np.uint8 and r.n_params == int(r.params["meta"]["n_leaves"]) + int(r.params["meta"]["n_weights"])
+        assert "interference_train" not in r.extra
+    else:
+        assert list(tab["method"])[0].startswith("adam") and r.train_nll < tab["init_train_nll"].iloc[0]
+        assert r.param_samples is not None and len(r.param_samples) == 2 and "laplace" in r.extra
+    if name in ("Q3", "Q5"):
+        it = r.extra["interference_train"]
+        assert it["order_zero_by_construction"] and it["n_pair_rows"] > 0 and it["order_mean"] == 0.0
+        if name == "Q5":
+            assert not it["ltp_defined"] and np.isnan(it["ltp_mean"]) and it["mean_abs_q"] == pytest.approx(model.mean_abs_q(r.params, data.subset(r.train_rows)))
+        else:
+            assert it["ltp_defined"] and np.isfinite(it["ltp_mean"]) and "mean_abs_q" not in it
+    # artifact round trip: same predictions, same count, blobs restored from float64 for B5
+    art = F.artifact_from_fit(r, data, training_data_refs=["tests/gc20"])
+    assert art.n_params == r.n_params and art.is_synthetic_training
+    art.save(tmp_path / name)
+    back = ModelArtifact.load(tmp_path / name)
+    assert back.model_name == name and back.n_params == r.n_params and back.n_samples == (0 if name == "B5" else 2)
+    p_direct = np.asarray(model.predict_proba(r.params, data))
+    assert np.allclose(predict_rows(back, df), p_direct, atol=1e-12)
+    assert predict_rows_samples(back, df).shape == (back.n_samples, data.n)
+    if name == "B5":
+        assert "no parameter draws" in back.notes and back.params["blob"]["gbt"].dtype == np.float64
+    cc = back.calibrated_contexts[data.ctx_vocab[0]]
+    assert cc["status"] == CALIBRATED and (cc["theta"] is None) == (name in ("B5", "B6"))
+    df_new, _ = gc.generate(2, 8)  # unseen subjects
+    p_new = predict_rows(back, df_new)
+    assert p_new.shape == (len(df_new),) and np.all((p_new > 0) & (p_new < 1))
 
 
 def test_split_within_subject_is_stratified_and_deterministic(gc20):
@@ -199,6 +262,28 @@ def test_structural_tests_from_data_have_the_design_cells(gc20):
     assert oe["n_cells"] == 5 * 6 and np.isfinite(oe["mean_abs"])
 
 
+def test_model_structural_checks_q5_quarter_law_and_q3_zero_order_effect(gc6):
+    _, _, data = gc6
+    key = F.jax.random.PRNGKey(0)
+    q5 = make_model("Q5", data)
+    p5 = q5.init_params(key, data, 0)
+    c5 = E.model_structural_checks(q5, p5, data, n_boot=20, seed=0)
+    assert not c5["ltp"]["defined"] and "not defined" in c5["ltp"]["note"]
+    assert c5["order_effect"]["zero_by_construction"] and "by construction" in c5["order_effect"]["note"]
+    q = c5["quarter_law"]
+    assert q["reference"] == 0.25 and q["ci95"][0] <= q["mean_abs_q"] <= q["ci95"][1] and q["n_rows"] == int(data.sell_mask().sum())
+    assert "decoherence" not in c5
+    q3 = make_model("Q3", data)
+    c3 = E.model_structural_checks(q3, q3.init_params(key, data, 0), data, rows=data.sell_rows()[:400], n_boot=20, seed=0)
+    assert c3["ltp"]["defined"] and np.isfinite(c3["ltp"]["mean"]) and "quarter_law" not in c3
+    assert c3["order_effect"]["zero_by_construction"] and c3["order_effect"]["mean"] == 0.0
+    # a NaN interference interval (Q5 without a defined delta_LTP) never excludes zero
+    ici = E.interference_ci(q5, p5, data, param_samples=[p5, p5])
+    assert ici["ltp_mean_ci95"] == [float("nan")] * 2 or all(np.isnan(ici["ltp_mean_ci95"]))
+    assert ici["ltp_ci_excludes_zero"] is False and ici["order_zero_by_construction"] and "mean_abs_q" in ici
+    assert E.interference_ci(make_model("B1", data), {}, data) is None
+
+
 # ---------------------------------------------------------------------------------------------
 # Decision rule and comparison table
 # ---------------------------------------------------------------------------------------------
@@ -226,6 +311,10 @@ def test_decision_rule_returns_the_exact_verdict_sentences(rng):
     assert E.decision_rule(_results(rng, -0.05, 30, 40), ici, is_real_data=True, n_boot=200)["verdict"] == E.VERDICT_NONE
     assert E.decision_rule(_results(rng, 0.05, 50, 40), ici, is_real_data=True, n_boot=200)["verdict"] == E.VERDICT_NONE
     assert E.decision_rule(_results(rng, 0.05, 30, 40), {"ltp_mean_ci95": [-0.01, 0.08]}, is_real_data=True, n_boot=200)["verdict"] == E.VERDICT_NONE
+    # a NaN or missing interference interval does not exclude zero (Q5's undefined delta_LTP; no draws)
+    for ici_nan in ({"ltp_mean_ci95": [float("nan"), float("nan")]}, {"ltp_mean_ci95": None}, None):
+        out_nan = E.decision_rule(_results(rng, 0.05, 30, 40), ici_nan, is_real_data=True, n_boot=200)
+        assert out_nan["verdict"] == E.VERDICT_NONE and out_nan["details"]["conditions"]["interference_ci_excludes_zero"] is False
     syn = E.decision_rule(_results(rng, 0.05, 30, 40, synthetic=True), ici, n_boot=200)
     assert syn["verdict"] == E.VERDICT_NONE and "synthetic" in syn["details"]["note"] and "data_that_would_resolve_it" in syn["details"]
     # precomputed CI path (no per-row log-likelihoods)

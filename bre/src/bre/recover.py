@@ -12,8 +12,10 @@ For every generator in ``{gq, gc, gf}`` (``bre.sim``), every ``N`` and every see
 3. every model in the list is fitted and scored on the selection fold by held-out NLL per
    response; the model with the lowest NLL is *selected*, and the selection is *correct* when
    its family (classical / quantum) is the generator's family (``bre.registry.GENERATORS``).
-   WAIC and PSIS-LOO are recorded for B2 (the only Bayesian fit; they do not compare across
-   models at this stage);
+   Any model of ``bre.registry.MODEL_REGISTRY`` may be listed (``--models``); the default grid
+   is the first-pass five (``DEFAULT_MODELS``). WAIC and PSIS-LOO are recorded for B2 (the
+   only Bayesian fit; they do not compare across models at this stage); the interference
+   terms of every Q-model on the fit fold ride along;
 4. parameter recovery: for G_Q the population context means ``theta_c`` (the subject-mean of
    the generator's per-subject ``theta_{c,i}``) against the Q2 / Q4 tables after gauge
    alignment and folding (``align_gauge`` of ``bre.models.quantum.q2_context_unitary``), the
@@ -83,6 +85,18 @@ SECONDS_PER_STEP: dict[str, float] = {"B1": 0.002, "B4": 0.004, "Q2": 0.09, "Q4"
 """Measured full-batch step costs on the N = 200 design (34,000 sell rows) with four
 single-threaded workers running at once (2026-09-17 build machine); scaled linearly with the
 number of sell rows for the runtime estimate."""
+
+SECONDS_PER_STEP_ASSUMED: dict[str, float] = {"B3": 0.006, "B6": 0.02, "Q3": 0.09, "Q5": 0.005}
+"""**Assumed, not measured** step costs of the second-pass models, used only by
+:func:`estimate_minutes` (the pre-run wall-time guard): B3 and Q5 are encoder models of B4's
+size with a few more element-wise operations; B6 runs a ``lax.scan`` over session positions;
+Q3 evaluates one 2x2 matrix exponential per row like Q2. A model missing from both tables is
+estimated at the largest measured cost (Q4's). Replace an entry with a measured value once a
+fit of that model has been timed on the build machine (the log carries the seconds per fit)."""
+
+EXTERNAL_FIT_SECONDS: float = 60.0
+"""Assumed wall time of one external fit (B5: boosting + MLP on ~22,000 rows, one thread) for
+the runtime estimate; scaled with the number of rows like the step costs."""
 
 XLA_SINGLE_THREAD = "--xla_cpu_multi_thread_eigen=false intra_op_parallelism_threads=1"
 
@@ -188,6 +202,8 @@ def run_job(job: dict[str, Any]) -> dict[str, Any]:
     # parameters needed for the recovery scatter plots
     p = res.params
     summary: dict[str, Any] = {"subject_ids": [str(s) for s in data.subject_ids]}
+    if hasattr(res.model, "interference_terms"):
+        out["interference_train"] = res.extra.get("interference_train")
     if model_name in ("Q2", "Q4"):
         summary["theta_ctx"] = np.asarray(res.model.context_table(p))
         summary["theta_L"] = np.asarray(p["theta_L"])
@@ -201,7 +217,6 @@ def run_job(job: dict[str, Any]) -> dict[str, Any]:
             summary["log_gamma"] = np.asarray(p["log_gamma"])
             summary["gamma_mu"] = float(np.asarray(p["gamma_mu"]))
             summary["gamma_sigma"] = float(np.exp(np.asarray(p["gamma_log_sigma"])))
-        out["interference_train"] = res.extra.get("interference_train")
     elif model_name == "B1":
         coef = res.model.coefficients(p)
         summary["coefficients"] = {str(k): float(v) for k, v in coef.items()}
@@ -216,6 +231,11 @@ def run_job(job: dict[str, Any]) -> dict[str, Any]:
         summary["natural"] = res.model.natural_params(p)
         ss = res.model.subject_summary(p, data)
         summary["prior_recovery_logit"] = ss["prior_recovery_logit"].to_numpy()
+    else:  # any other registered model: its named population parameters, when it reports them
+        if hasattr(res.model, "natural_params"):
+            summary["natural"] = res.model.natural_params(p)
+        if hasattr(res.model, "quarter_law_check"):
+            out["quarter_law_train"] = res.model.quarter_law_check(p, data.subset(fit_rows), n_boot=int(job.get("n_boot", 200)), seed=seed)
     summary["ctx_vocab"] = list(data.ctx_vocab)
     out["summary"] = summary
     if job.get("artifact_dir"):
@@ -587,16 +607,30 @@ def summary_markdown(payload: dict[str, Any]) -> str:
 # ---------------------------------------------------------------------------------------------
 
 
+def step_cost(model_name: str) -> tuple[float, bool]:
+    """``(seconds per full-batch step, measured)`` of a model for :func:`estimate_minutes`:
+    :data:`SECONDS_PER_STEP` when measured, :data:`SECONDS_PER_STEP_ASSUMED` otherwise, and
+    the largest measured cost for a model in neither table."""
+    if model_name in SECONDS_PER_STEP:
+        return SECONDS_PER_STEP[model_name], True
+    return SECONDS_PER_STEP_ASSUMED.get(model_name, max(SECONDS_PER_STEP.values())), False
+
+
 def estimate_minutes(jobs: list[dict[str, Any]], workers: int) -> float:
-    """Rough wall-time estimate from :data:`SECONDS_PER_STEP` (worst case: no early stopping)."""
+    """Rough wall-time estimate from :data:`SECONDS_PER_STEP` (worst case: no early stopping;
+    assumed costs for models without a measurement, :func:`step_cost`; externally fitted
+    models at :data:`EXTERNAL_FIT_SECONDS` per restart)."""
     total = 0.0
     for j in jobs:
         m, s = j["model"], j["settings"]
         scale = (j["n"] * 170 * 0.8 * 0.8) / 34000.0 * 1.25  # rows in the fit fold relative to the benchmark table, plus polish/eval overhead
         if m == "B2":
             total += s["restarts"] * s["svi_steps"] * SECONDS_PER_STEP[m] * max(scale, 0.4) + 20
+        elif getattr(MODEL_REGISTRY[m], "requires_external_fit", False):
+            total += s.get("restarts", 1) * EXTERNAL_FIT_SECONDS * scale + 10
         else:
-            total += s["restarts"] * (s["steps"] + 3 * s.get("lbfgs_steps", 0)) * SECONDS_PER_STEP[m] * scale + 10
+            cost, _ = step_cost(m)
+            total += s.get("restarts", 1) * (s.get("steps", 0) + 3 * s.get("lbfgs_steps", 0)) * cost * scale + 10
     return total / max(workers, 1) / 60.0
 
 
@@ -663,7 +697,8 @@ def run(
     log(f"[recover] start: generators={generators} ns={ns} seeds={seeds} models={models} workers={workers} settings={json.dumps(settings)}")
     jobs = build_jobs(generators, ns, seeds, models, Path(data_dir), settings, log_path, artifact_dir, n_boot, log)
     est = estimate_minutes(jobs, workers)
-    log(f"[recover] {len(jobs)} fits queued; worst-case wall-time estimate {est:.0f} min with {workers} worker(s) (early stopping usually cuts this)")
+    assumed = sorted({m for m in models if m != "B2" and not step_cost(m)[1] and not getattr(MODEL_REGISTRY[m], "requires_external_fit", False)})
+    log(f"[recover] {len(jobs)} fits queued; worst-case wall-time estimate {est:.0f} min with {workers} worker(s) (early stopping usually cuts this)" + (f"; step costs of {assumed} are assumed, not measured (SECONDS_PER_STEP_ASSUMED)" if assumed else ""))
     if est > max_minutes and not force:
         raise RuntimeError(f"estimated {est:.0f} min exceeds --max-minutes {max_minutes:.0f}; reduce the grid (seeds, steps, restarts) or pass --force (a run over two hours is a GATE, CLAUDE.md rule 4)")
     results: list[dict[str, Any]] = []
@@ -803,9 +838,12 @@ if __name__ == "__main__":
 __all__ = [
     "DEFAULT_GENERATORS",
     "DEFAULT_MODELS",
+    "EXTERNAL_FIT_SECONDS",
     "MODEL_SETTINGS_DEFAULT",
     "N_TARGET_RULE",
     "N_TARGET_THRESHOLD",
+    "SECONDS_PER_STEP",
+    "SECONDS_PER_STEP_ASSUMED",
     "SELECTION_FRAC",
     "aggregate",
     "confusion_tables",
@@ -818,4 +856,5 @@ __all__ = [
     "run",
     "run_job",
     "selection_split",
+    "step_cost",
 ]

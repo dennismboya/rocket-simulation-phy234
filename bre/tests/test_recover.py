@@ -1,7 +1,9 @@
 """End-to-end test of the Phase 2 recovery study driver (``bre.recover``) at N = 10, one seed,
 two models, one worker, on temporary ``data/synthetic`` and report directories: every output
 file of the module docstring is written, the selection table has one row per (generator, seed),
-the N-target rule is stated, and the log holds one progress line per fit.
+the N-target rule is stated, and the log holds one progress line per fit. A second test checks
+that any registered model can be queued (jobs and the runtime estimate for all ten) and runs
+one job each of B5 (external fit) and Q5 on a tiny table.
 """
 
 from __future__ import annotations
@@ -64,3 +66,33 @@ def test_recover_end_to_end_writes_every_output(tmp_path):
     for f in payload["fits"]:
         assert abs(f["selection_nll"] - f["selection_nll_check"]) < 1e-9
         assert f["n_selection_rows"] == 10 * 34  # 20% of 170 items per subject
+
+
+@pytest.mark.filterwarnings("ignore")
+def test_recover_accepts_any_registered_model(tmp_path):
+    from bre.registry import MODEL_REGISTRY
+
+    data_dir = tmp_path / "data" / "synthetic"
+    log_path = tmp_path / "runs" / "recover" / "t.log"
+    log_path.parent.mkdir(parents=True)
+    models = sorted(MODEL_REGISTRY)
+    settings = {"classical": {"restarts": 1, "steps": 40, "lbfgs_steps": 3}, "quantum": {"restarts": 1, "steps": 40, "lbfgs_steps": 3}, "B2": {"restarts": 1, "svi_steps": 50, "svi_lr": 0.01}}
+    jobs = R.build_jobs(("gq",), (6,), (0,), models, data_dir, settings, log_path, None, 20, log=lambda s: None)
+    assert [j["model"] for j in jobs][:2] == ["Q4", "Q2"] and {j["model"] for j in jobs} == set(models)
+    est = R.estimate_minutes(jobs, 1)
+    assert np.isfinite(est) and est > 0
+    assert R.step_cost("Q2") == (R.SECONDS_PER_STEP["Q2"], True) and R.step_cost("Q3") == (R.SECONDS_PER_STEP_ASSUMED["Q3"], False)
+    assert R.step_cost("nonesuch") == (max(R.SECONDS_PER_STEP.values()), False)
+    with pytest.raises(KeyError):
+        R.run(models=("B1", "Z9"), ns=(6,), seeds=(0,), data_dir=data_dir, out_dir=tmp_path / "r", runs_dir=tmp_path / "runs")
+    # one external-fit job (B5) and one Q-model without a defined delta_LTP (Q5)
+    by_model = {j["model"]: j for j in jobs}
+    b5 = R.run_job({**by_model["B5"], "artifact_dir": str(tmp_path / "art")})
+    assert b5["family"] == "classical" and np.isfinite(b5["selection_nll"]) and b5["n_params"] > 0
+    assert b5["restarts"][0]["method"] == "external" and "interference_train" not in b5 and b5["summary"]["ctx_vocab"]
+    assert (tmp_path / "art" / "gq_n6_seed0" / "B5" / "params.npz").exists()
+    q5 = R.run_job(by_model["Q5"])
+    assert q5["family"] == "quantum" and np.isfinite(q5["selection_nll"])
+    assert q5["interference_train"]["order_zero_by_construction"] and not q5["interference_train"]["ltp_defined"]
+    assert q5["quarter_law_train"]["reference"] == 0.25 and "natural" in q5["summary"]
+    assert log_path.read_text().count("[fit] ") >= 2
