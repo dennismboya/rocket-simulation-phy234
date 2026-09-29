@@ -1,6 +1,13 @@
 """G_Q — the quantum-probability generator of the Phase 2 recovery study (PLAN.md section 5).
 
 Every table produced here is synthetic (``is_synthetic = True`` on every row) and every number
+
+# Population-default rationale (2026-09-29): the loss unitary rotates about the y axis of the Bloch
+# sphere (theta_L = (0, -1.5, 0)) and the state prior b keeps subjects hold-leaning, so that the
+# no-context sell probability rises with the loss for most subjects (probe on 150 subjects: mean
+# P(sell) 0.34 at -5% to 0.58 at -30%, 92% monotone). The earlier defaults rotated about an axis
+# nearly parallel to the typical state, leaving the loss response flat and theta_L unidentified.
+# Synthetic design choice, not fitted to data.
 in :data:`POPULATION_DEFAULTS` is a labelled synthetic design choice (``SOURCE``), chosen so
 that the generator exercises all the structure the Q-models can represent; none of it is fitted
 to, or quoted from, any dataset. :func:`population_from_fit` maps fitted Q2/Q4 parameters to a
@@ -118,9 +125,9 @@ POPULATION_DEFAULTS: dict[str, Any] = {
     "SOURCE": SOURCE,
     "covariate_columns": tuple(_COLUMNS),
     "W": _default_W(_COLUMNS),
-    "b": np.array([1.0, 0.55, 0.0, 0.25]),
+    "b": np.array([1.0, 0.45, 0.0, 0.15]),
     "sigma_v": np.array([0.3, 0.3, 0.3, 0.3]),
-    "theta_L": np.array([1.6, 0.6, 0.3]),
+    "theta_L": np.array([0.0, -1.5, 0.0]),
     "contexts": tuple(_design.NONNULL_CONTEXTS),
     "mu_c": np.array(
         [
