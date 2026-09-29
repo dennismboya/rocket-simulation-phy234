@@ -18,6 +18,12 @@ One sub-folder per run, named after the dataset (`<dataset>[-n<subjects>][-smoke
 | `verdict.json` | `{verdict, best_quantum, best_classical, nll_diff, ci95, interference_ci, n_params_q, n_params_c, data, ...}` — `verdict` is one of the two exact sentences of PLAN.md section 6 |
 | `verdict.md` | the verdict with the conditions that held or failed, the data that would resolve it, and the decision rule verbatim |
 
+The real tables are assembled by `bre.realdata` (Phase 4 mapping, deterministic subject
+subsample) and cached as validated parquet under `runs/realdata/<dataset>-n<subjects>-seed<seed>.parquet`
+(gitignored; real rows only, never under `data/synthetic/`), so a run or a worker reads its
+subsample in about a second instead of rebuilding the 510,750-row CPC18 table. Delete that folder to
+rebuild from `data/processed/`.
+
 Fits, logs, per-job caches and model artifacts go to `runs/phase4/<name>/` (gitignored):
 `phase4.log`, `jobs/<split>__<model>.pkl` (reused by later invocations with the same settings) and
 `artifacts/<split>/<model>/` (a `bre.artifact.ModelArtifact` per fit; the split (b) winner is what
