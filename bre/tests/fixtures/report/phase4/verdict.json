@@ -1,0 +1,12 @@
+{
+ "FIXTURE": "test fixture for tests/test_report.py; not a result",
+ "best_classical": "B1",
+ "best_quantum": "Q2",
+ "ci95": [-0.0011, 0.0009],
+ "data": "FIXTURE: 12 synthetic rows, no dataset",
+ "interference_ci": [-0.002, 0.003],
+ "n_params_c": 7,
+ "n_params_q": 6,
+ "nll_diff": -0.0001,
+ "verdict": "FIXTURE verdict sentence: no evidence of a quantum-probability advantage in the available data (fixture, not a result)"
+}
