@@ -13,9 +13,13 @@ is set to zero, B2's subject context slopes to their population mean ``mu_ctx``,
 ``log_gamma`` to the population location ``gamma_mu``.
 
 Parameter-count notes (INTERFACE.md section 2): reports show two counts for models with a
-per-subject block, all free scalars and the count without the per-subject blocks; both are
-produced by ``count_params(params)`` / ``count_params(params, exclude=...)`` through
-:func:`param_counts`.
+per-subject block, all free scalars and the count without the per-subject blocks; both come
+from :func:`param_counts`, which asks the model (``model.n_params(params)`` and
+``model.n_params(params, include_random_effects=False)``) when the instance is given and falls
+back to counting the pytree leaves (``count_params``) otherwise. The model's own count is the
+documented one (``PARAM_COUNT_NOTES``): it leaves out fixed entries (the ``none`` rows of a
+Q-model's context table) and, for B5, counts tree leaves and MLP weights instead of the bytes
+of the pickled estimators.
 """
 
 from __future__ import annotations
@@ -102,10 +106,9 @@ def per_subject_paths(name: str) -> tuple[tuple[str, ...], ...]:
     return tuple(PER_SUBJECT_BLOCKS[name])
 
 
-def param_counts(name: str, params: Any) -> dict[str, int]:
-    """``{"all": ..., "population": ...}``: every free scalar, and the count without the
-    per-subject blocks of :data:`PER_SUBJECT_BLOCKS` (equal when the model has none)."""
-    total = count_params(params)
+def _count_without_per_subject_blocks(name: str, params: Any) -> int:
+    """``count_params`` of ``params`` with the per-subject blocks of :data:`PER_SUBJECT_BLOCKS`
+    removed (the pytree fallback of :func:`param_counts`)."""
     without = dict(params)
     for path in per_subject_paths(name):
         if len(path) == 1:
@@ -114,7 +117,32 @@ def param_counts(name: str, params: Any) -> dict[str, int]:
             inner = dict(without[path[0]])
             inner = {k: v for k, v in inner.items() if k != path[1]}
             without[path[0]] = inner
-    return {"all": int(total), "population": int(count_params(without))}
+    return int(count_params(without))
+
+
+def param_counts(name: str, params: Any, model: Model | None = None) -> dict[str, int]:
+    """``{"all": ..., "population": ...}``: every free scalar, and the count without the
+    per-subject blocks of :data:`PER_SUBJECT_BLOCKS` (equal when the model has none).
+
+    With ``model`` (the instance the parameters belong to) both numbers come from
+    ``model.n_params`` — ``all = model.n_params(params)``, ``population =
+    model.n_params(params, include_random_effects=False)`` for a model with per-subject blocks
+    (every such model takes that keyword; a model without blocks reports ``all`` twice). This is
+    the count reports must use: for B5 the pytree leaves are pickled estimators and
+    ``count_params`` would count their bytes. Without ``model`` the pytree leaves are counted
+    (``count_params``), which agrees with the model's count for every gradient-fitted model on a
+    vocabulary without ``none`` entries.
+    """
+    if model is not None:
+        total = int(model.n_params(params))
+        if not PER_SUBJECT_BLOCKS.get(name):
+            return {"all": total, "population": total}
+        try:
+            population = int(model.n_params(params, include_random_effects=False))
+        except TypeError:  # a model with per-subject blocks but no such keyword: pytree fallback
+            population = _count_without_per_subject_blocks(name, params)
+        return {"all": total, "population": population}
+    return {"all": int(count_params(params)), "population": _count_without_per_subject_blocks(name, params)}
 
 
 __all__ = [

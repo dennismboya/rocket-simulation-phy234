@@ -11,11 +11,15 @@ The demo model
 Q4 (the open-system context-unitary model; Q2 when the Q4 fit fails) fitted by MAP with the
 minimal optax loop of ``tests/test_q2_q4.py`` (Adam, cosine-decayed learning rate,
 :data:`FIT_STEPS` <= 1500 steps, :data:`FIT_RESTARTS` restarts, best final objective kept). The
-artifact (``bre.artifact.ModelArtifact``, saved under ``runs/models/demo-<model>-v1/``) carries
+artifact (``bre.artifact.ModelArtifact``, saved under ``runs/models/demo-<model>-v<revision>/``,
+:data:`DEMO_ARTIFACT_REVISION`) carries
 ``is_synthetic_training = True``, the training subjects' ids (so book clients keep their fitted
 random effects), the train NLL per response, and ``calibrated_contexts`` computed from the
 training rows: a context is ``"calibrated"`` when at least :data:`CALIBRATION_MIN_RESPONSES`
-training sell rows show it, else ``"uncalibrated: prior only"``.
+training sell rows show it, else ``"uncalibrated: prior only"``. Its metrics also hold the
+``loss_response`` diagnostic of the training book (:func:`bre.predict.loss_response_diagnostic`:
+the share of subjects whose fitted ``P(sell | L, no context)`` is non-decreasing over the design
+grid, and the mean ``P(sell)`` per loss level).
 
 Intervals come from :func:`laplace_samples`: a **diagonal Laplace approximation** at the
 optimum over the population-level parameters (``bre.artifact`` module docstring lists its
@@ -60,7 +64,14 @@ MODELS_ROOT = S.PROJECT_ROOT / "runs" / "models"
 
 DEMO_MODEL = "Q4"
 FALLBACK_MODEL = "Q2"
-ARTIFACT_VERSION_TEMPLATE = "demo-{model}-v1"
+DEMO_ARTIFACT_REVISION = 2
+"""Revision of the demo artifact: v1 was fitted on the book generated with the G_Q defaults before
+2026-09-29 (loss rotation about the x axis); v2 on the book from the current defaults (``theta_L``
+about the y axis, ``b = (1, 0.45, 0, 0.15)``, so the synthetic loss response rises with the loss).
+A rebuild registers the new version as the active model and leaves older artifact directories on
+disk (their registry rows are deactivated)."""
+
+ARTIFACT_VERSION_TEMPLATE = "demo-{model}-v" + str(DEMO_ARTIFACT_REVISION)
 
 FIT_STEPS = 1500
 FIT_RESTARTS = 3
@@ -268,7 +279,15 @@ def fit_demo_model(
         notes=notes,
         subject_ids=tuple(str(s) for s in data.subject_ids),
     )
-    summary = {"model": name, "steps": steps, "restarts": restarts, "train_nll_per_response": train_nll, "objective": float(obj), "seconds": seconds, "fallback_errors": errors}
+    from bre.predict import loss_response_diagnostic
+
+    book = responses.drop_duplicates("subject_id")[["subject_id", "covariates"]].rename(columns={"subject_id": "client_id"}).reset_index(drop=True)
+    loss_response = loss_response_diagnostic(artifact, book)
+    artifact.metrics["loss_response"] = {k: loss_response[k] for k in ("monotone_share", "n_clients", "n_monotone", "loss_levels", "mean_p_sell_by_loss", "p_sell_by_loss_ci80", "context", "question_order_id", "definition")}
+    artifact.metrics["loss_response_monotone_share"] = loss_response["monotone_share"]
+    summary = {"model": name, "steps": steps, "restarts": restarts, "train_nll_per_response": train_nll, "objective": float(obj), "seconds": seconds, "fallback_errors": errors,
+               "theta_L": np.asarray(artifact.params["theta_L"], dtype=np.float64).tolist(), "loss_response_monotone_share": loss_response["monotone_share"],
+               "mean_p_sell_by_loss": loss_response["mean_p_sell_by_loss"]}
     return artifact, summary
 
 
@@ -437,6 +456,7 @@ if __name__ == "__main__":  # pragma: no cover
 __all__ = [
     "ACTOR",
     "CALIBRATION_MIN_RESPONSES",
+    "DEMO_ARTIFACT_REVISION",
     "DEMO_DB_PATH",
     "DEMO_MODEL",
     "FALLBACK_MODEL",

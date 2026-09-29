@@ -8,6 +8,13 @@ training-data reference. The layout on disk is::
     <dir>/params.npz       the parameter pytree flattened with "/"-joined keys (numpy float64)
     <dir>/samples.npz      optional: K parameter draws, same keys, leading axis K
 
+Every leaf is stored as float64 (complex128 for complex leaves). B5's leaves are pickled
+scikit-learn estimators as ``uint8`` byte arrays: the values 0..255 are exact in float64, so
+the artifact round-trips them without a special case and ``B5.estimators`` (``unpickle_blob``)
+casts the reloaded float64 array back to bytes. ``n_params`` is the model's own count
+(``model.n_params``, through ``registry.param_counts(name, params, model)``): for B5 that is
+the number of tree leaves plus MLP weights, not the byte count of the blobs.
+
 Parameter draws (``param_samples``) carry the uncertainty the dashboard shows as intervals:
 
 * B2 (hierarchical Bayesian): posterior draws from the fitted guide / sampler, in the protocol
@@ -26,6 +33,8 @@ Parameter draws (``param_samples``) carry the uncertainty the dashboard shows as
   at ``LAPLACE_MAX_SD`` so that a draw stays finite; (4) per-subject random effects are not
   resampled, so a training subject's interval is conditional on its fitted ``u``; (5) it is a
   posterior under the model's own priors (ridge / random-effect scale), not a bootstrap.
+* Externally fitted models (B5): no draws (``param_samples = None``; the ``notes`` say so). The
+  dashboard shows a point prediction without an interval for such a model.
 
 Scoring new subjects: :func:`predict_rows` builds a ``ModelData`` from schema rows with the
 artifact's context vocabulary and covariate standardization (``build_model_data(...,
@@ -416,9 +425,12 @@ def predict_rows_samples(artifact: ModelArtifact, df: pd.DataFrame, **data_kwarg
 def context_parameter(model_name: str, params: dict[str, Any], ctx_vocab: tuple[str, ...], tag: str) -> list[float] | None:
     """The parameter block that carries context ``tag`` in ``params``, as a flat list:
     Q2/Q4 the ``theta_ctx`` row (3 su(2) components); B2 ``mu_ctx[c]`` (one value); B4
-    ``lambda[c]`` (one value); B1 the per-position main-effect weights ``ctx{k}={tag}`` (K
-    values, read by column name from ``B1.columns`` when the model instance is given through
-    ``params["_columns"]``, else None)."""
+    ``lambda[c]`` (one value); B3 ``[rho_ctx[c], pr_ctx[c]]`` (reference-point shift and
+    recovery-belief term); Q3 ``w_ctx[c]`` (dissonance weight); Q5 ``b_ctx[c]`` (attraction
+    term); B1 the per-position main-effect weights ``ctx{k}={tag}`` (K values, read by column
+    name from ``B1.columns`` when the model instance is given through ``params["_columns"]``,
+    else None); None for B5 and B6 (B5 has no named context parameter; B6's context weights
+    are per position and per state, reported through ``B6.natural_params``)."""
     vocab = tuple(ctx_vocab)
     if tag not in vocab:
         return None
@@ -429,6 +441,12 @@ def context_parameter(model_name: str, params: dict[str, Any], ctx_vocab: tuple[
         return [float(np.asarray(params["mu_ctx"])[c])]
     if model_name == "B4":
         return [float(np.asarray(params["lambda"])[c])]
+    if model_name == "B3":
+        return [float(np.asarray(params["rho_ctx"])[c]), float(np.asarray(params["pr_ctx"])[c])]
+    if model_name == "Q3":
+        return [float(np.asarray(params["w_ctx"])[c])]
+    if model_name == "Q5":
+        return [float(np.asarray(params["b_ctx"])[c])]
     if model_name == "B1":
         cols = params.get("_columns")
         if cols is None:

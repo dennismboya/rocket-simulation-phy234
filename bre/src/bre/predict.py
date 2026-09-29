@@ -22,6 +22,10 @@ Documented constants (design choices, changeable here only):
   when the loss rotation ``theta_L`` is scaled up (``tests/test_predict.py``); a plain "max L
   with P <= target" would not be, because ``P(sell | L)`` is a rotation and need not be monotone.
 * :data:`STATUS_THRESHOLDS`: triage status from the predicted probability under the market state.
+* :data:`LOSS_RESPONSE_DEFINITION`: the loss-response diagnostic of a book
+  (:func:`loss_response_diagnostic`, shown on the dashboard's transparency page and stored in
+  the demo artifact's metrics): the share of clients whose ``P(sell | L, no context)`` is
+  non-decreasing over the design grid, and the mean ``P(sell)`` per loss level.
 * :data:`WEAK_MATCH_THRESHOLD`: a free-text cause frame is mapped to the nearest calibrated news
   context by :func:`cause_frame_similarity`; below the threshold the mapping is flagged
   ``weak_match`` and the dashboard must show the flag.
@@ -80,6 +84,17 @@ RISK_SCORE_LOSS = -0.20
 
 DRAWDOWN_TARGET = 0.25
 """Default target of the behavioral drawdown capacity (module docstring)."""
+
+CAPACITY_DEFINITION = (
+    "behavioral drawdown capacity: the largest loss L on the design grid {grid} such that "
+    "P(sell | L', {contexts}, scenario-first) <= {target} for every grid loss L' <= L, i.e. the last "
+    "grid loss before P(sell) first crosses the target (0 when the smallest grid loss already "
+    "crosses it). The loss enters the model as a rotation of the state, so P(sell | L) is not "
+    "guaranteed to be monotone in L; the capacity therefore uses this first-crossing (prefix) rule, "
+    "not the value at L alone."
+)
+"""Definition text returned in ``score_book(...).attrs['capacity_definition']`` (and the API's
+``meta.capacity_definition``) so the dashboard can show what the number means."""
 
 STATUS_THRESHOLDS: dict[str, float] = {"elevated": 0.25, "high": 0.50}
 """Triage status: ``"high"`` when ``p >= 0.50``, ``"elevated"`` when ``p >= 0.25``, else
@@ -1248,10 +1263,16 @@ def rank_interventions(
 
 
 def drawdown_capacity(p_grid: np.ndarray, target: float = DRAWDOWN_TARGET) -> tuple[float, str]:
-    """Capacity from ``P(sell | L, typical crisis)`` over ``design.LOSS_PCTS`` (ascending
-    magnitude): the largest grid loss before the first crossing of ``target`` (module
-    docstring). Returns ``(capacity, status)`` with capacity 0.0 and status ``"below smallest
-    grid loss"`` when even the smallest loss crosses, ``"at grid maximum"`` when none does."""
+    """Behavioral drawdown capacity (first-crossing definition, :data:`CAPACITY_DEFINITION`).
+
+    ``p_grid`` holds ``P(sell | L, typical crisis)`` over ``design.LOSS_PCTS`` in ascending
+    magnitude. The capacity is the largest grid loss ``L`` such that ``p <= target`` at *every*
+    grid loss ``L' <= L`` (a prefix rule), not the largest ``L`` with ``p(L) <= target``: the
+    loss unitary is a rotation, so ``P(sell | L)`` may come back under the target at a larger
+    loss, and an investor predicted to sell at 15% is not credited with sitting through 30%.
+    Returns ``(capacity, status)`` with capacity 0.0 and status ``"below smallest grid loss"``
+    when even the smallest loss crosses, ``"at grid maximum"`` when none does.
+    """
     losses = sorted(abs(x) for x in D.LOSS_PCTS)
     cap = 0.0
     for L, p in zip(losses, p_grid):
@@ -1264,6 +1285,39 @@ def drawdown_capacity(p_grid: np.ndarray, target: float = DRAWDOWN_TARGET) -> tu
     if cap >= losses[-1] - 1e-12:
         return cap, "at grid maximum"
     return cap, "within grid"
+
+
+LOSS_RESPONSE_DEFINITION = (
+    "share of the book's clients whose predicted P(sell | L, no context, scenario-first) is non-decreasing "
+    "over the five design loss levels {grid} (each client with its fitted random effects when known to the "
+    "model, else at the population mean), and the mean predicted P(sell) per loss level across the book. "
+    "A diagnostic of the served model's loss response, not a test of the data: the loss enters as a rotation "
+    "of the state, so a non-monotone response is possible under the model."
+)
+
+
+def loss_response_diagnostic(artifact: ModelArtifact, book: pd.DataFrame, *, subject_effects: SubjectEffects | None = None) -> dict[str, Any]:
+    """Loss-response diagnostic of a book (:data:`LOSS_RESPONSE_DEFINITION`): ``monotone_share``
+    (share of clients with a non-decreasing ``P(sell | L, no context)`` over ``design.LOSS_PCTS``),
+    ``mean_p_sell_by_loss`` (per level, across the book), ``p_sell_by_loss_ci80`` (10th-90th
+    percentile across clients per level), ``n_clients``, ``loss_levels`` and the definition.
+    ``book`` needs ``client_id`` and ``covariates``."""
+    ids = [str(c) for c in book["client_id"].tolist()]
+    covs = [covariates_text(c) for c in book["covariates"].tolist()]
+    losses = [float(x) for x in D.LOSS_PCTS]
+    if not ids:
+        return {"monotone_share": None, "n_clients": 0, "n_monotone": 0, "loss_levels": losses, "mean_p_sell_by_loss": None, "p_sell_by_loss_ci80": None,
+                "context": "none", "question_order_id": D.SCENARIO_FIRST, "definition": LOSS_RESPONSE_DEFINITION.format(grid=losses), **_model_meta(artifact)}
+    sc = scorer_for(artifact)
+    scen = [Scenario(cid, cov, L, (), D.SCENARIO_FIRST, None, tag=f"loss:{L}") for cid, cov in zip(ids, covs) for L in losses]
+    p = sc.predict(scen, subject_effects).reshape(len(ids), len(losses))
+    monotone = np.all(np.diff(p, axis=1) >= -1e-12, axis=1)
+    lo, hi = np.percentile(p, [10, 90], axis=0)
+    return jsonable({
+        "monotone_share": float(monotone.mean()), "n_clients": len(ids), "n_monotone": int(monotone.sum()), "loss_levels": losses,
+        "mean_p_sell_by_loss": p.mean(axis=0).tolist(), "p_sell_by_loss_ci80": [lo.tolist(), hi.tolist()],
+        "context": "none", "question_order_id": D.SCENARIO_FIRST, "definition": LOSS_RESPONSE_DEFINITION.format(grid=losses), **_model_meta(artifact),
+    })
 
 
 def score_book(
@@ -1355,7 +1409,8 @@ def score_book(
         out[col] = pd.Series([r[col] for r in rows], dtype="object")  # keep None: the string dtype would turn it into NaN
     out.attrs.update({
         "scenario": scen, "n_calibration": calibration, "target": target, "interval": "80% " + INTERVAL_SOURCE if smp is not None else _no_samples_reason(artifact),
-        "intervention_label": INTERVENTION_LABEL, "capacity_definition": f"largest design-grid loss before P(sell | L, {list(TYPICAL_CRISIS_CONTEXTS)}) first exceeds {target}",
+        "intervention_label": INTERVENTION_LABEL,
+        "capacity_definition": CAPACITY_DEFINITION.format(grid=[-x for x in grid], contexts=list(TYPICAL_CRISIS_CONTEXTS), target=target),
         "model_version": artifact.version, "model_type": artifact.model_name, "synthetic": bool(artifact.is_synthetic_training), "wording": PROBABILITY_WORDING,
     })
     return out
@@ -1363,12 +1418,14 @@ def score_book(
 
 __all__ = [
     "ARTIFACT_REF_PREFIX",
+    "CAPACITY_DEFINITION",
     "CAUSE_FRAME_KEYWORDS",
     "DRAWDOWN_TARGET",
     "INTERVAL_SOURCE",
     "INTERVENTION_LABEL",
     "LEVELS",
     "LOSS_RANGE",
+    "LOSS_RESPONSE_DEFINITION",
     "PROBABILITY_WORDING",
     "RISK_SCORE_LOSS",
     "STATUS_THRESHOLDS",
@@ -1387,6 +1444,7 @@ __all__ = [
     "drawdown_capacity",
     "load_active_artifact",
     "load_artifact",
+    "loss_response_diagnostic",
     "market_state_to_contexts",
     "match_cause_frame",
     "predict_sell",

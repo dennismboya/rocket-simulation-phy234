@@ -219,6 +219,28 @@ def test_drawdown_capacity_prefix_rule():
     assert P.drawdown_capacity(np.array([0.1, 0.2, 0.3, 0.2, 0.1]), target=0.5) == (0.30, "at grid maximum")
 
 
+def test_loss_response_diagnostic(art, demo_env: DemoEnv):
+    """Monotone share and mean P(sell) per design loss over the book, with the fitted effects of
+    known clients; the share is the fraction of clients whose curve never decreases."""
+    out = P.loss_response_diagnostic(art, demo_env.clients)
+    n = len(demo_env.clients)
+    assert out["n_clients"] == n and 0.0 <= out["monotone_share"] <= 1.0 and out["n_monotone"] == round(out["monotone_share"] * n)
+    assert out["loss_levels"] == list(D.LOSS_PCTS) and len(out["mean_p_sell_by_loss"]) == len(D.LOSS_PCTS)
+    lo, hi = out["p_sell_by_loss_ci80"]
+    assert all(0.0 <= a <= m <= b <= 1.0 + 1e-12 for a, m, b in zip(lo, out["mean_p_sell_by_loss"], hi)) or all(0.0 <= a <= b <= 1.0 for a, b in zip(lo, hi))
+    assert out["synthetic"] is True and "non-decreasing" in out["definition"]
+    # recomputed by hand for the first three clients
+    sc = P.scorer_for(art)
+    ids = demo_env.clients["client_id"].tolist()[:3]
+    covs = [P.covariates_text(c) for c in demo_env.clients["covariates"].tolist()[:3]]
+    p = sc.predict([P.Scenario(i, c, L, ()) for i, c in zip(ids, covs) for L in D.LOSS_PCTS]).reshape(3, 5)
+    small = P.loss_response_diagnostic(art, demo_env.clients.head(3))
+    assert np.allclose(small["mean_p_sell_by_loss"], p.mean(axis=0)) and small["monotone_share"] == pytest.approx(np.all(np.diff(p, axis=1) >= -1e-12, axis=1).mean())
+    # the demo fit stores the same diagnostic of its training book in the artifact metrics
+    assert art.metrics["loss_response"]["n_clients"] == n and art.metrics["loss_response_monotone_share"] == pytest.approx(out["monotone_share"])
+    assert P.loss_response_diagnostic(art, demo_env.clients.head(0))["monotone_share"] is None
+
+
 def test_drawdown_capacity_monotone_in_loss_sensitivity(art, demo_env: DemoEnv):
     """Scaling ``theta_L`` up (more loss sensitivity) must not increase any client's capacity."""
     sc = P.scorer_for(art)
@@ -271,6 +293,7 @@ def test_score_book_contract_and_timing(art, demo_env: DemoEnv):
     assert tab["status"].str.startswith(("stable", "elevated", "high")).all()
     assert tab["synthetic"].all() and not tab["known_client"].any()  # replicated ids are unseen subjects
     assert tab.attrs["intervention_label"] == P.INTERVENTION_LABEL and tab.attrs["wording"] == P.PROBABILITY_WORDING
+    assert "every grid loss L' <= L" in tab.attrs["capacity_definition"] and "first crosses" in tab.attrs["capacity_definition"]
     known = P.score_book(art, demo_env.clients.head(5), MARKET, demo_env.interventions)
     assert known["known_client"].all()
     with pytest.raises(ValueError):

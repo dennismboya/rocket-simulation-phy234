@@ -2,14 +2,27 @@
 
 :func:`fit_model` fits one registered model (``bre.registry.MODEL_REGISTRY``) on a ``ModelData``:
 
-* MAP models (B1, B4, Q2, Q4): ``restarts`` random restarts of full-batch Adam on
-  ``model.objective`` (negative log-posterior) with a cosine-decayed learning rate, **early
+* MAP models (B1, B3, B4, B6, Q2, Q3, Q4, Q5): ``restarts`` random restarts of full-batch Adam
+  on ``model.objective`` (negative log-posterior) with a cosine-decayed learning rate, **early
   stopping** on a validation fold, then an **L-BFGS polish** (``optax.lbfgs`` with its zoom line
   search) of the early-stopped parameters; the restart with the lowest validation NLL wins.
 * B2 (hierarchical Bayesian, NumPyro): ``restarts`` SVI runs (``B2.fit_svi``, ``svi_steps`` steps,
   different PRNG keys), the run with the lowest validation NLL of its posterior-mean parameters
   wins and its posterior draws become ``param_samples``; WAIC and PSIS-LOO of the winning run on
   the training rows are recorded through ``B2.waic`` / ``B2.loo``.
+* Externally fitted models (``model.requires_external_fit`` is True: B5, whose parameters are
+  pickled scikit-learn estimators): ``restarts`` calls of ``model.fit_external(train, seed)``
+  with the seed of restart ``r`` derived from ``(seed, r)`` (:func:`external_fit_seed`); the
+  fit with the lowest validation NLL wins. No Adam, no L-BFGS polish and **no Laplace draws**
+  (there is no differentiable objective): ``param_samples`` is None and the result carries a
+  note saying so. Parameter counts always come from ``model.n_params`` (``registry.param_counts``
+  with the model instance): for B5 the pytree leaves are bytes, not parameters.
+
+Every Q-model (any model with ``interference_terms``) has its mean interference terms on the
+training rows logged (``extra["interference_train"]``: ``delta_LTP`` and ``Delta_order``; a NaN
+mean means the model does not define the term, as Q5's ``ltp``); a model with ``mean_abs_q``
+(Q5) has its mean ``|q|`` logged next to them. Q3 is fitted at each row's default time ``t``
+(no news age in the shared design; see ``bre.models.quantum.q3_dynamics``).
 
 Validation fold (documented rule): ``val_frac`` (default 20%) of the training sell rows is held
 out **within subject**, stratified by condition type (number of contexts x question order), so
@@ -24,7 +37,8 @@ the restart table says so.
 
 Uncertainty: :func:`laplace_samples` draws ``n_samples`` parameter vectors from a diagonal
 Laplace approximation at the optimum for the MAP models (the approximation and its limits are
-documented in :mod:`bre.artifact`); B2 uses its posterior draws.
+documented in :mod:`bre.artifact`); B2 uses its posterior draws; externally fitted models get
+none (the draws need ``jax.hessian`` of the objective, which the external models lack).
 
 Config-driven use: ``python -m bre.fit experiments/<name>.yaml`` (:func:`run_experiment`) reads
 the dataset, model, split and optimizer settings from the YAML, fits on the split's training
@@ -161,6 +175,25 @@ def split_within_subject(
 
 def _finite_tree(tree) -> bool:
     return all(bool(np.isfinite(np.asarray(leaf)).all()) for leaf in jax.tree_util.tree_leaves(tree))
+
+
+def requires_external_fit(model: Model) -> bool:
+    """True for a model whose parameters are not fitted by gradient steps (``B5``: the class
+    attribute ``requires_external_fit``); such a model has no differentiable objective, so no
+    Adam, no L-BFGS polish and no Laplace draws apply to it."""
+    return bool(getattr(model, "requires_external_fit", False))
+
+
+def external_fit_seed(key, restart: int) -> int:
+    """The integer seed of restart ``restart`` of an external fit: ``randint(fold_in(key,
+    restart))`` in ``[0, 2^31)``, the same derivation ``B5.init_params`` uses, so that the fit
+    driver and a direct ``init_params`` call agree for the same ``(seed, restart)``."""
+    return int(jax.random.randint(jax.random.fold_in(key, int(restart)), (), 0, 2**31 - 1))
+
+
+NO_DRAWS_NOTE = ("no parameter draws: the model is fitted externally (pickled estimators, no differentiable "
+                 "objective), so neither a Laplace approximation nor posterior draws exist; intervals are not available")
+"""``extra["param_samples_note"]`` (and the artifact note) of an externally fitted model."""
 
 
 def _log(log_path: str | Path | None, line: str, echo: bool = True) -> None:
@@ -419,6 +452,38 @@ def laplace_samples(
 
 
 # ---------------------------------------------------------------------------------------------
+# Interference terms on a fold
+# ---------------------------------------------------------------------------------------------
+
+
+def interference_summary(model: Model, params: dict[str, Any], data: ModelData) -> dict[str, Any]:
+    """Mean interference terms of a Q-model over the sell rows of ``data``: ``ltp_mean`` /
+    ``ltp_abs_mean`` (NaN, with ``ltp_defined = False``, when the model returns NaN on every
+    row, as Q5 does: ``delta_LTP`` is not defined for it), ``order_mean`` / ``order_abs_mean``
+    over the ordered-pair rows (NaN without pair rows) and, for a model with ``mean_abs_q``
+    (Q5), ``mean_abs_q``. ``order_zero_by_construction`` is True when every pair row has an
+    order term of exactly 0 (Q3 and Q5 compose contexts symmetrically)."""
+    sell = data.sell_mask()
+    terms = model.interference_terms(params, data)
+    ltp = np.asarray(terms["ltp"], dtype=np.float64)[sell]
+    order = np.asarray(terms["order"], dtype=np.float64)[sell]
+    ltp_ok, order_ok = bool(np.isfinite(ltp).any()), bool(np.isfinite(order).any())
+    out: dict[str, Any] = {
+        "n_rows": int(sell.sum()),
+        "ltp_defined": ltp_ok,
+        "ltp_mean": float(np.nanmean(ltp)) if ltp_ok else float("nan"),
+        "ltp_abs_mean": float(np.nanmean(np.abs(ltp))) if ltp_ok else float("nan"),
+        "n_pair_rows": int(np.isfinite(order).sum()),
+        "order_mean": float(np.nanmean(order)) if order_ok else float("nan"),
+        "order_abs_mean": float(np.nanmean(np.abs(order))) if order_ok else float("nan"),
+        "order_zero_by_construction": bool(order_ok and np.all(order[np.isfinite(order)] == 0.0)),
+    }
+    if hasattr(model, "mean_abs_q"):
+        out["mean_abs_q"] = float(model.mean_abs_q(params, data))
+    return out
+
+
+# ---------------------------------------------------------------------------------------------
 # fit_model
 # ---------------------------------------------------------------------------------------------
 
@@ -492,8 +557,27 @@ def fit_model(
         return nll_per_response(np.asarray(model.log_lik(p, train)), train.sell_mask())
 
     best: tuple[int, float, Any, Any] | None = None  # (restart, val_nll, params, posterior)
+    external = requires_external_fit(model)
 
-    if model_name == "B2":
+    if external:
+        for r in range(int(restarts)):
+            t0 = time.time()
+            seed_r = external_fit_seed(key, r)
+            p_np = to_numpy_tree(model.fit_external(train, seed_r))
+            vn, tn = val_nll_of(p_np), train_nll_of(p_np)
+            rows_tab.append({"restart": r, "method": "external", "seed": seed_r, "train_nll": tn, "val_nll": vn, "seconds": time.time() - t0})
+            _log(log_path, f"[fit] {model_name} restart {r + 1}/{restarts}: external fit (seed {seed_r}), train_nll={tn:.4f} val_nll={vn:.4f} ({time.time() - t0:.0f}s)", echo)
+            if best is None or (np.isfinite(vn) and vn < best[1]) or (not np.isfinite(best[1])):
+                best = (r, vn, p_np, None)
+        assert best is not None
+        r_best, val_nll, params, _ = best
+        posterior = None
+        samples = None
+        extra["param_samples_note"] = NO_DRAWS_NOTE
+        extra["external_fit"] = {"method": "model.fit_external(train, seed) per restart; best validation NLL kept", "seeds": [int(row["seed"]) for row in rows_tab], "n_samples_requested": int(n_samples)}
+        if int(n_samples) > 0:
+            _log(log_path, f"[fit] {model_name}: n_samples={n_samples} requested but the model is fitted externally; no draws", echo)
+    elif model_name == "B2":
         for r in range(int(restarts)):
             t0 = time.time()
             k = jax.random.fold_in(key, r)
@@ -561,18 +645,17 @@ def fit_model(
         r_best, val_nll, params, _ = best
         posterior = None
         samples = None
-        if int(n_samples) > 0:
+        if int(n_samples) > 0 and not external:  # Laplace draws need jax.hessian of the objective
             t0 = time.time()
             samples, lap = laplace_samples(model, model_name, params, train, int(n_samples), int(seed))
             extra["laplace"] = {**lap, "seconds": time.time() - t0}
             _log(log_path, f"[fit] {model_name} laplace: {lap['n_pop_params']} population params, {lap['n_flat_directions']} flat, {lap['n_capped']} capped ({time.time() - t0:.0f}s)", echo)
 
-    counts = param_counts(model_name, params)
-    if model_name in ("Q2", "Q4"):
-        terms = model.interference_terms(params, train)
-        ltp = np.asarray(terms["ltp"])[train.sell_mask()]
-        order = np.asarray(terms["order"])[train.sell_mask()]
-        extra["interference_train"] = {"ltp_mean": float(np.mean(ltp)), "ltp_abs_mean": float(np.mean(np.abs(ltp))), "order_mean": float(np.nanmean(order)) if np.isfinite(order).any() else float("nan"), "order_abs_mean": float(np.nanmean(np.abs(order))) if np.isfinite(order).any() else float("nan")}
+    counts = param_counts(model_name, params, model)
+    if hasattr(model, "interference_terms"):
+        extra["interference_train"] = interference_summary(model, params, train)
+        it = extra["interference_train"]
+        _log(log_path, f"[fit] {model_name} interference on the training rows: ltp_mean={it['ltp_mean']:.4f} order_mean={it['order_mean']:.4f}" + (f" mean_abs_q={it['mean_abs_q']:.4f}" if "mean_abs_q" in it else ""), echo)
     result = FitResult(
         model_name=model_name,
         params=params,
@@ -624,6 +707,8 @@ def artifact_from_fit(
                         "blind to gauge copies — see bre.artifact." % (LAPLACE_MIN_CURVATURE, LAPLACE_MAX_SD))
     elif result.model_name == "B2" and result.param_samples:
         laplace_note = " param_samples: posterior draws from B2's SVI guide (AutoNormal, mean-field)."
+    elif result.extra.get("param_samples_note"):
+        laplace_note = " param_samples: " + str(result.extra["param_samples_note"]) + "."
     return ModelArtifact(
         version=ARTIFACT_VERSION,
         model_name=result.model_name,
@@ -790,13 +875,16 @@ __all__ = [
     "artifact_from_fit",
     "condition_strata",
     "experiments_listed",
+    "external_fit_seed",
     "fit_model",
     "fit_settings",
+    "interference_summary",
     "laplace_samples",
     "polish_lbfgs",
     "load_config",
     "load_dataset",
     "nll_per_response",
+    "requires_external_fit",
     "resolve_path",
     "run_experiment",
     "split_within_subject",

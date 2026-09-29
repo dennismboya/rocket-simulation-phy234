@@ -317,6 +317,9 @@ class ModelInfo(Served):
     evaluation_status: str
     notes: str
     n_draws: int
+    loss_response_monotone_share: float | None = Field(description="share of the served book's clients whose predicted P(sell | L, no context) is non-decreasing over the five design loss levels")
+    loss_response: dict[str, Any] = Field(description="the loss-response diagnostic of the served book: monotone_share, n_clients, loss_levels, mean_p_sell_by_loss, p_sell_by_loss_ci80, definition")
+    capacity_definition: str = Field(description="the first-crossing definition of the behavioral drawdown capacity at the default target")
 
 
 class Health(BaseModel):

@@ -85,6 +85,14 @@ def test_model_info_fields(client: TestClient, demo_env: DemoEnv):
     assert "Q-model supported" in m["decision_rule"] and m["evaluation_status"].startswith("not evaluated")
     assert m["wording"] == "predicted probability of selling" and "draws" in m["interval_source"]
     assert m["promoted_at"] is not None and m["design_version"] == "1.0.0"
+    # loss-response diagnostic of the served book and the capacity definition (transparency page)
+    lr = m["loss_response"]
+    assert m["loss_response_monotone_share"] == lr["monotone_share"] and 0.0 <= lr["monotone_share"] <= 1.0
+    assert lr["n_clients"] == len(demo_env.clients) and lr["loss_levels"] == [-0.05, -0.10, -0.15, -0.20, -0.30]
+    assert len(lr["mean_p_sell_by_loss"]) == 5 and all(0.0 <= p <= 1.0 for p in lr["mean_p_sell_by_loss"])
+    assert "non-decreasing" in lr["definition"] and "rotation" in lr["definition"]
+    assert m["metrics"]["loss_response_monotone_share"] == art.metrics["loss_response_monotone_share"]
+    assert "first crosses" in m["capacity_definition"] and "every grid loss L' <= L" in m["capacity_definition"]
 
 
 def test_clients_interventions_market(client: TestClient, demo_env: DemoEnv):
@@ -225,6 +233,7 @@ def test_score_book_json(client: TestClient, demo_env: DemoEnv):
     assert body["scenario"]["context_tags"] == ["news:recession", "social:friend_sells"] and body["scenario"]["weak_match"] is False
     assert set(body["n_calibration"]) == {"news:recession", "social:friend_sells"}
     assert body["meta"]["intervention_label"] == "predicted effect, not causally validated" and body["meta"]["n_clients"] == 5
+    assert "every grid loss L' <= L" in body["meta"]["capacity_definition"] and "0.25" in body["meta"]["capacity_definition"]
     known = [row for row in body["rows"] if row["client_id"] != "new-upload-1"]
     assert all(row["known_client"] for row in known) and not next(row for row in body["rows"] if row["client_id"] == "new-upload-1")["known_client"]
     for row in body["rows"]:

@@ -8,7 +8,9 @@ Endpoints
 * ``GET /health`` — liveness, served model version, demo mode.
 * ``GET /model`` — version, type, metrics, calibrated contexts, provenance (training data refs
   and the ``data/CATALOG.md`` entry names), ``is_synthetic_training``, ``demo_mode``, the
-  pre-registered decision rule and the evaluation status.
+  pre-registered decision rule, the evaluation status, the loss-response diagnostic of the
+  served book (``loss_response_monotone_share``, ``loss_response``) and the first-crossing
+  definition of the drawdown capacity (``capacity_definition``).
 * ``GET /clients``, ``GET /interventions``, ``GET /market`` — the served book, the intervention
   table, the current market state (cached files unless ``BRE_MARKET_NETWORK=1``) with its
   mapping to a scenario.
@@ -161,6 +163,7 @@ class ServiceState:
         self.started_at = time.time()
         self.warmup: dict[str, float] = {}
         self.seed_summary: dict[str, Any] | None = None
+        self._loss_response: tuple[tuple[str, ...], dict[str, Any]] | None = None
 
     @property
     def demo_mode(self) -> bool:
@@ -209,6 +212,7 @@ def build_state(db_url: str | None = None, *, autoseed: bool | None = None, warm
         with session_scope(state.engine) as s:
             n_book = int(s.execute(select(func.count()).select_from(Client)).scalar_one()) - 2  # minus the two reserved rows
         state.warmup = P.warm_up(state.artifact, (*P.WARM_UP_BOOK_SIZES, max(n_book, 1)), _interventions(state))
+        loss_response(state)  # compiles the diagnostic's bucket and fills the cache for GET /model
     return state
 
 
@@ -335,6 +339,7 @@ def model_info(request: Request) -> Any:
     refs = list(a.training_data_refs)
     used = catalog_entries_used(entries, refs)
     metrics = P.jsonable(a.metrics)
+    lr = loss_response(st)
     return Sch.ModelInfo(
         **_served(st), version=a.version, n_params=int(a.n_params), n_params_population=metrics.get("n_params_population"),
         design_version=a.design_version, created_at=a.created_at, promoted_at=row.get("promoted_at"), metrics=metrics,
@@ -354,6 +359,8 @@ def model_info(request: Request) -> Any:
         evaluation_status=("not evaluated on real data: demo fit on synthetic responses (Phase 4 pending); the decision rule has not been applied"
                            if a.is_synthetic_training else str(metrics.get("verdict", "see metrics"))),
         notes=str(a.notes), n_draws=int(a.n_samples),
+        loss_response_monotone_share=lr.get("monotone_share"), loss_response=lr,
+        capacity_definition=P.CAPACITY_DEFINITION.format(grid=list(P.D.LOSS_PCTS), contexts=list(P.TYPICAL_CRISIS_CONTEXTS), target=P.DRAWDOWN_TARGET),
     )
 
 
@@ -373,6 +380,24 @@ def list_clients(request: Request) -> Any:
                                      created_at=c.created_at.isoformat(), n_responses=int(counts.get(c.client_id, 0)),
                                      known_to_model=c.client_id in known, synthetic=bool(syn.get(c.client_id, st.demo_mode))))
     return out
+
+
+def _served_book(st: ServiceState) -> pd.DataFrame:
+    """The served book (every client row except the two reserved ones) as a scoring frame."""
+    with session_scope(st.engine) as s:
+        rows = s.scalars(select(Client).order_by(Client.client_id)).all()
+        return pd.DataFrame([{"client_id": c.client_id, "display_label": c.display_label, "covariates": c.covariates} for c in rows if c.client_id not in (ANON_CLIENT_ID, BATCH_CLIENT_ID)],
+                            columns=["client_id", "display_label", "covariates"])
+
+
+def loss_response(st: ServiceState) -> dict[str, Any]:
+    """``bre.predict.loss_response_diagnostic`` of the served book, cached until the set of
+    client ids changes (the served model cannot change without a restart)."""
+    book = _served_book(st)
+    key = tuple(book["client_id"].tolist())
+    if st._loss_response is None or st._loss_response[0] != key:
+        st._loss_response = (key, P.loss_response_diagnostic(st.artifact, book))
+    return st._loss_response[1]
 
 
 def _interventions(st: ServiceState) -> list[dict[str, Any]]:
@@ -541,4 +566,4 @@ async def _validation(request: Request, exc: RequestValidationError) -> JSONResp
     return JSONResponse(status_code=422, content={"detail": _clean_errors(exc.errors())})
 
 
-__all__ = ["ANON_CLIENT_ID", "BATCH_CLIENT_ID", "CATALOG_MATCH_RULE", "DECISION_RULE", "ServiceState", "app", "build_state", "catalog_entries", "catalog_entries_used", "dataset_ids_of_refs", "default_db_url"]
+__all__ = ["ANON_CLIENT_ID", "BATCH_CLIENT_ID", "CATALOG_MATCH_RULE", "DECISION_RULE", "ServiceState", "app", "build_state", "catalog_entries", "catalog_entries_used", "dataset_ids_of_refs", "default_db_url", "loss_response"]
