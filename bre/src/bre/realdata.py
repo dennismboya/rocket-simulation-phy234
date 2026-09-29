@@ -513,7 +513,7 @@ def rate_metrics(p, y, w, group_idx, *, n_boot: int = 1000, seed: int = 0) -> di
         "nll_per_row": nll_row,
         "brier": brier,
         "pearson_r": r,
-        "spearman_rho": float(spearmanr(p, y).correlation) if n > 2 else float("nan"),
+        "spearman_rho": float(spearmanr(p, y).correlation) if (n > 2 and np.ptp(p) > 0 and np.ptp(y) > 0) else float("nan"),
         "mean_observed_rate": float(np.sum(w * y) / w.sum()),
         "mean_predicted_rate": float(np.sum(w * p) / w.sum()),
     }
