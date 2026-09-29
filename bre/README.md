@@ -90,28 +90,42 @@ takes the six product keys only. `context_tags` are `namespace:value`. Rows of t
 
 ## Batch scoring
 
-The Phase 5 service (`make api`) scores one investor or a batch of investors. The endpoint paths and
-schemas are fixed by the OpenAPI document the service publishes at `http://127.0.0.1:8000/docs`
-once `api/main.py` exists; this section records the request shape so callers can prepare, and the
-curl example is added when the service lands.
+The Phase 5 service (`make api`; `BRE_API_PORT` picks the port) scores one investor or a whole
+book. Its contract is `api/openapi.json` (regenerated from the app by `api/export_openapi.py`,
+browsable at `http://127.0.0.1:8000/docs`); `api/README.md` documents every endpoint. The
+dashboard obtains every number from this service; no model code runs in the UI.
 
-Request shape (one item per investor × scenario; a batch is a JSON list of these):
+* `POST /predict` — one investor (six covariates), one scenario (`loss_pct` in [-1, 0],
+  at most two ordered `context_tags` from `none`, `news:recession`, `news:technical`,
+  `social:friend_sells`, `market:recovered_5pct`; `question_order_id`; optional prior tolerance
+  answer, mixture weights for a mixed cause frame, and intake answers to refine the investor's
+  random effects). Returns the *predicted probability of selling* `p` with its 80% and 95%
+  intervals (percentiles over the artifact's parameter draws), the interference terms of
+  PLAN.md section 4 (`ltp`; `order_effect` for a pair; `mix` for a mixture), the top driver,
+  the number of training responses behind each context, the served `model_version` and type,
+  and `synthetic: true` when the model was trained on synthetic data.
+* `POST /score_book` (JSON list of clients + one market state) and `POST /score_book/csv`
+  (CSV upload with `client_id`, optional `display_label` and the six covariate columns) —
+  the triage table: per client `p_sell` under the market state, change versus the no-loss
+  baseline, 80% interval, top driver, suggested intervention ("predicted effect, not causally
+  validated"), behavioral drawdown capacity and status. The market state (drawdown, duration,
+  free-text cause frame, recovery, VIX bucket, media intensity, social-cue prevalence) is mapped
+  to a loss on the design range and an ordered context list; a cause frame that matches no
+  calibrated context well is flagged `weak_match`.
 
-| Field | Meaning |
-|---|---|
-| `display_label` | optional, free text shown to the advisor; the only identifying field accepted |
-| `covariates` | `age_band`, `wealth_band`, `invest_experience_yrs`, `self_reported_risk_tolerance`, `financial_literacy_score`, `education` (PLAN.md section 3) |
-| `loss_pct` | signed portfolio loss, one of −0.05, −0.10, −0.15, −0.20, −0.30 (other values are interpolated by the served model and flagged) |
-| `horizon_days` | investment horizon, default 365 |
-| `context_tags` | ordered list drawn from `none`, `news:recession`, `news:technical`, `social:friend_sells`, `market:recovered_5pct` |
-| `question_order_id` | `tolerance-first` or `scenario-first` |
-| `prior_answers` | answers already given in this session, if any |
-| `model_version` | optional; defaults to the active entry of the model registry |
+```bash
+curl -s -X POST http://127.0.0.1:8000/score_book -H 'Content-Type: application/json' -d '{
+  "clients": [{"client_id": "DEMO-C01", "display_label": "Demo client 01",
+               "covariates": {"age_band": "30-44", "wealth_band": "50-250k", "invest_experience_yrs": 5,
+                              "self_reported_risk_tolerance": 3, "financial_literacy_score": 2, "education": "bachelor"}}],
+  "market_state": {"drawdown_pct": -0.14, "cause_frame": "analysts expect a recession", "social_cue_prevalence": "medium"}
+}'
+```
 
-Response shape per item: `p_sell`, its uncertainty interval, the served `model_version` and model type
-(the dashboard says so when the winner is a classical model), and the interference terms defined in
-PLAN.md section 4 — `delta_ltp`, `delta_mix` (when the cause frame is a mixture), `delta_order` for a
-context pair — each with the parameters and data sources it traces to.
+Every prediction shown is written to `predictions_log` and `audit_log`; validation errors
+return 422 with the field names. In demo mode (the default database `data/synthetic/demo.db`,
+seeded on first start with the synthetic demo book of `bre.demo`) `GET /model` reports
+`demo_mode: true` and `is_synthetic_training: true`.
 
 ## Production deployment
 
