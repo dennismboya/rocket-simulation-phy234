@@ -115,3 +115,4 @@ Phases 0–8 as planned; no long runs started yet.
 * 2026-09-29 11:57 UTC — container rebooted (~11:55 UTC); grid_a stopped at 42/135 and was resumed from its per-cell cache; API and fit-wiring agents were cut off by the session limit and are being finished by the main session.
 * 2026-09-29 12:33 UTC — grid_a: 105 of 135 fits done since resume;  [recover] done gf N=200 seed=2 B2: selection_nll=0.5730 train_nll=0.5528 val_nll=0.5600 n_params=10
 * 2026-09-29 12:59 UTC — grid_a: 121 done lines (42 pre-reboot + resumed);  [recover] done gf N=50 seed=0 B2: selection_nll=0.5929 train_nll=0.5669 val_nll=0.5785 n_params=285 (37s) [79
+* 2026-09-29 13:28 UTC — grid_a at 79/135 (resumed run): workers alive but memory-bound (3 × 4.4 GB RSS, 1 GB free); chained grid_b detached, to be relaunched with 2 workers after grid_a's cap; dashboard agent's retrain test still running.
