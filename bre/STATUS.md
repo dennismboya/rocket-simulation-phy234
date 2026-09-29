@@ -99,3 +99,4 @@ Phases 0–8 as planned; no long runs started yet.
 * 2026-09-17 20:25 UTC — recovery study (N=200) and API build started in background agents; check runs/recover/*.log.
 * 2026-09-17 20:34 UTC — check-in: recovery runner still being written; no run log yet
 * 2026-09-29 04:55 UTC — extended recovery grid launched (N 50/100/200/400, seeds 0–2, 3 workers, capped at 110 min); API fixes and dashboard pages 1–3 in agents.
+* 2026-09-29 05:13 UTC — grid check-in: [recover] estimated 165 min exceeds --max-minutes 110; reduce the grid (seeds, steps, restarts) or pass --force (a run over two hours is a GATE, CLAUDE.md rule 
