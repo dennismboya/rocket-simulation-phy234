@@ -77,7 +77,34 @@ parallel (as `bre.recover`).
 
 ## Runtime budget (measured on the smoke run, scaled by rows)
 
-RUNTIME_SECTION_PLACEHOLDER
+What was measured (2026-09-29, `python -m bre.phase4 --dataset cpc18 --smoke --subjects 30 --models B1 Q2`,
+one worker on a machine whose other three cores and 13 GB were held by the Phase 2 recovery grid):
+the six jobs (B1 and Q2 on splits (a), (b), (d)) took 214 s in all; a Q2 fit on 11,300 fit rows for
+300 Adam steps + 20 L-BFGS iterations + 10 Laplace draws took 52-61 s, a B1 fit 7 s; the held-out
+evaluation (1000-draw bootstrap, interference draws) took 2-9 s per job. Per fit row and optimizer
+step that is about 1.4e-5 s for Q2 and 2.2e-6 s for B1 (`bre.phase4.SECONDS_PER_ROW_STEP`); these
+include JIT compilation and are upper bounds. The 10-model smoke at 60 subjects
+(`experiments/p4-cpc18-smoke.yaml`) could not be completed on the memory-bound build machine, so the
+other eight models are unmeasured here; `--estimate-only` charges them at Q2's cost and says so.
+
+Scaling to the full CPC18 pairs table (686 subjects: 408,600 rows; split (a)/(d) train about
+327,000 rows, split (b) train 40,860 and test 367,740 rows) at the PLAN.md section 4 settings (5
+restarts x (1500 Adam + 100 L-BFGS) steps, no early stopping = worst case):
+
+* Q2: about 9 h per split for (a) and (d), about 1.1 h for (b) — roughly 19 h for the three splits;
+* B1: about 1.4 h per split for (a) and (d), about 0.2 h for (b) — roughly 3 h;
+* the other models, from the recovery-study step costs (`bre.recover.SECONDS_PER_STEP`, Q4 about
+  3x Q2, B2 about 0.6 h per split, B3/B4/B5/B6/Q5 minutes to an hour each): the whole ten-model run
+  is of the order of 60-80 h sequential, 15-20 h with four workers.
+
+Early stopping usually cuts the Adam steps by 2-4x and the smoke costs are compile-inflated, so the
+real times should be lower, but not by enough to fit the run under two hours. Every one of these
+runs is therefore a GATE and must be split: e.g. `--models B1 B4 B3 Q5 B6` (short), then `--models
+B2 B5`, then `--models Q2`, `--models Q3`, `--models Q4` in separate background invocations with
+`--workers 4`, each estimated first with `--estimate-only`; or reduce `--restarts 2 --steps 800` and
+`--subjects 200` (about one ninth of the rows and one fifth of the steps: Q2 then takes about 0.4 h
+per split). The secondary dataset (`p4-psych201-spektor2024.yaml`, 73,250 rows, splits (a) and (d)
+only) is about one sixth of the CPC18 cost.
 
 A run over two hours wall-clock is a GATE (CLAUDE.md rule 4): the main session must split it
 (`--models` subsets in separate invocations, fewer restarts or steps, or `--subjects N`) or ask the

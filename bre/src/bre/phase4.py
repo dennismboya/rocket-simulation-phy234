@@ -136,15 +136,21 @@ MODEL_SETTINGS: dict[str, dict[str, Any]] = {"B5": {"n_samples": 0}}
 MODEL_KWARGS_DEFAULT: dict[str, dict[str, Any]] = {"B5": {"n_threads": 1}}
 """Constructor keywords per model (B5 single-threaded, as the recovery study)."""
 
-# Measured on the smoke run of 2026-09-29 (CPC18 pairs, 60 subjects, 300 steps, one restart, one
-# worker while three cores were busy with the recovery grid): seconds of fit wall time per
-# training row per optimizer step (Adam steps + 3 x L-BFGS iterations; the Laplace draws and the
-# polish are inside the wall time, so the number is an average over the whole fit), used by
-# :func:`estimate_seconds` scaled by rows and steps. B2: per row per SVI step; B5: per row per
-# external fit. Replace with new measurements from ``metrics.json["timing"]`` of a later run.
-SECONDS_PER_ROW_STEP: dict[str, float] = {}
-SECONDS_PER_ROW_EVAL: float = 0.0
-"""Seconds per test row of the held-out evaluation (bootstrap, interference draws), measured."""
+# Measured on the smoke run of 2026-09-29 (CPC18 pairs, 30 subjects, 300 steps, one restart,
+# ``--smoke``, one worker while three cores and 13 GB were held by the recovery grid): seconds of
+# fit wall time per fit row per optimizer step (Adam steps + 3 x L-BFGS iterations; JIT
+# compilation, the Laplace draws and the polish are inside the wall time, so at 11,000 fit rows
+# the numbers are compile-inflated upper bounds), used by :func:`estimate_seconds` scaled by rows
+# and steps. Only B1 and Q2 are measured (the 10-model smoke could not run on the memory-bound
+# build machine); a model outside the table is estimated at Q2's cost and flagged. For reference,
+# ``bre.recover.SECONDS_PER_STEP`` (N = 200 synthetic tables, 34,000 rows, 4 workers) gives per
+# row and step: B1 6e-8, B4 1.2e-7, Q2 2.6e-6, Q4 7.6e-6, B2 (SVI) 8.8e-7. B2: per row per SVI
+# step; B5: per row per external fit. Replace with new measurements from
+# ``metrics.json["timing"]`` of a later run.
+SECONDS_PER_ROW_STEP: dict[str, float] = {"B1": 2.2e-06, "Q2": 1.4e-05}
+SECONDS_PER_ROW_EVAL: float = 7.0e-04
+"""Seconds per test row of the held-out evaluation (bootstrap, interference draws), measured on
+the same smoke run (median over its six jobs; compile-inflated on small tables)."""
 GATE_MINUTES = 120.0
 
 
