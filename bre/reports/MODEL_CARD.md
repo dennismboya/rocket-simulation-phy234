@@ -81,6 +81,33 @@ predicted `P(sell)` per loss level is 0.337, 0.345, 0.361, 0.382, 0.438 at losse
 −0.15, −0.20, −0.30 (`mean_p_sell_by_loss`). This is a diagnostic of the served model, not a test
 of any data (see §9, loss-response caveat).
 
+## 5. Real-data evaluation (Phase 4), completed 2026-09-29
+
+Generated from `reports/phase4/cpc18-pairs/verdict.json` and `table.md` (pre-registered split (b) on CPC18 pairs, real data, 686 subjects, 40,860 train / 367,740 test rows).
+
+**Verdict (verbatim):** no evidence of a quantum-probability advantage in the available data
+
+* Best classical model: B6 (held-out NLL 0.5374, 58 parameters); best quantum-probability model: Q4 (NLL 0.6672, 3546 parameters).
+* NLL difference (quantum minus classical): 0.1298, bootstrap 95% CI [0.1262, 0.1334]; interference-term 95% CI [-0.1382, 0.0379].
+* Failed conditions of the rule: beats_best_classical_nll_ci_excludes_zero, param_count_matched_or_lower, interference_ci_excludes_zero.
+* Model the rule designates for serving on this data: B6 (classical). The model served in demo mode remains `demo-q4-v2`, trained on synthetic data for demonstration; no real-data-validated model exists for the product question, and the transparency page says so.
+* CPC18 is an analog (retreat to the lower-variance option after experienced outcomes in a lab lottery task), not panic selling; the data that would resolve the question is the intake battery / Prolific design (see `reports/DATA_GAPS.md`).
+
+Split (b) table (all models, from `table.md`):
+
+| model | family | n_params | NLL | NLL CI95 | Brier | AUC |
+|---|---|---:|---|---|---|---|
+| B6 | classical | 58 | 0.5374 | [0.5331, 0.5415] | 0.1750 | 0.8668 |
+| B5 | classical | 3005 | 0.6291 | [0.6263, 0.6319] | 0.2189 | 0.7194 |
+| Q4 | quantum | 3546 | 0.6672 | [0.6638, 0.6706] | 0.2375 | 0.6258 |
+| B2 | classical | 4841 | 0.6736 | [0.6697, 0.6776] | 0.2403 | 0.6218 |
+| B1 | classical | 93 | 0.6830 | [0.6814, 0.6848] | 0.2450 | 0.5707 |
+| Q5 | quantum | 721 | 0.6833 | [0.6803, 0.6862] | 0.2450 | 0.6074 |
+| Q3 | quantum | 2848 | 0.6844 | [0.6814, 0.6875] | 0.2455 | 0.5880 |
+| B4 | classical | 720 | 0.6963 | [0.6940, 0.6987] | 0.2494 | 0.5710 |
+| B3 | classical | 2145 | 0.7012 | [0.6970, 0.7058] | 0.2496 | 0.6039 |
+| Q2 | quantum | 2858 | 0.7157 | [0.7106, 0.7207] | 0.2586 | 0.5987 |
+
 ## 6. Evaluation data
 
 * No held-out evaluation of `demo-q4-v2` exists (`artifact.json`, `metrics.held_out: null`).
@@ -194,30 +221,3 @@ of any data (see §9, loss-response caveat).
    `reports/phase4/cpc18-pairs/verdict.json` exists and the verdict is copied here unchanged; if the
    verdict is negative, this card and the transparency page must say so (CLAUDE.md rule 6). The
    data that would resolve the question and their cost are listed in `reports/DATA_GAPS.md`.
-
-## Real-data evaluation (Phase 4) — COMPLETED 2026-09-29
-
-Generated from `reports/phase4/cpc18-pairs/verdict.json` and `table.md` (pre-registered split (b) on CPC18 pairs, real data, 686 subjects, 40,860 train / 367,740 test rows).
-
-**Verdict (verbatim):** no evidence of a quantum-probability advantage in the available data
-
-* Best classical model: B6 (held-out NLL 0.5374, 58 parameters); best quantum-probability model: Q4 (NLL 0.6672, 3546 parameters).
-* NLL difference (quantum minus classical): 0.1298, bootstrap 95% CI [0.1262, 0.1334]; interference-term 95% CI [-0.1382, 0.0379].
-* Failed conditions of the rule: beats_best_classical_nll_ci_excludes_zero, param_count_matched_or_lower, interference_ci_excludes_zero.
-* Model the rule designates for serving on this data: B6 (classical). The model served in demo mode remains `demo-q4-v2`, trained on synthetic data for demonstration; no real-data-validated model exists for the product question, and the transparency page says so.
-* CPC18 is an analog (retreat to the lower-variance option after experienced outcomes in a lab lottery task), not panic selling; the data that would resolve the question is the intake battery / Prolific design (see `reports/DATA_GAPS.md`).
-
-Split (b) table (all models, from `table.md`):
-
-| model | family | n_params | NLL | NLL CI95 | Brier | AUC |
-|---|---|---:|---|---|---|---|
-| B6 | classical | 58 | 0.5374 | [0.5331, 0.5415] | 0.1750 | 0.8668 |
-| B5 | classical | 3005 | 0.6291 | [0.6263, 0.6319] | 0.2189 | 0.7194 |
-| Q4 | quantum | 3546 | 0.6672 | [0.6638, 0.6706] | 0.2375 | 0.6258 |
-| B2 | classical | 4841 | 0.6736 | [0.6697, 0.6776] | 0.2403 | 0.6218 |
-| B1 | classical | 93 | 0.6830 | [0.6814, 0.6848] | 0.2450 | 0.5707 |
-| Q5 | quantum | 721 | 0.6833 | [0.6803, 0.6862] | 0.2450 | 0.6074 |
-| Q3 | quantum | 2848 | 0.6844 | [0.6814, 0.6875] | 0.2455 | 0.5880 |
-| B4 | classical | 720 | 0.6963 | [0.6940, 0.6987] | 0.2494 | 0.5710 |
-| B3 | classical | 2145 | 0.7012 | [0.6970, 0.7058] | 0.2496 | 0.6039 |
-| Q2 | quantum | 2858 | 0.7157 | [0.7106, 0.7207] | 0.2586 | 0.5987 |
