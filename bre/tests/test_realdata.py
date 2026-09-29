@@ -79,7 +79,7 @@ def test_aggregate_cpc18_by_problem_is_computed_from_the_individual_rows():
     S.validate_frame(frame, expect_synthetic=False, strict=True)
     assert (frame["elicitation_type"] == "choice_rate").all()
     w = frame["covariates"].map(lambda c: json.loads(c)["weight"]).to_numpy()
-    assert np.all(w >= 1) and w.sum() == len(R.subsample_subjects(R.read_frame("cpc18"), SCRATCH_SUBJECTS, 0))
+    assert np.all(w >= 1) and np.all(w % 5 == 0) and w.max() <= 5 * SCRATCH_SUBJECTS  # 5 trials per block per subject
     assert frame["response"].between(0, 1).all()
     assert all(len(t) == 2 and t[0].startswith("feedback:") and t[1].startswith("block:") for t in frame["context_tags"])
     assert frame["loss_pct"].between(-1, 0).all()

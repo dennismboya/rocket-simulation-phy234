@@ -101,6 +101,8 @@ from bre.registry import MODEL_FAMILY, make_model
 PROJECT_ROOT = S.PROJECT_ROOT
 TRANSFER_REPORTS_DIR = PROJECT_ROOT / "reports" / "transfer"
 TRANSFER_RUNS_DIR = PROJECT_ROOT / "runs" / "transfer"
+CACHE_DIR = PROJECT_ROOT / "runs" / "realdata"
+"""Parquet cache of the assembled / subsampled frames (:func:`assembled_frame`); gitignored."""
 
 SELL_TYPES_INDIVIDUAL: tuple[str, ...] = ("lottery_choice",)
 """Elicitation types mapped to the sell likelihood for the individual tables (INTERFACE.md 1)."""
@@ -150,14 +152,37 @@ def _check_name(name: str) -> dict[str, Any]:
     return DATASETS[name]
 
 
-@functools.lru_cache(maxsize=8)
+@functools.lru_cache(maxsize=1)
 def read_frame(name: str) -> pd.DataFrame:
     """The loader's frame of ``name`` as stored (validated by ``read_events``; the CPC18 pairs
-    variant is built by the loader on demand, which takes about 15 s). Cached per process."""
+    variant is built by the loader on demand, which takes about 15 s). One full table is kept
+    in memory at a time (the CPC18 tables are large; the build machine shares its memory with
+    the recovery grid)."""
     spec = _check_name(name)
     if name == "cpc18_pairs":
         return _cpc18.load_cpc18(pairs=True)
     return S.read_events(PROCESSED_DIR / spec["file"])
+
+
+def _cache_path(stem: str, subjects: int | None, seed: int) -> Path:
+    return CACHE_DIR / f"{stem}-n{'all' if subjects is None else int(subjects)}-seed{int(seed)}.parquet"
+
+
+def assembled_frame(name: str, subjects: int | None = None, seed: int = 0, *, cache: bool = True) -> pd.DataFrame:
+    """The assembled (Phase 4 mapping) and subsampled frame of ``name``. With ``cache`` the
+    result is written once to ``runs/realdata/<name>-n<subjects>-seed<seed>.parquet`` through
+    ``bre.schema.write_events`` (strict validation) and read back by ``read_events`` (validated
+    again) on later calls, so a subsample costs a second instead of a full-table load and the
+    full table never has to stay in memory. ``runs/`` is gitignored; the cache holds real rows
+    (``is_synthetic == False``) outside ``data/synthetic``, as the location rule requires."""
+    path = _cache_path(name, subjects, seed)
+    if cache and path.exists():
+        return S.read_events(path)
+    frame = subsample_subjects(assemble_frame(name, read_frame(name)), subjects, seed)
+    if cache:
+        S.write_events(frame, path)
+        read_frame.cache_clear()  # release the full table; later calls with this key read the parquet
+    return frame
 
 
 def _covariate(text: object, key: str) -> Any:
@@ -288,6 +313,7 @@ def load_real(
     ctx_vocab: tuple[str, ...] | None = None,
     validate: bool = True,
     n_ctx_positions: int = 2,
+    cache: bool = True,
 ) -> tuple[pd.DataFrame, ModelData]:
     """``(frame, ModelData)`` of a real dataset after the Phase 4 mapping (module docstring).
 
@@ -295,19 +321,20 @@ def load_real(
     aggregate table under one pseudo-subject (transfer protocol). ``ctx_vocab`` fixes the
     context vocabulary (apply-to-new-data mode; unknown tags raise). ``validate`` runs the
     strict schema validation on the assembled frame (about 10 s on the full CPC18; workers
-    that re-load a table the driver already validated pass False). Every row must be real
-    (``is_synthetic == False``), which is asserted.
+    that re-load a table the driver already validated pass False; a frame served from the
+    parquet cache of :func:`assembled_frame` was validated when written and when read).
+    ``cache`` uses that parquet cache. Every row must be real (``is_synthetic == False``),
+    which is asserted.
     """
     spec = _check_name(name)
-    frame = assemble_frame(name, read_frame(name))
-    frame = subsample_subjects(frame, subjects, seed)
+    frame = assembled_frame(name, subjects, seed, cache=cache)
     if single_subject:
         if spec["kind"] != "aggregate":
             raise ValueError("single_subject applies to the aggregate tables only")
         frame = collapse_to_single_subject(frame)
     if bool(frame["is_synthetic"].map(bool).any()):
         raise S.SchemaError(f"{name}: a real dataset carries is_synthetic=True rows")
-    if validate:
+    if validate and not (cache and not single_subject):
         S.validate_frame(frame, expect_synthetic=False, strict=True)
     data = build_model_data(
         frame,
@@ -348,7 +375,11 @@ def aggregate_cpc18_by_problem(subjects: int | None = None, seed: int = 0) -> pd
     ``context_tags = [feedback:on|off, block:k]`` (as choices13k / CPC15), ``loss_pct`` =
     ``min(0, worst outcome / max |outcome|)`` of the problem (:func:`cpc18_worst_outcome_rel`),
     ``subject_id = "agg:<GameID>:<block>"``, ``source_row_ref`` naming the aggregation.
-    ``subjects`` subsamples the individual subjects first (same rule as :func:`load_real`)."""
+    ``subjects`` subsamples the individual subjects first (same rule as :func:`load_real`).
+    The result is cached under ``runs/realdata/`` like :func:`assembled_frame`."""
+    path = _cache_path("cpc18_agg", subjects, seed)
+    if path.exists():
+        return S.read_events(path)
     frame = subsample_subjects(read_frame("cpc18"), subjects, seed)
     tags = _tags(frame)
     fb = [next(t for t in tt if t.startswith("feedback:")) for tt in tags]
@@ -377,6 +408,8 @@ def aggregate_cpc18_by_problem(subjects: int | None = None, seed: int = 0) -> pd
         },
         n,
     )
+    S.write_events(out, path)
+    read_frame.cache_clear()
     return out
 
 
@@ -805,6 +838,7 @@ __all__ = [
     "TRANSFER_TARGETS",
     "aggregate_cpc18_by_problem",
     "assemble_frame",
+    "assembled_frame",
     "collapse_to_single_subject",
     "cpc15_worst_outcome_rel",
     "cpc18_worst_outcome_rel",
