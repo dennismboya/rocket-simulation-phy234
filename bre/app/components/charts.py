@@ -103,7 +103,7 @@ def sensitivity_bars(rows: list[dict[str, Any]], loss_label: str) -> plt.Figure:
         hi = np.array([np.nan if c is None else float(c[1]) for c in ci])
         ax.barh(y, vals, height=0.5, color=SERIES_1, edgecolor="none")
         ok = np.isfinite(lo) & np.isfinite(hi)
-        ax.errorbar(vals[ok], y[ok], xerr=np.vstack([vals[ok] - lo[ok], hi[ok] - vals[ok]]), fmt="none", ecolor=INK_2, elinewidth=1.2, capsize=3)
+        ax.errorbar(vals[ok], y[ok], xerr=np.vstack([np.clip(vals[ok] - lo[ok], 0, None), np.clip(hi[ok] - vals[ok], 0, None)]), fmt="none", ecolor=INK_2, elinewidth=1.2, capsize=3)
         ax.axvline(0, color=MUTED, linewidth=0.8)
         ax.set_xlabel(xlabel, fontsize=8)
         ax.set_yticks(y)
