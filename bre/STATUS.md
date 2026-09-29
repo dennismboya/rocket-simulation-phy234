@@ -21,10 +21,10 @@ first unfinished item in "Next up".
 | 0 Plan + scaffold | done | schema + validators, shared design, SQLAlchemy layer, packaging, 217 tests green; review findings fixed (df29e0a) |
 | 1 Data | done (public part) | 8 processed tables under data/processed (README lists counts); owner downloads for E–J still pending |
 | 2 Recovery | first pass done | N=200 × 3 seeds × 3 generators × 5 models: 9/9 correct family selection (reports/recovery/); extended grid N∈{50,100,200,400} running in background (runs/recover/grid_n50_400.*) |
-| 3 Models | nearly done | core, Q1, B1, B2, B4, Q2, Q4, G_Q/G_C/G_F all present with tests (554+ passing); B3, B5, B6, Q3, Q5 still to write |
-| 4 Evaluation | not started | protocol pre-registered in PLAN.md §6 |
-| 5 API | in progress | predict facade, demo book and endpoints exist (3f62e10); 8 contract tests being fixed (agent) |
-| 6 Dashboard | in progress | pages 1–3 (market bar, book triage, client profile) being built against the API (agent) |
+| 3 Models | done | B1–B6, Q1–Q5 implemented, registered and tested; fit/eval/recover wired for all ten |
+| 4 Evaluation | in progress | real-data pipeline (A→B transfer, CPC18 pre-registered splits) being built (agent); full runs scheduled after the grid |
+| 5 API | done | /profile /predict /score_book /interventions/rank /model /market /clients /health; openapi.json committed; demo model demo-q4-v2 active; contract tests green |
+| 6 Dashboard | pages 1–3 done | AppTest suite green; pages 4–7, retrain path and acceptance tests being built (agent) |
 | 7 Instrument | nearly done | battery browser-verified (0460ab2); document consistency fixes from the honesty review landing (agent) |
 | 8 Report | not started | |
 
@@ -69,6 +69,14 @@ first unfinished item in "Next up".
 3. B2 recovers G_C context means at r = 1.00 and subject intercepts at Spearman 0.98; B1 attenuates (marginal vs conditional coefficients).
 4. N_target = 200 is an upper bound so far (only N tested); the extended grid N ∈ {50, 100, 200, 400} is running to find the smallest N; "responses needed for calibration" = N_target × 170 on the shared design.
 5. Runtime: 45 fits in 16 min on 4 cores; Q4 is the slowest (2–4 min per fit at N=200).
+
+## Phase 5 and 6a summary (five lines)
+
+1. The FastAPI service is the only prediction source; every prediction is logged to predictions_log and audit_log; the OpenAPI spec is committed.
+2. The demo book is 60 G_Q investors plus five archetypes, all synthetic and labelled; the active model is demo-q4-v2 fitted on that book (population-level calibration only).
+3. Behavioral drawdown capacity uses a first-crossing rule because a loss unitary is a rotation and the response need not be monotone; the monotone share is reported by GET /model.
+4. Dashboard pages 1–3 run against the API only, carry the synthetic banner, intervals and calibration N on every probability, and export CSV/PDF with the banner.
+5. Missing endpoints noted by the dashboard build (per-client response history, status and intervention logging) are being added with pages 4–7.
 
 ## Decisions
 
