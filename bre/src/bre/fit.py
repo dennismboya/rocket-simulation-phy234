@@ -409,6 +409,26 @@ def _merge(pop: dict[str, Any], subj: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+def hessian_diagonal(f: Callable[[Any], Any], x) -> np.ndarray:
+    """``diag(H)`` of the scalar function ``f`` at the vector ``x`` through one Hessian-vector
+    product per coordinate (``jax.jvp`` of ``jax.grad(f)`` along each basis vector, jitted
+    once): the same numbers as ``np.diag(jax.hessian(f)(x))``, at the memory of a single
+    gradient pass. ``jax.hessian`` (forward-over-reverse over every coordinate at once)
+    materializes ``n`` reverse passes together and was killed by the memory limit for Q3 on a
+    3,400-row table; the per-coordinate products stay flat in memory and cost ``n`` gradient
+    evaluations in time."""
+    x = jnp.asarray(x, dtype=jnp.float64)
+    n = int(x.shape[0])
+    grad_f = jax.grad(f)
+
+    @jax.jit
+    def hvp_entry(j):
+        e = jnp.zeros(n, dtype=jnp.float64).at[j].set(1.0)
+        return jax.jvp(grad_f, (x,), (e,))[1][j]
+
+    return np.asarray([float(hvp_entry(j)) for j in range(n)], dtype=np.float64)
+
+
 def laplace_samples(
     model: Model,
     model_name: str,
@@ -418,9 +438,9 @@ def laplace_samples(
     seed: int,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """``n_samples`` draws from the diagonal Laplace approximation at ``params`` (see
-    :mod:`bre.artifact` for the approximation and its limits): the Hessian of
+    :mod:`bre.artifact` for the approximation and its limits): the diagonal of the Hessian of
     ``model.objective`` with respect to the population block (per-subject blocks held fixed) is
-    computed with ``jax.hessian``; each population parameter ``j`` gets
+    computed by :func:`hessian_diagonal`; each population parameter ``j`` gets
     ``sd_j = min(LAPLACE_MAX_SD, 1 / sqrt(max(H_jj, LAPLACE_MIN_CURVATURE)))`` and the draws are
     ``theta* + sd * z`` with ``z ~ N(0, I)`` from ``numpy.random.default_rng(seed)``. Returns
     the draws (numpy pytrees) and a diagnostics dict (``n_pop_params``, ``n_flat_directions``,
@@ -433,8 +453,7 @@ def laplace_samples(
     def objective_vec(v):
         return model.objective(_merge(unravel(v), subj_j), train)
 
-    H = np.asarray(jax.hessian(objective_vec)(vec))
-    diag = np.diag(H)
+    diag = hessian_diagonal(objective_vec, vec)
     flat = ~np.isfinite(diag) | (diag < LAPLACE_MIN_CURVATURE)
     curv = np.where(flat, LAPLACE_MIN_CURVATURE, diag)
     sd = 1.0 / np.sqrt(curv)
@@ -884,6 +903,7 @@ __all__ = [
     "external_fit_seed",
     "fit_model",
     "fit_settings",
+    "hessian_diagonal",
     "interference_summary",
     "laplace_samples",
     "polish_lbfgs",

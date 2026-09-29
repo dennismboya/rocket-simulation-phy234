@@ -22,9 +22,10 @@ Parameter draws (``param_samples``) carry the uncertainty the dashboard shows as
 * MAP-fitted models (B1, B4, Q2, Q4): draws from a **diagonal Laplace approximation** at the
   optimum (:func:`bre.fit.laplace_samples`): the population-level parameters ``theta_pop`` are
   given a Gaussian ``N(theta_pop*, diag(1 / H_jj))`` with ``H`` the Hessian of the negative
-  log-posterior (``model.objective``) with respect to the population block, computed with
-  ``jax.hessian`` at the optimum and with the per-subject blocks (random effects) held at their
-  fitted values. Limits, stated once here and in the artifact ``notes``: (1) it is a local
+  log-posterior (``model.objective``) with respect to the population block at the optimum, with
+  the per-subject blocks (random effects) held at their fitted values; only its diagonal is
+  computed, one Hessian-vector product per population parameter
+  (:func:`bre.fit.hessian_diagonal`). Limits, stated once here and in the artifact ``notes``: (1) it is a local
   quadratic approximation around one optimum and knows nothing about other modes or the discrete
   gauge copies of the Q-models; (2) the diagonal ignores every posterior correlation, so
   intervals of correlated parameters (e.g. ``W`` and ``b``) are too narrow or too wide
