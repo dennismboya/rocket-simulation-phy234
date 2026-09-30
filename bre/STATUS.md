@@ -164,3 +164,4 @@ Phases 0–8 as planned; no long runs started yet.
 * UAS, LISS/DNB: $0, registration by the owner (GATE) → RQ3.
 * FINRA NFCS, GPS, Robintrack, Psych-101, Wang 2014 SI: $0, owner downloads (hosts unreachable from the build session).
 * Splits (a) and (d) of the CPC18 protocol at full settings: 15–20 h of compute (GATE).
+* 2026-09-30 14:46 UTC — stale check-in delivered a day late; repository verified intact and fully pushed (HEAD 9aa706f on origin); no runs launched; no scheduled triggers remain.
